@@ -22,7 +22,7 @@ body {
 
   --color-darkGrey: #1E2738;   /* Dark Grey text, sidebar background.*/
   --color-lightGrey: #94A3B8;  /* Grey text & icon at sidebar. */
-  --color--grey: #767682;      /* Grey icon (e.g. Download / Filter) */
+  --color-grey: #464651;      /* Grey icon (e.g. Download / Filter) */
   --color-darkblue: #151E66;   /* Dark blue icon (e.g. Eyes / Pen / Add), button, dashboard background, overlay window header. */
   --color-lightBlue: #94A3B8;  /* Table header, overlay window background. */
   --color-green: #15803D;      /* Green icon (e.g. Tick / Save), button (e.g. Simpan / Sahkan), text (e.g. Kredit). */
