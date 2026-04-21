@@ -34,6 +34,7 @@ type KuartersClassRatesPanelProps = {
   onPageChange: (page: number) => void;
   onSaveRow: () => void;
   onUnavailableFeature: (message: string) => void;
+  onViewRow: (quarterClass: QuarterClassRecord) => void;
 };
 
 function ActionButton({
@@ -172,6 +173,7 @@ export default function KuartersClassRatesPanel({
   onPageChange,
   onSaveRow,
   onUnavailableFeature,
+  onViewRow,
   pendingAction,
   pendingRowId,
   pageItems,
@@ -256,11 +258,13 @@ export default function KuartersClassRatesPanel({
           icon={commonIcons.eye}
           label="Lihat"
           disabled={Boolean(pendingAction)}
-          onClick={() =>
-            onUnavailableFeature(
-              "Paparan terperinci kelas kuarters belum disediakan lagi.",
-            )
-          }
+          onClick={() => {
+            const selectedQuarterClass = rates.find((item) => item.id === rowId);
+
+            if (selectedQuarterClass) {
+              onViewRow(selectedQuarterClass);
+            }
+          }}
           textClass="text-grey"
         />
       </div>

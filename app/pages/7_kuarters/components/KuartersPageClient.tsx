@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 import KuartersClassRatesPanel from "./KuartersClassRatesPanel";
 import KuartersFeedbackBanner from "./KuartersFeedbackBanner";
@@ -58,6 +59,7 @@ export default function KuartersPageClient({
   initialData,
   initialNotice = null,
 }: KuartersPageClientProps) {
+  const router = useRouter();
   const [summary] = useState(initialData.summary);
   const [quarterClasses, setQuarterClasses] = useState<QuarterClassRecord[]>(
     initialData.quarterClasses,
@@ -352,6 +354,14 @@ export default function KuartersPageClient({
     });
   }
 
+  function handleViewRow(quarterClass: QuarterClassRecord) {
+    if (!ensureActionIsAvailable()) {
+      return;
+    }
+
+    router.push(`/pages/7_kuarters/${quarterClass.id}`);
+  }
+
   return (
     <div className="flex flex-col gap-6 pb-8">
       <KuartersPageHeader />
@@ -380,6 +390,7 @@ export default function KuartersPageClient({
         onPageChange={setCurrentPage}
         onSaveRow={handleSaveRow}
         onUnavailableFeature={handleUnavailableFeature}
+        onViewRow={handleViewRow}
         totalPages={pagination.totalPages}
       />
     </div>

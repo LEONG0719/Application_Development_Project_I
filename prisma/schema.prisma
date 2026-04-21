@@ -172,7 +172,7 @@ model QuarterClass {
 
 model Unit {
   id             String       @id @default(uuid()) @db.Uuid
-  unitCode       String       @unique
+  unitCode       String
   status         UnitStatus   @default(VACANT)
   recordStatus   RecordStatus @default(VERIFIED)
 
@@ -192,6 +192,7 @@ model Unit {
   verifiedBy     AdminProfile? @relation("UnitVerifiedBy", fields: [verifiedById], references: [id])
 
   @@index([classId])
+  @@unique([classId, unitCode])
   @@index([status])
   @@index([recordStatus])
 }
