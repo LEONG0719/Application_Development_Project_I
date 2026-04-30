@@ -22,8 +22,8 @@ const toneStyles: Record<
     icon: "error",
   },
   info: {
-    containerClass: "border-darkblue/15 bg-lightBlue/10",
-    iconClass: "text-darkblue",
+    containerClass: "border-darkBlue/15 bg-lightBlue/10",
+    iconClass: "text-darkBlue",
     icon: "info",
   },
 };

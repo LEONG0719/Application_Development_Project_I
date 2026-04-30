@@ -40,7 +40,7 @@ export default function KuartersClassDetailHeader({
     <section className="space-y-4">
       <Link
         href="/pages/7_kuarters"
-        className="inline-flex items-center gap-2 text-sm font-semibold text-grey transition-colors hover:text-darkblue"
+        className="inline-flex items-center gap-2 text-sm font-semibold text-grey transition-colors hover:text-darkBlue"
       >
         <Icon icon="arrow_back" size={18} />
         Kembali ke senarai kelas

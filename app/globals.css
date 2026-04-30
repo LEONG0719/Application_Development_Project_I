@@ -23,7 +23,7 @@ body {
   --color-darkGrey: #1E2738;  /* Dark Grey text, sidebar background.*/
   --color-lightGrey: #94A3B8; /* Grey text & icon at sidebar. */
   --color-grey: #464651;      /* Grey icon (e.g. Download / Filter) */
-  --color-darkblue: #151E66;  /* Dark blue icon (e.g. Eyes / Pen / Add), button, dashboard background, overlay window header. */
+  --color-darkBlue: #151E66;  /* Dark blue icon (e.g. Eyes / Pen / Add), button, dashboard background, overlay window header. */
   --color-lightBlue: #EFF4FF; /* Table header, overlay window background. */
   --color-green: #15803D;     /* Green icon (e.g. Tick / Save), button (e.g. Simpan / Sahkan), text (e.g. Kredit). */
   --color-red: #BA1A1A;       /* Red icon (e.g. Dustbin / Warning / Logout), button (e.g. Batal / Padam), text (e.g. Debit). */

@@ -5,7 +5,7 @@ type KuartersOverviewCardsProps = {
 };
 
 const accentClasses = [
-  "border-l-4 border-l-darkblue",
+  "border-l-4 border-l-darkBlue",
   "border-l-4 border-l-aktif",
   "border-l-4 border-l-pencenDatang",
   "border-l-4 border-l-xLengkap",

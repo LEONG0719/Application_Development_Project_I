@@ -90,8 +90,8 @@ function PageButton({
       type="button"
       className={`min-h-8 min-w-8 rounded-md border px-2 text-sm transition-colors ${
         isActive
-          ? "border-darkblue bg-darkblue font-bold text-white"
-          : "border-lightGrey/30 bg-white text-grey hover:border-darkblue hover:text-darkblue"
+          ? "border-darkBlue bg-darkBlue font-bold text-white"
+          : "border-lightGrey/30 bg-white text-grey hover:border-darkBlue hover:text-darkBlue"
       } disabled:cursor-not-allowed disabled:opacity-40`}
       aria-current={isActive ? "page" : undefined}
       disabled={disabled}
@@ -114,7 +114,7 @@ function ToolbarButton({
   return (
     <button
       type="button"
-      className="inline-flex items-center justify-center rounded-lg border border-lightGrey/20 bg-white p-2 text-grey transition-colors hover:border-darkblue hover:text-darkblue"
+      className="inline-flex items-center justify-center rounded-lg border border-lightGrey/20 bg-white p-2 text-grey transition-colors hover:border-darkBlue hover:text-darkBlue"
       aria-label={label}
       onClick={onClick}
       title={label}
@@ -147,7 +147,7 @@ function InputField({
       disabled={disabled}
       onChange={(event) => onChange(event.target.value)}
       placeholder={placeholder}
-      className={`min-h-9 rounded-xl border border-lightGrey/35 bg-white px-4 py-2 text-sm font-semibold text-darkblue outline-none transition-colors placeholder:text-lightGrey focus:border-darkblue ${
+      className={`min-h-9 rounded-xl border border-lightGrey/35 bg-white px-4 py-2 text-sm font-semibold text-darkBlue outline-none transition-colors placeholder:text-lightGrey focus:border-darkBlue ${
         align === "start"
           ? "w-full min-w-35 text-left"
           : align === "end"
@@ -252,7 +252,7 @@ export default function KuartersClassRatesPanel({
               onEditRow(selectedQuarterClass);
             }
           }}
-          textClass="text-darkblue"
+          textClass="text-darkBlue"
         />
         <ActionButton
           icon={commonIcons.eye}
@@ -301,7 +301,7 @@ export default function KuartersClassRatesPanel({
               <span className="mb-2 block text-xs font-extrabold uppercase tracking-[0.18em] text-grey">
                 Carian Mengikut Kelas
               </span>
-              <div className="flex items-center gap-3 rounded-xl border border-lightGrey/30 bg-background px-3 py-2 transition-colors focus-within:border-darkblue">
+              <div className="flex items-center gap-3 rounded-xl border border-lightGrey/30 bg-background px-3 py-2 transition-colors focus-within:border-darkBlue">
                 <Icon
                   icon={commonIcons.search}
                   size={18}
@@ -320,7 +320,7 @@ export default function KuartersClassRatesPanel({
             <div className="flex items-center gap-3 self-start lg:self-end">
               <button
                 type="button"
-                className="inline-flex min-h-10 items-center rounded-xl border border-lightGrey/25 bg-white px-4 py-2 text-sm font-semibold text-grey transition-colors hover:border-darkblue hover:text-darkblue disabled:cursor-not-allowed disabled:opacity-40"
+                className="inline-flex min-h-10 items-center rounded-xl border border-lightGrey/25 bg-white px-4 py-2 text-sm font-semibold text-grey transition-colors hover:border-darkBlue hover:text-darkBlue disabled:cursor-not-allowed disabled:opacity-40"
                 disabled={!hasActiveFilters}
                 onClick={onClearFilter}
               >
@@ -358,7 +358,7 @@ export default function KuartersClassRatesPanel({
               {isCreateRowVisible ? (
                 <tr
                   ref={editor?.mode === "create" ? editingRowRef : null}
-                  className="border-t border-lightGrey/20 bg-darkblue/3"
+                  className="border-t border-lightGrey/20 bg-darkBlue/3"
                 >
                   <td className="px-6 py-4">
                     <InputField
@@ -535,7 +535,7 @@ export default function KuartersClassRatesPanel({
       <div className="mt-6 flex justify-end">
         <button
           type="button"
-          className="inline-flex min-h-10 items-center gap-2 rounded-2xl bg-darkblue px-4 py-2 text-sm font-extrabold text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+          className="inline-flex min-h-10 items-center gap-2 rounded-2xl bg-darkBlue px-4 py-2 text-sm font-extrabold text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
           disabled={Boolean(pendingAction)}
           onClick={onAddRow}
         >
