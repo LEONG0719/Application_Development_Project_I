@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Icon from "@/app/components/Icon";
+import HelpButton from "@/app/components/HelpButton";
 
 type AuthLoginProps = {
     onSwitchToRegister: () => void;
@@ -142,16 +143,21 @@ export default function AuthLogin({ onSwitchToRegister, onForgotPassword }: Auth
     }
 
     return (
-        <div className="flex flex-col justify-evenly h-full overflow-auto">
+        <div className="flex flex-col justify-evenly h-full overflow-auto relative">
             <div className="flex flex-col gap-8">
-                {/* Header */}
-                <div className="flex flex-col gap-1">
-                    <div className="font-bold text-2xl">Log Masuk ke Sistem</div>
-                    <div className="font-light text-sm text-grey">
-                        Sila masukkan butiran akaun anda untuk akses.
+                <div className="flex flex-row justify-between items-start">
+                    {/* Header */}
+                    <div className="flex flex-col gap-1">
+                        <div className="font-bold text-2xl">Log Masuk ke Sistem</div>
+                        <div className="font-light text-sm text-grey">
+                            Sila masukkan butiran akaun anda untuk akses.
+                        </div>
                     </div>
-                </div>
 
+                    {/* Help Button */}
+                    <HelpButton />
+                </div>
+                
                 {errorMessage && (
                     <div className={`flex items-center justify-center font-bold text-sm rounded-lg p-2 ${errorType === "error" ? "bg-red/20 text-red" : "bg-green/20 text-green"}`}>
                         {errorMessage}

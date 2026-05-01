@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Icon from "@/app/components/Icon";
+import HelpButton from "@/app/components/HelpButton";
 
 type AuthRegisterProps = {
 	onSwitchToLogin: () => void;
@@ -131,15 +132,20 @@ export default function AuthRegister({ onSwitchToLogin }: AuthRegisterProps) {
 	}
 
 	return (
-		<div className="flex flex-col justify-evenly h-full overflow-auto">
+		<div className="flex flex-col justify-evenly h-full overflow-auto relative">
 			<div className="flex flex-col gap-8">
-				{/* Header */}
-				<div className="flex flex-col gap-1">
-					<div className="font-bold text-2xl">Daftar Akaun Baharu</div>
-					<div className="font-light text-sm text-grey">
-						Sila lengkapkan butiran di bawah untuk pendaftaran.
-					</div>
-				</div>
+                <div className="flex flex-row justify-between items-start">
+                    {/* Header */}
+                    <div className="flex flex-col gap-1">
+                        <div className="font-bold text-2xl">Daftar Akaun Baharu</div>
+                        <div className="font-light text-sm text-grey">
+                            Sila lengkapkan butiran di bawah untuk pendaftaran.
+                        </div>
+                    </div>
+
+                    {/* Help Button */}
+                    <HelpButton />
+                </div>
 
 				{/* Error Messages */}
 				{errorMessage && (

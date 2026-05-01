@@ -1,3 +1,4 @@
+import { log } from "console";
 import { send } from "process";
 import type { ComponentPropsWithoutRef, CSSProperties } from "react";
 
@@ -20,6 +21,7 @@ export const commonIcons = {
   phone: "phone",
   sms: "sms",
   send: "send",
+  logout: "logout",
 } as const;
 
 export type CommonIconName = keyof typeof commonIcons;

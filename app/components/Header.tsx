@@ -1,6 +1,11 @@
 "use client";
 
+
 import { useRouter } from "next/navigation";
+
+import Icon from "./Icon";
+import HelpButton from "./HelpButton";
+import { ROUTES } from "../constants/routes";
 
 export default function Header() {
     const router = useRouter();
@@ -13,7 +18,7 @@ export default function Header() {
             });
 
             // Redirect to login page after logout.
-            router.push("/pages/0_authentication");
+            router.push(ROUTES.auth);
         } catch (error) {
             console.error("Logout failed:", error);
         }
@@ -21,15 +26,17 @@ export default function Header() {
 
     return (
         <header className="flex flex-row justify-end gap-5 p-4">
-            <span className="material-symbols-outlined text-grey">notifications</span>
-            <span className="material-symbols-outlined text-grey">help</span>
+            {/* Help Button */}
+            <HelpButton />
+
+            {/* Logout Button */}
             <button
                 type="button"
-                className="material-symbols-outlined text-red hover:cursor-pointer hover:text-dark-blue"
+                className="material-symbols-outlined text-red hover:cursor-pointer hover:text-dark-blue hover:scale-[0.98] active:scale-[0.86]"
                 onClick={handleLogout}
                 title="Logout"
             >
-                logout
+                <Icon icon="logout" size={24} />
             </button>
         </header>
     );

@@ -3,6 +3,7 @@
 import { useState } from "react";
 
 import Icon from "@/app/components/Icon";
+import HelpButton from "@/app/components/HelpButton";
 
 type AuthForgotProps = {
 	onClose: () => void;
@@ -118,16 +119,21 @@ export default function AuthForgot({ onClose }: AuthForgotProps) {
 	}
 
 	return (
-		<div className="flex flex-col justify-evenly h-full overflow-auto">
+		<div className="flex flex-col justify-evenly h-full overflow-auto relative">
 			<div className="flex flex-col gap-8">
-				{/* Header */}
-				<div className="flex flex-col gap-1">
-					<div className="font-bold text-2xl">Lupa Kata Laluan</div>
-					<div className="font-light text-sm text-grey">
-						Sila lengkapkan butiran di bawah untuk tetapkan semula kata laluan.
+				<div className="flex flex-row justify-between items-start">
+					{/* Header */}
+					<div className="flex flex-col gap-1">
+						<div className="font-bold text-2xl">Lupa Kata Laluan</div>
+						<div className="font-light text-sm text-grey">
+							Sila lengkapkan butiran di bawah untuk tetapkan semula kata laluan.
+						</div>
 					</div>
-				</div>
 
+					{/* Help Button */}
+					<HelpButton />
+				</div>
+				
 				{/* Error/Success Messages */}
 				{errorMessage && (
 					<div className={`flex flex-1 items-center justify-center font-bold text-sm rounded-lg p-2 ${errorType === "error" ? "text-red bg-red/20" : "text-green bg-green/20"}`}>
