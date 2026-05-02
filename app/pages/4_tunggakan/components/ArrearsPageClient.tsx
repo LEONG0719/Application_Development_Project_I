@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Icon from "../../../components/Icon";
 import type { TunggakanListItem, TunggakanSummary } from "@/lib/arrears";
+import KemasKiniModal from "./KemasKiniModal";
 
 // --- MOCK DATA (Matches your Figma Screenshot exactly) ---
 const mockSummary: TunggakanSummary = {
@@ -18,7 +19,9 @@ const mockData: TunggakanListItem[] = [
 ];
 
 export default function TunggakanPageClient() {
+  // HOOKS MUST BE INSIDE THE COMPONENT
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Helper to format currency accurately to RM
   const formatRM = (value: number) => {
@@ -47,7 +50,7 @@ export default function TunggakanPageClient() {
     <div className="flex flex-col gap-8 pb-20 relative">
       {/* --- HEADER SECTION --- */}
       <div>
-        <h1 className="text-3xl font-bold mb-2">
+        <h1 className="text-3xl font-bold text-dark-blue mb-2">
           Tunggakan
         </h1>
         <p className="text-grey">
@@ -59,7 +62,7 @@ export default function TunggakanPageClient() {
       <div className="grid grid-cols-2 gap-6">
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
           <p className="text-sm text-grey font-medium mb-2">Jumlah Rekod</p>
-          <h2 className="text-3xl font-bold mb-4">
+          <h2 className="text-3xl font-bold text-dark-blue mb-4">
             {formatRM(mockSummary.jumlahRekod)}
           </h2>
           <div className="flex items-center gap-2">
@@ -70,7 +73,7 @@ export default function TunggakanPageClient() {
 
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
           <p className="text-sm text-grey font-medium mb-2">Jumlah Tunggakan</p>
-          <h2 className="text-3xl font-bold mb-4">
+          <h2 className="text-3xl font-bold text-dark-blue mb-4">
             {formatRM(mockSummary.jumlahTunggakan)}
           </h2>
           <div className="flex items-center gap-2">
@@ -85,7 +88,7 @@ export default function TunggakanPageClient() {
         {/* Table Header Controls */}
         <div className="p-6 flex justify-between items-center bg-[#F8FAFC]">
           <div>
-            <h3 className="text-lg font-bold">Senarai Tunggakan</h3>
+            <h3 className="text-lg font-bold text-dark-blue">Senarai Tunggakan</h3>
             <p className="text-sm text-grey mt-1">Klik pada ikon kemaskini untuk mengubah maklumat unit.</p>
           </div>
           <div className="flex gap-4">
@@ -189,11 +192,21 @@ export default function TunggakanPageClient() {
 
       {/* --- FLOATING 'KEMAS KINI' BUTTON (Active when rows are selected) --- */}
       <div className={`fixed bottom-8 right-8 transition-opacity duration-200 ${selectedIds.length > 0 ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
-        <button className="flex items-center gap-2 bg-dark-blue text-white px-6 py-3 rounded-lg shadow-lg font-bold hover:bg-opacity-90 transition-all">
+        <button 
+          onClick={() => setIsModalOpen(true)}
+          className="flex items-center gap-2 bg-dark-blue text-white px-6 py-3 rounded-lg shadow-lg font-bold hover:bg-opacity-90 transition-all"
+        >
           <Icon icon="edit" size={20} />
           KEMAS KINI {selectedIds.length > 0 && `(${selectedIds.length})`}
         </button>
       </div>
+
+      {/* --- KEMAS KINI MODAL --- */}
+      <KemasKiniModal 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+        selectedCount={selectedIds.length} 
+      />
     </div>
   );
 }
