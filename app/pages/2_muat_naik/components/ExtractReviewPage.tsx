@@ -1,3 +1,6 @@
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
 import Icon from "../../../components/Icon";
 
 export type ReviewKind = "bayaran" | "tunggakan" | "penghuni" | "kuarters";
@@ -8,6 +11,25 @@ type StatCard = {
   helper: string;
   icon: string;
   tone: "blue" | "green";
+};
+
+type ExtractedPenghuniRecord = {
+  nama: string;
+  noKadPengenalan: string;
+  kuarters: string;
+  unit: string;
+  alamatKuarters: string;
+  perhubungan: string;
+  pekerjaan: string;
+  jabatan: string;
+  sourceSheet: string;
+  sourceRow: number;
+};
+
+type PenghuniExtractResult = {
+  documentType: "penghuni";
+  recordCount: number;
+  records: ExtractedPenghuniRecord[];
 };
 
 const residents = [
@@ -279,7 +301,23 @@ function PaymentTable({ kind }: { kind: "bayaran" | "tunggakan" }) {
   );
 }
 
-function ResidentTable() {
+function ResidentTable({ records }: { records: ExtractedPenghuniRecord[] }) {
+  const displayRecords =
+    records.length > 0
+      ? records
+      : residents.map((resident, index) => ({
+          nama: resident.name,
+          noKadPengenalan: resident.ic,
+          kuarters: resident.quarters.split("\n")[0],
+          unit: resident.quarters.split("\n")[1] ?? "",
+          alamatKuarters: "",
+          perhubungan: resident.contact,
+          pekerjaan: resident.job.split("\n").slice(0, 2).join(" "),
+          jabatan: resident.job.split("\n").slice(2).join(" "),
+          sourceSheet: "Contoh",
+          sourceRow: index + 1,
+        }));
+
   return (
     <div className="overflow-hidden rounded-lg border border-[#DCE2F1] bg-white">
       <table className="w-full table-fixed text-left text-xs">
@@ -296,22 +334,28 @@ function ResidentTable() {
           </tr>
         </thead>
         <tbody className="divide-y divide-[#EEF1F7]">
-          {residents.map((resident) => (
-            <tr key={resident.ic}>
+          {displayRecords.map((resident) => (
+            <tr key={`${resident.sourceSheet}-${resident.sourceRow}`}>
               <td className="px-5 py-4">
                 <input type="checkbox" className="h-4 w-4" />
               </td>
               <td className="px-4 py-4">
-                <p className="font-extrabold text-[#172033]">{resident.name}</p>
+                <p className="font-extrabold text-[#172033]">{resident.nama}</p>
                 <p className="text-[10px] font-semibold text-[#667085]">
-                  {resident.ic}
+                  {resident.noKadPengenalan}
                 </p>
               </td>
-              {[resident.quarters, resident.contact, resident.job].map((text) => (
-                <td key={text} className="whitespace-pre-line px-4 py-4">
-                  {text}
-                </td>
-              ))}
+              <td className="whitespace-pre-line px-4 py-4">
+                {[resident.kuarters, resident.unit, resident.alamatKuarters]
+                  .filter(Boolean)
+                  .join("\n")}
+              </td>
+              <td className="whitespace-pre-line px-4 py-4">
+                {resident.perhubungan || "-"}
+              </td>
+              <td className="whitespace-pre-line px-4 py-4">
+                {[resident.pekerjaan, resident.jabatan].filter(Boolean).join("\n")}
+              </td>
               <td className="px-4 py-4 text-center">
                 <Icon
                   icon="visibility"
@@ -324,7 +368,9 @@ function ResidentTable() {
           ))}
         </tbody>
       </table>
-      <Pagination label="Memaparkan 1-3 Daripada 45 Rekod" />
+      <Pagination
+        label={`Memaparkan 1-${displayRecords.length} Daripada ${displayRecords.length} Rekod`}
+      />
     </div>
   );
 }
@@ -429,20 +475,66 @@ function QuartersTable() {
   );
 }
 
-function ReviewTable({ kind }: { kind: ReviewKind }) {
+function ReviewTable({
+  kind,
+  penghuniRecords,
+}: {
+  kind: ReviewKind;
+  penghuniRecords: ExtractedPenghuniRecord[];
+}) {
   if (kind === "bayaran" || kind === "tunggakan") {
     return <PaymentTable kind={kind} />;
   }
 
   if (kind === "penghuni") {
-    return <ResidentTable />;
+    return <ResidentTable records={penghuniRecords} />;
   }
 
   return <QuartersTable />;
 }
 
 export default function ExtractReviewPage({ kind }: { kind: ReviewKind }) {
-  const content = reviewContent[kind];
+  const [penghuniExtract, setPenghuniExtract] =
+    useState<PenghuniExtractResult | null>(null);
+  const [uploadedFileName, setUploadedFileName] = useState("");
+
+  useEffect(() => {
+    if (kind !== "penghuni") {
+      return;
+    }
+
+    const storedExtract = sessionStorage.getItem("penghuniExtractResult");
+    const storedFileName = sessionStorage.getItem("penghuniExtractFileName");
+
+    if (storedExtract) {
+      setPenghuniExtract(JSON.parse(storedExtract));
+    }
+
+    if (storedFileName) {
+      setUploadedFileName(storedFileName);
+    }
+  }, [kind]);
+
+  const content = useMemo(() => {
+    const baseContent = reviewContent[kind];
+
+    if (kind !== "penghuni" || !penghuniExtract) {
+      return baseContent;
+    }
+
+    return {
+      ...baseContent,
+      fileName: uploadedFileName || baseContent.fileName,
+      stats: baseContent.stats.map((stat) =>
+        stat.label === "Jumlah Rekod"
+          ? {
+              ...stat,
+              value: String(penghuniExtract.recordCount),
+            }
+          : stat,
+      ),
+    };
+  }, [kind, penghuniExtract, uploadedFileName]);
 
   return (
     <section className="min-h-full bg-[#F8F9FF]">
@@ -483,7 +575,10 @@ export default function ExtractReviewPage({ kind }: { kind: ReviewKind }) {
             <Icon icon="filter_alt" size={22} weight={500} className="text-[#667085]" />
           </div>
           <div className="px-2 pb-2">
-            <ReviewTable kind={kind} />
+            <ReviewTable
+              kind={kind}
+              penghuniRecords={penghuniExtract?.records ?? []}
+            />
           </div>
         </div>
 

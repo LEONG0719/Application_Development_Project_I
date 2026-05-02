@@ -103,6 +103,9 @@ export default function MuatNaikPage() {
   const router = useRouter();
   const [activeCategory, setActiveCategory] = useState<Category>("Bayaran");
   const [selectedFileName, setSelectedFileName] = useState("");
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [processingError, setProcessingError] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const activeRows = processingRows[activeCategory];
 
@@ -113,15 +116,53 @@ export default function MuatNaikPage() {
   function handleFileChange(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     setSelectedFileName(file?.name ?? "");
+    setSelectedFile(file ?? null);
+    setProcessingError("");
   }
 
-  function handleUploadAction() {
-    if (!selectedFileName) {
+  async function handleUploadAction() {
+    if (!selectedFile) {
       handleChooseFile();
       return;
     }
 
-    router.push(`${ROUTES.muatNaik}/semakan/${reviewRoutes[activeCategory]}`);
+    if (activeCategory !== "Penghuni") {
+      router.push(`${ROUTES.muatNaik}/semakan/${reviewRoutes[activeCategory]}`);
+      return;
+    }
+
+    setIsProcessing(true);
+    setProcessingError("");
+
+    try {
+      const formData = new FormData();
+      formData.append("file", selectedFile);
+
+      const apiBaseUrl =
+        process.env.NEXT_PUBLIC_AI_SERVICE_URL ?? "http://127.0.0.1:8000";
+      const response = await fetch(`${apiBaseUrl}/extract/penghuni?limit=3`, {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorBody = await response.json().catch(() => null);
+        throw new Error(errorBody?.detail ?? "Gagal mengekstrak data penghuni.");
+      }
+
+      const extractedData = await response.json();
+      sessionStorage.setItem("penghuniExtractResult", JSON.stringify(extractedData));
+      sessionStorage.setItem("penghuniExtractFileName", selectedFile.name);
+      router.push(`${ROUTES.muatNaik}/semakan/penghuni`);
+    } catch (error) {
+      setProcessingError(
+        error instanceof Error
+          ? error.message
+          : "Gagal mengekstrak data penghuni.",
+      );
+    } finally {
+      setIsProcessing(false);
+    }
   }
 
   return (
@@ -184,14 +225,17 @@ export default function MuatNaikPage() {
           <button
             type="button"
             onClick={handleUploadAction}
-            className="mt-6 inline-flex h-12 items-center justify-center gap-2 rounded-lg bg-dark-blue px-8 text-sm font-extrabold text-white shadow-[0_14px_24px_rgba(21,30,102,0.22)] transition hover:bg-[#202A78]"
+            disabled={isProcessing}
+            className="mt-6 inline-flex h-12 items-center justify-center gap-2 rounded-lg bg-dark-blue px-8 text-sm font-extrabold text-white shadow-[0_14px_24px_rgba(21,30,102,0.22)] transition hover:bg-[#202A78] disabled:cursor-not-allowed disabled:bg-[#6B7280]"
           >
             <Icon
-              icon={selectedFileName ? "fact_check" : "add"}
+              icon={isProcessing ? "progress_activity" : selectedFileName ? "fact_check" : "add"}
               size={18}
               weight={700}
             />
-            {selectedFileName
+            {isProcessing
+              ? "Sedang Memproses..."
+              : selectedFileName
               ? "Kenal Pasti Untuk Proses"
               : "Pilih Fail Dari Komputer"}
           </button>
@@ -205,6 +249,11 @@ export default function MuatNaikPage() {
           {selectedFileName ? (
             <p className="mt-3 max-w-full truncate text-xs font-bold text-[#43506B]">
               Fail dipilih: {selectedFileName}
+            </p>
+          ) : null}
+          {processingError ? (
+            <p className="mt-3 max-w-xl text-xs font-bold text-red">
+              {processingError}
             </p>
           ) : null}
         </div>
