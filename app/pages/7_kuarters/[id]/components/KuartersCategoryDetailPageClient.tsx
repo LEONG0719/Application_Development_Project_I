@@ -6,12 +6,12 @@ import KuartersFeedbackBanner from "@/app/pages/7_kuarters/components/KuartersFe
 import KuartersOverviewCards from "@/app/pages/7_kuarters/components/KuartersOverviewCards";
 import {
   buildKuartersSummaryCards,
-  createEmptyQuarterClassFilters,
-  hasActiveQuarterClassFilters,
+  createEmptyQuarterCategoryFilters,
+  hasActiveQuarterCategoryFilters,
   type KuartersNotice,
 } from "@/app/pages/7_kuarters/components/kuartersHelpers";
 
-import KuartersClassDetailHeader from "./KuartersClassDetailHeader";
+import KuartersCategoryDetailHeader from "./KuartersCategoryDetailHeader";
 import KuartersResidentPickerModal from "./KuartersResidentPickerModal";
 import KuartersUnitsPanel from "./KuartersUnitsPanel";
 import {
@@ -25,7 +25,7 @@ import {
   filterQuarterUnits,
   sortQuarterUnits,
   validateQuarterUnitDraft,
-  type KuartersClassDetailInitialData,
+  type KuartersCategoryDetailInitialData,
   type KuartersUnitEditorState,
   type QuarterUnitDraft,
   type QuarterUnitMutationResponse,
@@ -41,8 +41,8 @@ type ResidentPickerState = {
   residents: AvailableResidentRecord[];
 };
 
-type KuartersClassDetailPageClientProps = {
-  initialData: KuartersClassDetailInitialData;
+type KuartersCategoryDetailPageClientProps = {
+  initialData: KuartersCategoryDetailInitialData;
   initialNotice?: KuartersNotice | null;
 };
 
@@ -70,14 +70,14 @@ function getErrorMessage(error: unknown, fallbackMessage: string) {
   return error instanceof Error ? error.message : fallbackMessage;
 }
 
-export default function KuartersClassDetailPageClient({
+export default function KuartersCategoryDetailPageClient({
   initialData,
   initialNotice = null,
-}: KuartersClassDetailPageClientProps) {
+}: KuartersCategoryDetailPageClientProps) {
   const [units, setUnits] = useState<QuarterUnitRecord[]>(initialData.units);
   const [currentPage, setCurrentPage] = useState(1);
   const [filterQuery, setFilterQuery] = useState(
-    createEmptyQuarterClassFilters().classNameQuery,
+    createEmptyQuarterCategoryFilters().categoryNameQuery,
   );
   const [editor, setEditor] = useState<KuartersUnitEditorState | null>(null);
   const [notice, setNotice] = useState<KuartersNotice | null>(initialNotice);
@@ -94,8 +94,8 @@ export default function KuartersClassDetailPageClient({
     residentPicker.searchQuery,
   );
   const summary = buildQuarterUnitSummary(units);
-  const hasActiveFilters = hasActiveQuarterClassFilters({
-    classNameQuery: filterQuery,
+  const hasActiveFilters = hasActiveQuarterCategoryFilters({
+    categoryNameQuery: filterQuery,
   });
   const filteredUnits = filterQuarterUnits(units, filterQuery);
   const pagination = buildQuarterUnitPagination(filteredUnits, currentPage, {
@@ -349,7 +349,7 @@ export default function KuartersClassDetailPageClient({
 
       const response =
         editor.mode === "create"
-          ? await fetch(`/api/quarter-classes/${initialData.id}/units`, {
+          ? await fetch(`/api/quarter-categories/${initialData.id}/units`, {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
@@ -357,7 +357,7 @@ export default function KuartersClassDetailPageClient({
               body: JSON.stringify(payload),
             })
           : await fetch(
-              `/api/quarter-classes/${initialData.id}/units/${editor.rowId}`,
+              `/api/quarter-categories/${initialData.id}/units/${editor.rowId}`,
               {
                 method: "PATCH",
                 headers: {
@@ -460,7 +460,7 @@ export default function KuartersClassDetailPageClient({
       setPendingAction("delete");
 
       const response = await fetch(
-        `/api/quarter-classes/${initialData.id}/units/${rowId}`,
+        `/api/quarter-categories/${initialData.id}/units/${rowId}`,
         {
           method: "DELETE",
         },
@@ -513,8 +513,8 @@ export default function KuartersClassDetailPageClient({
 
   return (
     <div className="flex flex-col gap-6 pb-8">
-      <KuartersClassDetailHeader
-        className={initialData.className}
+      <KuartersCategoryDetailHeader
+        categoryName={initialData.categoryName}
         rates={initialData.rates}
       />
       <KuartersFeedbackBanner

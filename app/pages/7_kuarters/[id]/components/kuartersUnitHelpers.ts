@@ -1,17 +1,17 @@
 import type { UnitStatus } from "@prisma/client";
-import type { QuarterClassSummary } from "@/lib/quarter-classes";
+import type { QuarterCategorySummary } from "@/lib/quarter-categories";
 import type { AvailableResidentListItem } from "@/lib/residents";
 
 import type {
-  QuarterClassUnitsDetail,
+  QuarterCategoryUnitsDetail,
   QuarterUnitListItem,
 } from "@/lib/quarter-units";
 
 export const EMPTY_QUARTER_UNIT_ID = "__new__";
 
 export type QuarterUnitRecord = QuarterUnitListItem;
-export type KuartersClassDetailInitialData = QuarterClassUnitsDetail;
-export type QuarterClassRates = QuarterClassUnitsDetail["rates"];
+export type KuartersCategoryDetailInitialData = QuarterCategoryUnitsDetail;
+export type QuarterCategoryRates = QuarterCategoryUnitsDetail["rates"];
 
 export type QuarterUnitDraft = {
   unitCode: string;
@@ -118,7 +118,7 @@ export function sortQuarterUnits(units: QuarterUnitRecord[]) {
 
 export function buildQuarterUnitSummary(
   units: QuarterUnitRecord[],
-): QuarterClassSummary {
+): QuarterCategorySummary {
   const occupiedUnits = units.filter((unit) => unit.status === "OCCUPIED").length;
   const totalUnits = units.length;
   const vacantUnits = totalUnits - occupiedUnits;
