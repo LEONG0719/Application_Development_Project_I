@@ -1,7 +1,17 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useSyncExternalStore } from "react";
 import Icon from "../../../components/Icon";
+import BayaranReviewTable from "./BayaranReviewTable";
+import KuartersReviewTable from "./KuartersReviewTable";
+import PenghuniReviewTable from "./PenghuniReviewTable";
+import TunggakanReviewTable from "./TunggakanReviewTable";
+import type {
+  ExtractedPenghuniRecord,
+  ExtractedQuarterRecord,
+  KuartersExtractResult,
+  PenghuniExtractResult,
+} from "./extract-review-shared";
 
 export type ReviewKind = "bayaran" | "tunggakan" | "penghuni" | "kuarters";
 
@@ -12,58 +22,6 @@ type StatCard = {
   icon: string;
   tone: "blue" | "green";
 };
-
-type ExtractedPenghuniRecord = {
-  nama: string;
-  noKadPengenalan: string;
-  kuarters: string;
-  unit: string;
-  alamatKuarters: string;
-  perhubungan: string;
-  pekerjaan: string;
-  jabatan: string;
-  sourceSheet: string;
-  sourceRow: number;
-};
-
-type PenghuniExtractResult = {
-  documentType: "penghuni";
-  recordCount: number;
-  records: ExtractedPenghuniRecord[];
-};
-
-const residents = [
-  {
-    name: "Ahmad Azam bin Sulaiman",
-    ic: "850412-81-5543",
-    date: "12 Julai 2024",
-    receipt: "RES-2024-001",
-    amount: "450.00",
-    quarters: "Kategori C\nUnit 12-A, Blok B",
-    contact: "012-3456789\nazam.sul@gmail.com",
-    job: "Penolong Jurutera\nJA29\nJKR Daerah Johor Bahru",
-  },
-  {
-    name: "Siti Yasmin binti Abdullah",
-    ic: "920115-81-6622",
-    date: "12 Julai 2024",
-    receipt: "RES-2024-002",
-    amount: "320.00",
-    quarters: "Kategori D\nUnit 05-C, Blok E",
-    contact: "019-8765432\nyasmin.abd@moe.gov.my",
-    job: "Guru Siswazah DG41\nSK Taman Universiti",
-  },
-  {
-    name: "Mohd Khairul bin Idris",
-    ic: "780922-81-4431",
-    date: "12 Julai 2024",
-    receipt: "RES-2024-003",
-    amount: "150.00",
-    quarters: "Kategori B\nNo. 22, Jalan Perdana 4",
-    contact: "017-1122334\nkhairul.idris@health.gov.my",
-    job: "Pegawai Perubatan\nUD48\nHospital Sultanah Aminah",
-  },
-];
 
 const reviewContent: Record<
   ReviewKind,
@@ -198,343 +156,109 @@ function StatCards({ stats }: { stats: StatCard[] }) {
   );
 }
 
-function Pagination({ label }: { label: string }) {
-  return (
-    <div className="flex items-center justify-between border-t border-[#EEF1F7] px-5 py-3 text-[11px] text-[#4B5567]">
-      <div className="flex items-center gap-1">
-        <button className="h-7 w-7 rounded bg-dark-blue text-white">1</button>
-        <button className="h-7 w-7 rounded text-[#344054]">2</button>
-        <button className="h-7 w-7 rounded text-[#344054]">3</button>
-        <span className="px-2">...</span>
-        <button className="h-7 w-7 rounded text-[#344054]">15</button>
-        <button className="h-7 w-7 rounded text-[#344054]">
-          <Icon icon="chevron_right" size={14} />
-        </button>
-      </div>
-      <span>{label}</span>
-    </div>
-  );
-}
-
-function RowActions({ showDelete = true }: { showDelete?: boolean }) {
-  return (
-    <div className="flex items-center justify-center gap-4">
-      <Icon icon="save" size={16} weight={700} className="text-green" />
-      {showDelete ? (
-        <Icon icon="delete" size={16} weight={700} className="text-red" />
-      ) : (
-        <Icon icon="edit" size={16} weight={700} className="text-dark-blue" />
-      )}
-    </div>
-  );
-}
-
-function PaymentTable({ kind }: { kind: "bayaran" | "tunggakan" }) {
-  const isPayment = kind === "bayaran";
-
-  return (
-    <div className="overflow-hidden rounded-lg border border-[#DCE2F1] bg-white">
-      <table className="w-full table-fixed text-left text-xs">
-        <thead className="bg-[#F7F9FF] text-[10px] font-extrabold uppercase text-[#667085]">
-          <tr>
-            <th className="w-10 px-5 py-4">
-              <input type="checkbox" className="h-4 w-4" />
-            </th>
-            <th className="px-4 py-4">Penghuni</th>
-            {isPayment ? <th className="w-[14%] px-4 py-4">Tarikh</th> : null}
-            {isPayment ? (
-              <th className="w-[16%] px-4 py-4">No. Resit</th>
-            ) : null}
-            {isPayment ? <th className="w-[18%] px-4 py-4">Catatan</th> : null}
-            <th className="w-[18%] px-4 py-4 text-right">
-              {isPayment ? "Amaun Bayar (RM)" : "Jumlah Tunggakan (RM)"}
-            </th>
-            <th className="w-[16%] px-4 py-4 text-center">Tindakan</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-[#EEF1F7]">
-          {residents.map((resident, index) => (
-            <tr key={resident.ic}>
-              <td className="px-5 py-4">
-                <input
-                  type="checkbox"
-                  defaultChecked={index === 0}
-                  className="h-4 w-4 accent-dark-blue"
-                />
-              </td>
-              <td className="px-4 py-4">
-                <p className="font-extrabold text-[#172033]">{resident.name}</p>
-                <p className="text-[10px] font-semibold text-[#667085]">
-                  {resident.ic}
-                </p>
-              </td>
-              {isPayment ? <td className="px-4 py-4">{resident.date}</td> : null}
-              {isPayment ? <td className="px-4 py-4">{resident.receipt}</td> : null}
-              {isPayment ? (
-                <td className="px-4 py-4">
-                  {index === 0 ? (
-                    <input
-                      className="h-10 w-full rounded-lg border border-[#E6EAF2] px-3 text-xs"
-                      placeholder="Tambah catatan..."
-                    />
-                  ) : (
-                    "N/A"
-                  )}
-                </td>
-              ) : null}
-              <td className="px-4 py-4 text-right">
-                <input
-                  className="h-10 w-23 rounded-lg border border-[#E6EAF2] px-3 text-right font-extrabold"
-                  defaultValue={resident.amount}
-                  readOnly={index !== 0}
-                />
-              </td>
-              <td className="px-4 py-4">
-                <RowActions showDelete={index === 0} />
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      <Pagination label="Memaparkan 1-3 Daripada 45 Rekod" />
-    </div>
-  );
-}
-
-function ResidentTable({ records }: { records: ExtractedPenghuniRecord[] }) {
-  const displayRecords =
-    records.length > 0
-      ? records
-      : residents.map((resident, index) => ({
-          nama: resident.name,
-          noKadPengenalan: resident.ic,
-          kuarters: resident.quarters.split("\n")[0],
-          unit: resident.quarters.split("\n")[1] ?? "",
-          alamatKuarters: "",
-          perhubungan: resident.contact,
-          pekerjaan: resident.job.split("\n").slice(0, 2).join(" "),
-          jabatan: resident.job.split("\n").slice(2).join(" "),
-          sourceSheet: "Contoh",
-          sourceRow: index + 1,
-        }));
-
-  return (
-    <div className="overflow-hidden rounded-lg border border-[#DCE2F1] bg-white">
-      <table className="w-full table-fixed text-left text-xs">
-        <thead className="bg-[#F7F9FF] text-[10px] font-extrabold uppercase text-[#667085]">
-          <tr>
-            <th className="w-10 px-5 py-4">
-              <input type="checkbox" className="h-4 w-4" />
-            </th>
-            <th className="px-4 py-4">Penghuni</th>
-            <th className="px-4 py-4">Kuarters</th>
-            <th className="px-4 py-4">Perhubungan</th>
-            <th className="px-4 py-4">Pekerjaan</th>
-            <th className="w-[12%] px-4 py-4 text-center">Tindakan</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-[#EEF1F7]">
-          {displayRecords.map((resident) => (
-            <tr key={`${resident.sourceSheet}-${resident.sourceRow}`}>
-              <td className="px-5 py-4">
-                <input type="checkbox" className="h-4 w-4" />
-              </td>
-              <td className="px-4 py-4">
-                <p className="font-extrabold text-[#172033]">{resident.nama}</p>
-                <p className="text-[10px] font-semibold text-[#667085]">
-                  {resident.noKadPengenalan}
-                </p>
-              </td>
-              <td className="whitespace-pre-line px-4 py-4">
-                {[resident.kuarters, resident.unit, resident.alamatKuarters]
-                  .filter(Boolean)
-                  .join("\n")}
-              </td>
-              <td className="whitespace-pre-line px-4 py-4">
-                {resident.perhubungan || "-"}
-              </td>
-              <td className="whitespace-pre-line px-4 py-4">
-                {[resident.pekerjaan, resident.jabatan].filter(Boolean).join("\n")}
-              </td>
-              <td className="px-4 py-4 text-center">
-                <Icon
-                  icon="visibility"
-                  size={17}
-                  weight={700}
-                  className="text-dark-blue"
-                />
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      <Pagination
-        label={`Memaparkan 1-${displayRecords.length} Daripada ${displayRecords.length} Rekod`}
-      />
-    </div>
-  );
-}
-
-function QuartersTable() {
-  const categories = [
-    ["C", "450.00", "50.00", "0.00"],
-    ["F", "320.00", "30.00", "10.00"],
-    ["E", "150.00", "20.00", "0.00"],
-    ["G", "120.00", "15.00", "0.00"],
-  ];
-  const units = ["JB-K01-A-04", "JH-K01-A-05", "JB-K01-B-02", "JB-K01-B-03"];
-
-  return (
-    <div className="grid overflow-hidden rounded-lg border border-[#DCE2F1] bg-white lg:grid-cols-[1fr_240px]">
-      <div className="overflow-x-auto">
-        <table className="w-full table-fixed text-left text-xs">
-          <thead className="bg-[#F7F9FF] text-[10px] font-extrabold uppercase text-[#667085]">
-            <tr>
-              <th className="w-10 px-5 py-4">
-                <input type="checkbox" className="h-4 w-4" />
-              </th>
-              <th className="px-4 py-4">Kategori</th>
-              <th className="px-4 py-4 text-right">Sewa (RM)</th>
-              <th className="px-4 py-4 text-right">Senggara (RM)</th>
-              <th className="px-4 py-4 text-right">Penalti (RM)</th>
-              <th className="px-4 py-4 text-center">Tindakan</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-[#EEF1F7]">
-            {categories.map(([name, rent, maintenance, penalty], index) => (
-              <tr key={name}>
-                <td className="px-5 py-4">
-                  <input
-                    type="checkbox"
-                    defaultChecked={index === 0}
-                    className="h-4 w-4 accent-dark-blue"
-                  />
-                </td>
-                <td className="px-4 py-4 font-extrabold text-[#172033]">
-                  {name}
-                </td>
-                {[rent, maintenance, penalty].map((value) => (
-                  <td key={value} className="px-4 py-4 text-right">
-                    <input
-                      className="h-9 w-22 rounded border border-[#E6EAF2] px-3 text-right font-extrabold"
-                      defaultValue={value}
-                      readOnly={index !== 0}
-                    />
-                  </td>
-                ))}
-                <td className="px-4 py-4">
-                  <RowActions showDelete={index === 0} />
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        <Pagination label="Memaparkan 1-4 daripada 12 Kategori" />
-      </div>
-
-      <div className="border-t border-[#DCE2F1] lg:border-l lg:border-t-0">
-        <div className="flex items-center justify-between bg-[#F7F9FF] px-5 py-4 text-[10px] font-extrabold uppercase text-dark-blue">
-          Senarai Unit
-          <Icon icon="add_circle" size={15} weight={700} />
-        </div>
-        <div className="grid grid-cols-[1fr_64px] border-b border-[#EEF1F7] px-5 py-3 text-[10px] font-extrabold uppercase text-[#667085]">
-          <span>ID Unit</span>
-          <span className="text-center">Tindakan</span>
-        </div>
-        {units.map((unit, index) => (
-          <div
-            key={unit}
-            className="grid grid-cols-[1fr_64px] items-center px-5 py-4 text-xs"
-          >
-            <span
-              className={
-                index === 0
-                  ? "rounded border border-[#E6EAF2] px-3 py-2 font-extrabold"
-                  : "font-extrabold"
-              }
-            >
-              {unit}
-            </span>
-            <span className="flex justify-center gap-3">
-              {index === 0 ? (
-                <>
-                  <Icon icon="save" size={15} weight={700} className="text-green" />
-                  <Icon icon="delete" size={15} weight={700} className="text-red" />
-                </>
-              ) : (
-                <Icon icon="edit" size={15} weight={700} className="text-dark-blue" />
-              )}
-            </span>
-          </div>
-        ))}
-        <div className="flex justify-center border-t border-[#EEF1F7] px-5 py-3">
-          <button className="h-7 w-7 rounded bg-dark-blue text-xs text-white">1</button>
-        </div>
-      </div>
-    </div>
-  );
-}
+const subscribeToSessionStorage = () => () => {};
 
 function ReviewTable({
   kind,
   penghuniRecords,
+  kuartersRecords,
 }: {
   kind: ReviewKind;
   penghuniRecords: ExtractedPenghuniRecord[];
+  kuartersRecords: ExtractedQuarterRecord[];
 }) {
-  if (kind === "bayaran" || kind === "tunggakan") {
-    return <PaymentTable kind={kind} />;
+  if (kind === "bayaran") {
+    return <BayaranReviewTable />;
+  }
+
+  if (kind === "tunggakan") {
+    return <TunggakanReviewTable />;
   }
 
   if (kind === "penghuni") {
-    return <ResidentTable records={penghuniRecords} />;
+    return <PenghuniReviewTable records={penghuniRecords} />;
   }
 
-  return <QuartersTable />;
+  return <KuartersReviewTable records={kuartersRecords} />;
 }
 
 export default function ExtractReviewPage({ kind }: { kind: ReviewKind }) {
-  const [penghuniExtract, setPenghuniExtract] =
-    useState<PenghuniExtractResult | null>(null);
-  const [uploadedFileName, setUploadedFileName] = useState("");
-
-  useEffect(() => {
-    if (kind !== "penghuni") {
-      return;
+  const storedExtract = useSyncExternalStore(
+    subscribeToSessionStorage,
+    () =>
+      kind === "penghuni" || kind === "kuarters"
+        ? window.sessionStorage.getItem(`${kind}ExtractResult`) ?? ""
+        : "",
+    () => "",
+  );
+  const uploadedFileName = useSyncExternalStore(
+    subscribeToSessionStorage,
+    () =>
+      kind === "penghuni" || kind === "kuarters"
+        ? window.sessionStorage.getItem(`${kind}ExtractFileName`) ?? ""
+        : "",
+    () => "",
+  );
+  const extractResult = useMemo(() => {
+    if (!storedExtract) {
+      return null;
     }
 
-    const storedExtract = sessionStorage.getItem("penghuniExtractResult");
-    const storedFileName = sessionStorage.getItem("penghuniExtractFileName");
-
-    if (storedExtract) {
-      setPenghuniExtract(JSON.parse(storedExtract));
+    try {
+      return JSON.parse(storedExtract) as PenghuniExtractResult | KuartersExtractResult;
+    } catch {
+      return null;
     }
-
-    if (storedFileName) {
-      setUploadedFileName(storedFileName);
-    }
-  }, [kind]);
+  }, [storedExtract]);
+  const penghuniExtract =
+    extractResult?.documentType === "penghuni" ? extractResult : null;
+  const kuartersExtract =
+    extractResult?.documentType === "kuarters" ? extractResult : null;
 
   const content = useMemo(() => {
     const baseContent = reviewContent[kind];
 
-    if (kind !== "penghuni" || !penghuniExtract) {
-      return baseContent;
+    if (kind === "kuarters" && kuartersExtract) {
+      return {
+        ...baseContent,
+        fileName: uploadedFileName || baseContent.fileName,
+        stats: baseContent.stats.map((stat) => {
+          if (stat.label === "Jumlah Rekod" || stat.label === "Total Kategori") {
+            return {
+              ...stat,
+              value: String(kuartersExtract.recordCount),
+            };
+          }
+
+          if (stat.label === "Total Unit") {
+            return {
+              ...stat,
+              value: String(kuartersExtract.totalUnits),
+            };
+          }
+
+          return stat;
+        }),
+      };
     }
 
-    return {
-      ...baseContent,
-      fileName: uploadedFileName || baseContent.fileName,
-      stats: baseContent.stats.map((stat) =>
-        stat.label === "Jumlah Rekod"
-          ? {
-              ...stat,
-              value: String(penghuniExtract.recordCount),
-            }
-          : stat,
-      ),
-    };
-  }, [kind, penghuniExtract, uploadedFileName]);
+    if (kind === "penghuni" && penghuniExtract) {
+      return {
+        ...baseContent,
+        fileName: uploadedFileName || baseContent.fileName,
+        stats: baseContent.stats.map((stat) =>
+          stat.label === "Jumlah Rekod"
+            ? {
+                ...stat,
+                value: String(penghuniExtract.recordCount),
+              }
+            : stat,
+        ),
+      };
+    }
+
+    return baseContent;
+  }, [kind, kuartersExtract, penghuniExtract, uploadedFileName]);
 
   return (
     <section className="min-h-full bg-background">
@@ -578,6 +302,7 @@ export default function ExtractReviewPage({ kind }: { kind: ReviewKind }) {
             <ReviewTable
               kind={kind}
               penghuniRecords={penghuniExtract?.records ?? []}
+              kuartersRecords={kuartersExtract?.records ?? []}
             />
           </div>
         </div>

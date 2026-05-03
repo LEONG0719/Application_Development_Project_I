@@ -10,7 +10,7 @@ def main() -> None:
         raise SystemExit("Usage: python test_extract_penghuni.py <xlsx-path>")
 
     workbook_path = Path(sys.argv[1])
-    result = extract_penghuni_from_xlsx(workbook_path.read_bytes(), limit=3)
+    result = extract_penghuni_from_xlsx(workbook_path.read_bytes())
     print(json.dumps(result, ensure_ascii=False, indent=2))
 
 

@@ -126,7 +126,7 @@ export default function MuatNaikPage() {
       return;
     }
 
-    if (activeCategory !== "Penghuni") {
+    if (activeCategory !== "Penghuni" && activeCategory !== "Kuarters") {
       router.push(`${ROUTES.muatNaik}/semakan/${reviewRoutes[activeCategory]}`);
       return;
     }
@@ -140,25 +140,29 @@ export default function MuatNaikPage() {
 
       const apiBaseUrl =
         process.env.NEXT_PUBLIC_AI_SERVICE_URL ?? "http://127.0.0.1:8000";
-      const response = await fetch(`${apiBaseUrl}/extract/penghuni?limit=3`, {
+      const extractKind = reviewRoutes[activeCategory];
+      const response = await fetch(`${apiBaseUrl}/extract/${extractKind}`, {
         method: "POST",
         body: formData,
       });
 
       if (!response.ok) {
         const errorBody = await response.json().catch(() => null);
-        throw new Error(errorBody?.detail ?? "Gagal mengekstrak data penghuni.");
+        throw new Error(
+          errorBody?.detail ?? `Gagal mengekstrak data ${extractKind}.`,
+        );
       }
 
       const extractedData = await response.json();
-      sessionStorage.setItem("penghuniExtractResult", JSON.stringify(extractedData));
-      sessionStorage.setItem("penghuniExtractFileName", selectedFile.name);
-      router.push(`${ROUTES.muatNaik}/semakan/penghuni`);
+      sessionStorage.setItem(`${extractKind}ExtractResult`, JSON.stringify(extractedData));
+      sessionStorage.setItem(`${extractKind}ExtractFileName`, selectedFile.name);
+      router.push(`${ROUTES.muatNaik}/semakan/${extractKind}`);
     } catch (error) {
+      const extractKind = reviewRoutes[activeCategory];
       setProcessingError(
         error instanceof Error
           ? error.message
-          : "Gagal mengekstrak data penghuni.",
+          : `Gagal mengekstrak data ${extractKind}.`,
       );
     } finally {
       setIsProcessing(false);
