@@ -551,9 +551,12 @@ export default function KuartersCategoryDetailPageClient({
       />
       <KuartersOverviewCards cards={buildKuartersSummaryCards(summary)} />
       <KuartersUnitsPanel
+        address={initialData.address}
         categoryId={initialData.id}
+        categoryName={initialData.categoryName}
         currentPage={pagination.currentPage}
         editor={editor}
+        exportUnits={filteredUnits}
         filterQuery={filters.query}
         statusFilter={filters.status}
         hasActiveFilters={hasActiveFilters}

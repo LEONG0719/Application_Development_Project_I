@@ -3,6 +3,11 @@
 import { useEffect, useEffectEvent, useRef, useState } from "react";
 
 import Icon, { commonIcons } from "@/app/components/Icon";
+import {
+  downloadXlsxFile,
+  type XlsxCell,
+  type XlsxSheet,
+} from "@/lib/xlsx-export";
 
 import type {
   KuartersUnitEditorState,
@@ -19,7 +24,10 @@ import KuartersUnitDetailsOverlay from "./KuartersUnitDetailsOverlay";
 
 type KuartersUnitsPanelProps = {
   units: QuarterUnitRecord[];
+  exportUnits: QuarterUnitRecord[];
   categoryId: string;
+  categoryName: string;
+  address: string | null;
   currentPage: number;
   editor: KuartersUnitEditorState | null;
   filterQuery: string;
@@ -216,7 +224,10 @@ function getStatusFilterLabel(status: QuarterUnitStatusFilter) {
 
 export default function KuartersUnitsPanel({
   units,
+  exportUnits,
   categoryId,
+  categoryName,
+  address,
   currentPage,
   editor,
   filterQuery,
@@ -428,6 +439,40 @@ export default function KuartersUnitsPanel({
     onRequestAssignResident(unit);
   }
 
+  function handleDownloadUnits() {
+    const headers: XlsxCell[] = [
+      { value: "ID Unit", style: "header" },
+      { value: "No. Kad Pengenalan Penghuni", style: "header" },
+      { value: "Nama Penghuni", style: "header" },
+      { value: "Status", style: "header", align: "center" },
+    ];
+    const rows: XlsxSheet["rows"] = exportUnits.map((unit) => [
+      unit.unitCode,
+      unit.occupantIcNumber ?? "N/A",
+      unit.occupantName ?? "N/A",
+      {
+        value: getStatusFilterLabel(unit.status),
+        align: "center",
+      },
+    ]);
+
+    downloadXlsxFile({
+      filename: buildUnitsExportFilename(categoryName, address),
+      sheets: [
+        {
+          name: "Senarai Unit",
+          columns: [
+            { width: 18 },
+            { width: 30 },
+            { width: 38 },
+            { width: 16 },
+          ],
+          rows: [headers, ...rows],
+        },
+      ],
+    });
+  }
+
   return (
     <section className="rounded-2xl border border-light-grey/20 bg-light-blue p-4 sm:p-5">
       {selectedUnitId ? (
@@ -516,9 +561,7 @@ export default function KuartersUnitsPanel({
           <ToolbarButton
             icon={commonIcons.download}
             label="Muat turun senarai unit"
-            onClick={() =>
-              onUnavailableFeature("Fungsi muat turun senarai unit belum tersedia lagi.")
-            }
+            onClick={handleDownloadUnits}
           />
         </div>
       </div>
@@ -776,4 +819,23 @@ export default function KuartersUnitsPanel({
       </div>
     </section>
   );
+}
+
+function buildUnitsExportFilename(categoryName: string, address: string | null) {
+  return [
+    "senarai-unit-kuarters",
+    sanitizeFilenamePart(categoryName),
+    sanitizeFilenamePart(address ?? "tiada-alamat"),
+  ]
+    .filter(Boolean)
+    .join("-");
+}
+
+function sanitizeFilenamePart(value: string) {
+  return value
+    .trim()
+    .replace(/\s+/g, "-")
+    .replace(/[<>:"/\\|?*\u0000-\u001F]/g, "")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
 }

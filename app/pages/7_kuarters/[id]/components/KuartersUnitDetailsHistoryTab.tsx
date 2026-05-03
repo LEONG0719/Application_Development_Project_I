@@ -175,7 +175,9 @@ export default function KuartersUnitDetailsHistoryTab({
             <HistoryActionButton
               icon={commonIcons.download}
               label="Muat turun sejarah penghunian"
-              onClick={() => downloadHistoryExcel(unitDetails)}
+              onClick={() =>
+                downloadHistoryExcel(unitDetails, filteredHistory)
+              }
             />
             <div ref={filterMenuRef} className="relative">
               <HistoryActionButton
@@ -421,7 +423,10 @@ function buildPageItems(currentPage: number, totalPages: number): PageItem[] {
   ];
 }
 
-function downloadHistoryExcel(unitDetails: QuarterUnitDetails) {
+function downloadHistoryExcel(
+  unitDetails: QuarterUnitDetails,
+  records: QuarterUnitOccupancyDetails[],
+) {
   const headers: XlsxCell[] = [
     { value: "Tarikh Masuk", style: "header" },
     { value: "Tarikh Keluar", style: "header" },
@@ -429,7 +434,7 @@ function downloadHistoryExcel(unitDetails: QuarterUnitDetails) {
     { value: "No. Kad Pengenalan", style: "header", align: "center" },
     { value: "Status", style: "header", align: "center" },
   ];
-  const rows: XlsxSheet["rows"] = unitDetails.occupancyHistory.map((occupancy) => [
+  const rows: XlsxSheet["rows"] = records.map((occupancy) => [
     formatHistoryDate(occupancy.moveInDate),
     formatHistoryDate(occupancy.moveOutDate),
     occupancy.occupantName,
@@ -441,7 +446,7 @@ function downloadHistoryExcel(unitDetails: QuarterUnitDetails) {
   ]);
 
   downloadXlsxFile({
-    filename: `sejarah-penghunian-${unitDetails.unitCode}`,
+    filename: buildHistoryExportFilename(unitDetails.unitCode),
     sheets: [
       {
         name: "Sejarah Penghunian",
@@ -456,4 +461,19 @@ function downloadHistoryExcel(unitDetails: QuarterUnitDetails) {
       },
     ],
   });
+}
+
+function buildHistoryExportFilename(unitCode: string) {
+  return ["sejarah-penghunian", sanitizeFilenamePart(unitCode)]
+    .filter(Boolean)
+    .join("-");
+}
+
+function sanitizeFilenamePart(value: string) {
+  return value
+    .trim()
+    .replace(/\s+/g, "-")
+    .replace(/[<>:"/\\|?*\u0000-\u001F]/g, "")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
 }

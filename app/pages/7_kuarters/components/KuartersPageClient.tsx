@@ -350,13 +350,6 @@ export default function KuartersPageClient({
     }
   }
 
-  function handleUnavailableFeature(message: string) {
-    showNotice({
-      tone: "info",
-      message,
-    });
-  }
-
   function handleViewRow(quarterCategory: QuarterCategoryRecord) {
     if (!ensureActionIsAvailable()) {
       return;
@@ -376,6 +369,7 @@ export default function KuartersPageClient({
       <KuartersCategoryRatesPanel
         currentPage={pagination.currentPage}
         editor={editor}
+        exportRates={filteredQuarterCategories}
         filterQuery={filters.categoryNameQuery}
         hasActiveFilters={hasActiveFilters}
         onCancelEdit={handleCancelEdit}
@@ -392,7 +386,6 @@ export default function KuartersPageClient({
         onFilterQueryChange={handleFilterQueryChange}
         onPageChange={setCurrentPage}
         onSaveRow={handleSaveRow}
-        onUnavailableFeature={handleUnavailableFeature}
         onViewRow={handleViewRow}
         totalPages={pagination.totalPages}
       />

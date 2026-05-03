@@ -3,6 +3,11 @@
 import { useEffect, useEffectEvent, useRef, useState } from "react";
 
 import Icon, { commonIcons } from "@/app/components/Icon";
+import {
+  downloadXlsxFile,
+  type XlsxCell,
+  type XlsxSheet,
+} from "@/lib/xlsx-export";
 
 import {
   EMPTY_QUARTER_CATEGORY_ID,
@@ -15,6 +20,7 @@ import {
 
 type KuartersCategoryRatesPanelProps = {
   rates: QuarterCategoryRecord[];
+  exportRates: QuarterCategoryRecord[];
   currentPage: number;
   editor: KuartersEditorState | null;
   filterQuery: string;
@@ -33,7 +39,6 @@ type KuartersCategoryRatesPanelProps = {
   onFilterQueryChange: (value: string) => void;
   onPageChange: (page: number) => void;
   onSaveRow: () => void;
-  onUnavailableFeature: (message: string) => void;
   onViewRow: (quarterCategory: QuarterCategoryRecord) => void;
 };
 
@@ -168,6 +173,7 @@ function InputField({
 export default function KuartersCategoryRatesPanel({
   currentPage,
   editor,
+  exportRates,
   filterQuery,
   hasActiveFilters,
   onCancelEdit,
@@ -179,7 +185,6 @@ export default function KuartersCategoryRatesPanel({
   onFilterQueryChange,
   onPageChange,
   onSaveRow,
-  onUnavailableFeature,
   onViewRow,
   pendingAction,
   pendingRowId,
@@ -245,6 +250,40 @@ export default function KuartersCategoryRatesPanel({
   function handleClearSearch() {
     onClearFilter();
     setIsSearchOpen(false);
+  }
+
+  function handleDownloadRates() {
+    const headers: XlsxCell[] = [
+      { value: "Kategori", style: "header" },
+      { value: "Alamat", style: "header" },
+      { value: "Sewa (RM)", style: "header", align: "right" },
+      { value: "Senggara (RM)", style: "header", align: "right" },
+      { value: "Penalti (RM)", style: "header", align: "right" },
+    ];
+    const rows: XlsxSheet["rows"] = exportRates.map((rate) => [
+      rate.categoryName,
+      rate.address ?? "N/A",
+      { value: rate.rentalPrice, type: "number", align: "right" },
+      { value: rate.maintenancePrice, type: "number", align: "right" },
+      { value: rate.penaltyPrice, type: "number", align: "right" },
+    ]);
+
+    downloadXlsxFile({
+      filename: "senarai-kategori-kuarters",
+      sheets: [
+        {
+          name: "Senarai Kategori",
+          columns: [
+            { width: 24 },
+            { width: 40 },
+            { width: 16 },
+            { width: 18 },
+            { width: 16 },
+          ],
+          rows: [headers, ...rows],
+        },
+      ],
+    });
   }
 
   function renderActionCell(rowId: string, isEditing: boolean) {
@@ -323,9 +362,7 @@ export default function KuartersCategoryRatesPanel({
           <ToolbarButton
             icon={commonIcons.download}
             label="Muat turun data kategori kuarters"
-            onClick={() =>
-              onUnavailableFeature("Fungsi muat turun belum tersedia lagi.")
-            }
+            onClick={handleDownloadRates}
           />
         </div>
       </div>
