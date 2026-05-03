@@ -6,8 +6,6 @@ import KuartersFeedbackBanner from "@/app/pages/7_kuarters/components/KuartersFe
 import KuartersOverviewCards from "@/app/pages/7_kuarters/components/KuartersOverviewCards";
 import {
   buildKuartersSummaryCards,
-  createEmptyQuarterClassFilters,
-  hasActiveQuarterClassFilters,
   type KuartersNotice,
 } from "@/app/pages/7_kuarters/components/kuartersHelpers";
 
@@ -78,9 +76,7 @@ export default function KuartersCategoryDetailPageClient({
 }: KuartersCategoryDetailPageClientProps) {
   const [units, setUnits] = useState<QuarterUnitRecord[]>(initialData.units);
   const [currentPage, setCurrentPage] = useState(1);
-  const [filterQuery, setFilterQuery] = useState(
-    createEmptyQuarterClassFilters().classNameQuery,
-  );
+  const [filters, setFilters] = useState(createEmptyQuarterUnitFilters);
   const [editor, setEditor] = useState<KuartersUnitEditorState | null>(null);
   const [notice, setNotice] = useState<KuartersNotice | null>(initialNotice);
   const [pendingUnitId, setPendingUnitId] = useState<string | null>(null);
@@ -96,10 +92,8 @@ export default function KuartersCategoryDetailPageClient({
     residentPicker.searchQuery,
   );
   const summary = buildQuarterUnitSummary(units);
-  const hasActiveFilters = hasActiveQuarterClassFilters({
-    classNameQuery: filterQuery,
-  });
-  const filteredUnits = filterQuarterUnits(units, filterQuery);
+  const hasActiveFilters = hasActiveQuarterUnitFilters(filters);
+  const filteredUnits = filterQuarterUnits(units, filters);
   const pagination = buildQuarterUnitPagination(filteredUnits, currentPage, {
     hasActiveFilter: hasActiveFilters,
     totalRecords: units.length,

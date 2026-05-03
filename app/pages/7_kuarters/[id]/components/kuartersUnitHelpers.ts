@@ -10,8 +10,9 @@ import type {
 export const EMPTY_QUARTER_UNIT_ID = "__new__";
 
 export type QuarterUnitRecord = QuarterUnitListItem;
-export type KuartersClassDetailInitialData = QuarterClassUnitsDetail;
-export type QuarterClassRates = QuarterClassUnitsDetail["rates"];
+export type KuartersCategoryDetailInitialData = QuarterCategoryUnitsDetail;
+export type QuarterCategoryRates = QuarterCategoryUnitsDetail["rates"];
+export type QuarterUnitStatusFilter = "ALL" | "OCCUPIED" | "VACANT";
 
 export type QuarterUnitDraft = {
   unitCode: string;

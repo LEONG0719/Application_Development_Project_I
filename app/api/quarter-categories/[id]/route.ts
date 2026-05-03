@@ -64,7 +64,7 @@ export async function PATCH(request: Request, context: RouteContext) {
 
     const existingQuarterCategory = await prisma.quarterCategory.findUnique({
       where: { id },
-      // We need the unit count to determine if the class can be deleted and to include in the response after update, so we include it in the query here.
+      // We need the unit count to determine if the category can be deleted and to include in the response after update, so we include it in the query here.
       include: {
         _count: {
           select: {

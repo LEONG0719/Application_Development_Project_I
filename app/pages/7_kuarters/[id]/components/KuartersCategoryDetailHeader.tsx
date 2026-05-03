@@ -10,7 +10,7 @@ type KuartersCategoryDetailHeaderProps = {
   rates: QuarterCategoryRates;
 };
 
-// Used to display the rental, maintenance, and penalty rates for a quarter class in a visually distinct way. Each rate is shown in a "pill" style container with a label and the corresponding value formatted as currency. If a rate value is null, it displays "--" instead.
+// Used to display the rental, maintenance, and penalty rates for a quarter category in a visually distinct way.
 function RatePill({
   label,
   value,

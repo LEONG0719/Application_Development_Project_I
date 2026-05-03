@@ -311,7 +311,7 @@ export default function KuartersCategoryRatesPanel({
                   type="text"
                   value={filterQuery}
                   onChange={(event) => onFilterQueryChange(event.target.value)}
-                  placeholder="Contoh: Kelas A"
+                  placeholder="Contoh: Kategori A"
                   className="w-full border-none bg-transparent text-sm font-medium text-dark-grey outline-none placeholder:text-light-grey"
                 />
               </div>
@@ -338,7 +338,7 @@ export default function KuartersCategoryRatesPanel({
             <thead className="bg-background">
               <tr>
                 <th className="w-[28%] px-6 py-4 text-left text-xs font-extrabold uppercase tracking-[0.18em] text-grey">
-                  Kelas
+                  Kategori
                 </th>
                 <th className="w-[20%] px-6 py-4 text-center text-xs font-extrabold uppercase tracking-[0.18em] text-grey">
                   Sewa (RM)
