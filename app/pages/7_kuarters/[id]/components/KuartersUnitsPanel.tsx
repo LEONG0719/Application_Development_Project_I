@@ -38,6 +38,7 @@ type KuartersUnitsPanelProps = {
   onDraftChange: (field: keyof QuarterUnitDraft, value: string) => void;
   onEditUnit: (unit: QuarterUnitRecord) => void;
   onFilterQueryChange: (value: string) => void;
+  onRequestAssignResident: (unit: QuarterUnitRecord) => void;
   onStatusFilterChange: (value: QuarterUnitStatusFilter) => void;
   onOpenResidentPicker: () => void;
   onPageChange: (page: number) => void;
@@ -229,6 +230,7 @@ export default function KuartersUnitsPanel({
   onDraftChange,
   onEditUnit,
   onFilterQueryChange,
+  onRequestAssignResident,
   onStatusFilterChange,
   onOpenResidentPicker,
   onPageChange,
@@ -414,6 +416,18 @@ export default function KuartersUnitsPanel({
     setIsFilterMenuOpen(false);
   }
 
+  function handleAssignResidentFromOverlay(unitId: string) {
+    const unit = units.find((item) => item.id === unitId);
+
+    if (!unit) {
+      onUnavailableFeature("Unit kuarters tidak ditemui untuk tetapan penghuni.");
+      return;
+    }
+
+    setSelectedUnitId(null);
+    onRequestAssignResident(unit);
+  }
+
   return (
     <section className="rounded-2xl border border-light-grey/20 bg-light-blue p-4 sm:p-5">
       {selectedUnitId ? (
@@ -421,6 +435,7 @@ export default function KuartersUnitsPanel({
           categoryId={categoryId}
           unitId={selectedUnitId}
           onClose={() => setSelectedUnitId(null)}
+          onAssignOccupant={handleAssignResidentFromOverlay}
         />
       ) : null}
 

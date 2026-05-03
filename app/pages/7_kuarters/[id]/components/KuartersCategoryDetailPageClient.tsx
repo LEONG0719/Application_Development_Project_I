@@ -269,6 +269,26 @@ export default function KuartersCategoryDetailPageClient({
     });
   }
 
+  function handleRequestAssignResident(unit: QuarterUnitRecord) {
+    if (!ensureActionIsAvailable()) {
+      return;
+    }
+
+    setEditor({
+      mode: "edit",
+      rowId: unit.id,
+      draft: createDraftFromQuarterUnit(unit),
+    });
+    setNotice(null);
+    setResidentPicker({
+      isOpen: true,
+      isLoading: false,
+      errorMessage: null,
+      searchQuery: "",
+      residents: [],
+    });
+  }
+
   function closeResidentPicker() {
     setResidentPicker((currentState) => ({
       ...currentState,
@@ -545,6 +565,7 @@ export default function KuartersCategoryDetailPageClient({
         onDraftChange={handleDraftChange}
         onEditUnit={handleEditUnit}
         onFilterQueryChange={handleFilterQueryChange}
+        onRequestAssignResident={handleRequestAssignResident}
         onStatusFilterChange={handleStatusFilterChange}
         onOpenResidentPicker={handleOpenResidentPicker}
         onPageChange={setCurrentPage}
