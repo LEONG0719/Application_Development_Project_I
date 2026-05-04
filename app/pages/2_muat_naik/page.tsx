@@ -24,6 +24,7 @@ const reviewRoutes: Record<Category, string> = {
 
 const draftKindByCategory: Partial<Record<Category, ProcessingDraft["kind"]>> = {
   Bayaran: "bayaran",
+  Tunggakan: "tunggakan",
   Penghuni: "penghuni",
   Kuarters: "kuarters",
 };
@@ -97,11 +98,6 @@ export default function MuatNaikPage() {
   async function handleUploadAction() {
     if (!selectedFile) {
       handleChooseFile();
-      return;
-    }
-
-    if (activeCategory === "Tunggakan") {
-      router.push(`${ROUTES.muatNaik}/semakan/${reviewRoutes[activeCategory]}`);
       return;
     }
 
