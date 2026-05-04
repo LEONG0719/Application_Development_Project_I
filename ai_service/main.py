@@ -5,6 +5,7 @@ from extractor import (
     extract_bayaran_from_pdf,
     extract_kuarters_from_xlsx,
     extract_penghuni_from_xlsx,
+    extract_tunggakan_from_xlsx,
 )
 
 
@@ -91,4 +92,25 @@ async def extract_kuarters(
         raise HTTPException(
             status_code=422,
             detail=f"Gagal mengekstrak data kuarters: {error}",
+        ) from error
+
+
+@app.post("/extract/tunggakan")
+async def extract_tunggakan(
+    file: UploadFile = File(...),
+    limit: int | None = Query(default=None, ge=1, le=1000),
+) -> dict:
+    if not file.filename or not file.filename.lower().endswith(".xlsx"):
+        raise HTTPException(status_code=400, detail="Sila muat naik fail .xlsx sahaja.")
+
+    file_bytes = await file.read()
+    if not file_bytes:
+        raise HTTPException(status_code=400, detail="Fail kosong.")
+
+    try:
+        return extract_tunggakan_from_xlsx(file_bytes, limit=limit)
+    except Exception as error:
+        raise HTTPException(
+            status_code=422,
+            detail=f"Gagal mengekstrak data tunggakan: {error}",
         ) from error

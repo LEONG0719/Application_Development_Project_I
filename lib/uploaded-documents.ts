@@ -150,6 +150,77 @@ export async function createPendingBayaranRows(
   };
 }
 
+export async function createPendingTunggakanRows(
+  tx: Prisma.TransactionClient,
+  uploadedDocumentId: string,
+  extractResult: ExtractResult,
+) {
+  if (extractResult.documentType !== "tunggakan") {
+    return extractResult;
+  }
+
+  const enrichedRecords = [];
+
+  for (const record of extractResult.records) {
+    const icNumber = record.noKadPengenalan.trim();
+    const existingResident = await tx.resident.findUnique({
+      where: {
+        icNumber,
+      },
+      select: {
+        id: true,
+        recordStatus: true,
+      },
+    });
+
+    let residentId = existingResident?.id;
+    let residentRecordStatus = existingResident?.recordStatus;
+
+    if (!residentId) {
+      const nextResidentId = randomUUID();
+      const createdResidents = await tx.$queryRaw<
+        { id: string; recordStatus: "PENDING" | "VERIFIED" | "REJECTED" }[]
+      >`
+        INSERT INTO "Resident"
+          ("id", "fullName", "icNumber", "recordStatus", "uploadedDocumentId", "description", "createdAt", "updatedAt")
+        VALUES
+          (${nextResidentId}::uuid, ${record.nama}, ${icNumber}, 'PENDING'::"RecordStatus", ${uploadedDocumentId}::uuid, ${"Dicipta sementara daripada dokumen tunggakan belum disahkan."}, NOW(), NOW())
+        RETURNING "id", "recordStatus"
+      `;
+      residentId = createdResidents[0]?.id ?? nextResidentId;
+      residentRecordStatus = createdResidents[0]?.recordStatus ?? "PENDING";
+    }
+
+    const arrearsSummaryId = randomUUID();
+    const arrearsSummaries = await tx.$queryRaw<{ id: string }[]>`
+      INSERT INTO "ArrearsSummary"
+        ("id", "residentId", "totalArrearsAmount", "description", "recordStatus", "uploadedDocumentId", "createdAt", "updatedAt")
+      VALUES
+        (${arrearsSummaryId}::uuid, ${residentId}::uuid, ${record.jumlahTunggakan || "0"}::numeric, ${"tunggakan"}, 'PENDING'::"RecordStatus", ${uploadedDocumentId}::uuid, NOW(), NOW())
+      ON CONFLICT ("residentId") DO UPDATE
+      SET
+        "totalArrearsAmount" = EXCLUDED."totalArrearsAmount",
+        "description" = EXCLUDED."description",
+        "recordStatus" = 'PENDING'::"RecordStatus",
+        "uploadedDocumentId" = EXCLUDED."uploadedDocumentId",
+        "updatedAt" = NOW()
+      RETURNING "id"
+    `;
+
+    enrichedRecords.push({
+      ...record,
+      arrearsSummaryId: arrearsSummaries[0]?.id ?? arrearsSummaryId,
+      residentId,
+      residentRecordStatus,
+    });
+  }
+
+  return {
+    ...extractResult,
+    records: enrichedRecords,
+  };
+}
+
 export async function createPendingPenghuniRows(
   tx: Prisma.TransactionClient,
   uploadedDocumentId: string,

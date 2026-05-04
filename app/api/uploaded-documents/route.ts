@@ -4,6 +4,7 @@ import {
   createPendingBayaranRows,
   createPendingKuartersRows,
   createPendingPenghuniRows,
+  createPendingTunggakanRows,
   documentCategoryForKind,
   mapUploadedDocumentForQueue,
 } from "@/lib/uploaded-documents";
@@ -104,10 +105,15 @@ export async function POST(request: Request) {
           createdDocument.id,
           extractResult,
         );
-        const penghuniExtractResult = await createPendingPenghuniRows(
+        const tunggakanExtractResult = await createPendingTunggakanRows(
           tx,
           createdDocument.id,
           bayaranExtractResult,
+        );
+        const penghuniExtractResult = await createPendingPenghuniRows(
+          tx,
+          createdDocument.id,
+          tunggakanExtractResult,
         );
         const enrichedExtractResult = await createPendingKuartersRows(
           tx,

@@ -76,14 +76,33 @@ export type BayaranExtractResult = {
   records: ExtractedBayaranRecord[];
 };
 
+export type ExtractedTunggakanRecord = {
+  arrearsSummaryId?: string;
+  residentId?: string;
+  residentRecordStatus?: "PENDING" | "VERIFIED" | "REJECTED";
+  nama: string;
+  noKadPengenalan: string;
+  jumlahTunggakan: string;
+  sourceSheet: string;
+  sourceRow: number;
+};
+
+export type TunggakanExtractResult = {
+  documentType: "tunggakan";
+  recordCount: number;
+  totalAmount: string;
+  records: ExtractedTunggakanRecord[];
+};
+
 export type ExtractResult =
   | BayaranExtractResult
+  | TunggakanExtractResult
   | PenghuniExtractResult
   | KuartersExtractResult;
 
 export type ProcessingDraft = {
   id: string;
-  kind: "bayaran" | "penghuni" | "kuarters";
+  kind: "bayaran" | "tunggakan" | "penghuni" | "kuarters";
   fileName: string;
   fileType: string;
   fileSize?: number;

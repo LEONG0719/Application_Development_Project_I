@@ -16,7 +16,9 @@ import type {
   ExtractedPenghuniRecord,
   ExtractedQuarterRecord,
   ExtractedBayaranRecord,
+  ExtractedTunggakanRecord,
   ExtractResult,
+  TunggakanExtractResult,
 } from "./extract-review-shared";
 
 export type ReviewKind = "bayaran" | "tunggakan" | "penghuni" | "kuarters";
@@ -171,6 +173,8 @@ function ReviewTable({
   onBayaranRecordsChange,
   penghuniRecords,
   kuartersRecords,
+  tunggakanRecords,
+  onTunggakanRecordsChange,
 }: {
   kind: ReviewKind;
   bayaranRecords: ExtractedBayaranRecord[];
@@ -181,6 +185,11 @@ function ReviewTable({
   ) => void;
   penghuniRecords: ExtractedPenghuniRecord[];
   kuartersRecords: ExtractedQuarterRecord[];
+  tunggakanRecords: ExtractedTunggakanRecord[];
+  onTunggakanRecordsChange?: (
+    records: ExtractedTunggakanRecord[],
+    totalAmount: string,
+  ) => void;
 }) {
   if (kind === "bayaran") {
     return (
@@ -193,7 +202,15 @@ function ReviewTable({
   }
 
   if (kind === "tunggakan") {
-    return <TunggakanReviewTable />;
+    return (
+      <TunggakanReviewTable
+        key={tunggakanRecords
+          .map((record) => record.arrearsSummaryId ?? record.sourceRow)
+          .join("|")}
+        records={tunggakanRecords}
+        onRecordsChange={onTunggakanRecordsChange}
+      />
+    );
   }
 
   if (kind === "penghuni") {
@@ -213,17 +230,13 @@ export default function ExtractReviewPage({ kind }: { kind: ReviewKind }) {
   const storedExtract = useSyncExternalStore(
     subscribeToSessionStorage,
     () =>
-      kind === "bayaran" || kind === "penghuni" || kind === "kuarters"
-        ? window.sessionStorage.getItem(`${kind}ExtractResult`) ?? ""
-        : "",
+      window.sessionStorage.getItem(`${kind}ExtractResult`) ?? "",
     () => "",
   );
   const uploadedFileName = useSyncExternalStore(
     subscribeToSessionStorage,
     () =>
-      kind === "bayaran" || kind === "penghuni" || kind === "kuarters"
-        ? window.sessionStorage.getItem(`${kind}ExtractFileName`) ?? ""
-        : "",
+      window.sessionStorage.getItem(`${kind}ExtractFileName`) ?? "",
     () => "",
   );
   const extractResult = useMemo(() => {
@@ -243,6 +256,8 @@ export default function ExtractReviewPage({ kind }: { kind: ReviewKind }) {
     extractResult?.documentType === "penghuni" ? extractResult : null;
   const kuartersExtract =
     extractResult?.documentType === "kuarters" ? extractResult : null;
+  const tunggakanExtract =
+    extractResult?.documentType === "tunggakan" ? extractResult : null;
 
   const updateCurrentBayaranDraft = async (
     records: ExtractedBayaranRecord[],
@@ -263,6 +278,44 @@ export default function ExtractReviewPage({ kind }: { kind: ReviewKind }) {
     );
 
     window.sessionStorage.setItem("bayaranExtractResult", JSON.stringify(nextExtract));
+
+    if (!draftId) {
+      return;
+    }
+
+    await fetch(`/api/uploaded-documents/${draftId}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        extractResult: nextExtract,
+      }),
+    });
+  };
+
+  const updateCurrentTunggakanDraft = async (
+    records: ExtractedTunggakanRecord[],
+    totalAmount: string,
+  ) => {
+    if (!tunggakanExtract) {
+      return;
+    }
+
+    const nextExtract: TunggakanExtractResult = {
+      ...tunggakanExtract,
+      recordCount: records.length,
+      totalAmount,
+      records,
+    };
+    const draftId = window.sessionStorage.getItem(
+      CURRENT_EXTRACT_DRAFT_ID_STORAGE_KEY,
+    );
+
+    window.sessionStorage.setItem(
+      "tunggakanExtractResult",
+      JSON.stringify(nextExtract),
+    );
 
     if (!draftId) {
       return;
@@ -383,6 +436,43 @@ export default function ExtractReviewPage({ kind }: { kind: ReviewKind }) {
       };
     }
 
+    if (kind === "tunggakan" && tunggakanExtract) {
+      return {
+        ...baseContent,
+        fileName: uploadedFileName || baseContent.fileName,
+        stats: baseContent.stats.map((stat) => {
+          if (stat.label === "Tarikh Tunggakan") {
+            return {
+              ...stat,
+              value: "-",
+            };
+          }
+
+          if (stat.label === "Jumlah Rekod") {
+            return {
+              ...stat,
+              value: String(tunggakanExtract.recordCount),
+            };
+          }
+
+          if (stat.label === "Jumlah Tunggakan (RM)") {
+            return {
+              ...stat,
+              value: `RM ${Number(tunggakanExtract.totalAmount).toLocaleString(
+                "ms-MY",
+                {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                },
+              )}`,
+            };
+          }
+
+          return stat;
+        }),
+      };
+    }
+
     if (kind === "penghuni" && penghuniExtract) {
       return {
         ...baseContent,
@@ -405,6 +495,7 @@ export default function ExtractReviewPage({ kind }: { kind: ReviewKind }) {
     bayaranExtract,
     kuartersExtract,
     penghuniExtract,
+    tunggakanExtract,
     uploadedFileName,
   ]);
 
@@ -458,6 +549,8 @@ export default function ExtractReviewPage({ kind }: { kind: ReviewKind }) {
               onBayaranRecordsChange={updateCurrentBayaranDraft}
               penghuniRecords={penghuniExtract?.records ?? []}
               kuartersRecords={kuartersExtract?.records ?? []}
+              tunggakanRecords={tunggakanExtract?.records ?? []}
+              onTunggakanRecordsChange={updateCurrentTunggakanDraft}
             />
           </div>
         </div>

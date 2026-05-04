@@ -1,46 +1,94 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import Icon from "../../../components/Icon";
-import { Pagination, sampleResidents } from "./extract-review-shared";
+import {
+  Pagination,
+  RESIDENTS_PER_PAGE,
+  type ExtractedTunggakanRecord,
+} from "./extract-review-shared";
 
-export default function TunggakanReviewTable() {
-  const [savedRows, setSavedRows] = useState(sampleResidents);
-  const [draftRows, setDraftRows] = useState(sampleResidents);
-  const [editingIc, setEditingIc] = useState<string | null>(
-    sampleResidents[0]?.ic ?? null,
+type TunggakanReviewTableProps = {
+  records: ExtractedTunggakanRecord[];
+  onRecordsChange?: (
+    records: ExtractedTunggakanRecord[],
+    totalAmount: string,
+  ) => void;
+};
+
+export default function TunggakanReviewTable({
+  records,
+  onRecordsChange,
+}: TunggakanReviewTableProps) {
+  const [savedRows, setSavedRows] = useState(records);
+  const [draftRows, setDraftRows] = useState(records);
+  const [editingKey, setEditingKey] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const totalPages = Math.max(1, Math.ceil(savedRows.length / RESIDENTS_PER_PAGE));
+  const paginatedRows = useMemo(
+    () =>
+      savedRows.slice(
+        (currentPage - 1) * RESIDENTS_PER_PAGE,
+        currentPage * RESIDENTS_PER_PAGE,
+      ),
+    [currentPage, savedRows],
   );
 
-  const updateDraftAmount = (ic: string, amount: string) => {
+  const updateDraftAmount = (key: string, jumlahTunggakan: string) => {
     setDraftRows((currentRows) =>
-      currentRows.map((row) => (row.ic === ic ? { ...row, amount } : row)),
+      currentRows.map((row) =>
+        getRowKey(row) === key ? { ...row, jumlahTunggakan } : row,
+      ),
     );
   };
 
-  const saveRow = (ic: string) => {
-    const draft = draftRows.find((row) => row.ic === ic);
+  const persistRows = (rows: ExtractedTunggakanRecord[]) => {
+    const totalAmount = rows
+      .reduce((total, row) => total + Number(row.jumlahTunggakan || 0), 0)
+      .toFixed(2);
+
+    onRecordsChange?.(rows, totalAmount);
+  };
+
+  const saveRow = (key: string) => {
+    const draft = draftRows.find((row) => getRowKey(row) === key);
 
     if (!draft) {
-      setEditingIc(null);
+      setEditingKey(null);
       return;
     }
 
-    setSavedRows((currentRows) =>
-      currentRows.map((row) => (row.ic === ic ? { ...row, ...draft } : row)),
+    const nextRows = savedRows.map((row) =>
+      getRowKey(row) === key ? { ...row, ...draft } : row,
     );
-    setEditingIc(null);
+
+    setSavedRows(nextRows);
+    setEditingKey(null);
+    persistRows(nextRows);
   };
 
-  const startEdit = (ic: string) => {
-    const saved = savedRows.find((row) => row.ic === ic);
+  const deleteRow = (key: string) => {
+    const nextRows = savedRows.filter((row) => getRowKey(row) !== key);
+
+    setSavedRows(nextRows);
+    setDraftRows((currentRows) =>
+      currentRows.filter((row) => getRowKey(row) !== key),
+    );
+    setEditingKey(null);
+    persistRows(nextRows);
+  };
+
+  const startEdit = (key: string) => {
+    const saved = savedRows.find((row) => getRowKey(row) === key);
 
     if (saved) {
       setDraftRows((currentRows) =>
-        currentRows.map((row) => (row.ic === ic ? { ...row, ...saved } : row)),
+        currentRows.map((row) => (getRowKey(row) === key ? { ...row, ...saved } : row)),
       );
     }
 
-    setEditingIc(ic);
+    setEditingKey(key);
   };
 
   return (
@@ -57,71 +105,114 @@ export default function TunggakanReviewTable() {
           </tr>
         </thead>
         <tbody className="divide-y divide-[#EEF1F7]">
-          {savedRows.map((resident, index) => {
-            const isEditing = editingIc === resident.ic;
-            const draft = draftRows.find((row) => row.ic === resident.ic) ?? resident;
-
-            return (
-            <tr key={resident.ic}>
-              <td className="px-5 py-4">
-                <input
-                  type="checkbox"
-                  defaultChecked={index === 0}
-                  className="h-4 w-4 accent-dark-blue"
-                />
-              </td>
-              <td className="px-4 py-4">
-                <p className="font-extrabold text-[#172033]">{resident.name}</p>
-                <p className="text-[10px] font-semibold text-[#667085]">
-                  {resident.ic}
-                </p>
-              </td>
-              <td className="px-4 py-4 text-right">
-                {isEditing ? (
-                  <input
-                    className="h-10 w-23 rounded-lg border border-[#E6EAF2] px-3 text-right font-extrabold"
-                    value={draft.amount}
-                    onChange={(event) =>
-                      updateDraftAmount(resident.ic, event.target.value)
-                    }
-                  />
-                ) : (
-                  <span className="font-extrabold text-[#172033]">
-                    {resident.amount}
-                  </span>
-                )}
-              </td>
-              <td className="px-4 py-4">
-                <div className="flex items-center justify-center gap-4">
-                  {isEditing ? (
-                    <>
-                      <button
-                        type="button"
-                        aria-label="Simpan perubahan tunggakan"
-                        onClick={() => saveRow(resident.ic)}
-                      >
-                        <Icon icon="save" size={16} weight={700} className="text-green" />
-                      </button>
-                      <button type="button" aria-label="Padam tunggakan">
-                        <Icon icon="delete" size={16} weight={700} className="text-red" />
-                      </button>
-                    </>
-                  ) : (
-                    <button
-                      type="button"
-                      aria-label="Edit tunggakan"
-                      onClick={() => startEdit(resident.ic)}
-                    >
-                      <Icon icon="edit" size={16} weight={700} className="text-dark-blue" />
-                    </button>
-                  )}
-                </div>
+          {paginatedRows.length === 0 ? (
+            <tr>
+              <td
+                colSpan={4}
+                className="px-6 py-10 text-center text-sm font-semibold text-[#667085]"
+              >
+                Tiada rekod tunggakan ditemui.
               </td>
             </tr>
-          )})}
+          ) : (
+            paginatedRows.map((resident) => {
+              const key = getRowKey(resident);
+              const isEditing = editingKey === key;
+              const draft = draftRows.find((row) => getRowKey(row) === key) ?? resident;
+
+              return (
+                <tr key={key}>
+                  <td className="px-5 py-4">
+                    <input type="checkbox" className="h-4 w-4 accent-dark-blue" />
+                  </td>
+                  <td className="px-4 py-4">
+                    <p className="font-extrabold text-[#172033]">{resident.nama}</p>
+                    <p className="text-[10px] font-semibold text-[#667085]">
+                      {resident.noKadPengenalan}
+                    </p>
+                  </td>
+                  <td className="px-4 py-4 text-right">
+                    {isEditing ? (
+                      <input
+                        className="h-10 w-24 rounded-lg border border-[#E6EAF2] px-3 text-right font-extrabold"
+                        value={draft.jumlahTunggakan}
+                        onChange={(event) =>
+                          updateDraftAmount(key, event.target.value)
+                        }
+                      />
+                    ) : (
+                      <span className="font-extrabold text-[#172033]">
+                        {Number(resident.jumlahTunggakan || 0).toLocaleString(
+                          "ms-MY",
+                          {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          },
+                        )}
+                      </span>
+                    )}
+                  </td>
+                  <td className="px-4 py-4">
+                    <div className="flex items-center justify-center gap-4">
+                      {isEditing ? (
+                        <>
+                          <button
+                            type="button"
+                            aria-label="Simpan perubahan tunggakan"
+                            onClick={() => saveRow(key)}
+                          >
+                            <Icon
+                              icon="save"
+                              size={16}
+                              weight={700}
+                              className="text-green"
+                            />
+                          </button>
+                          <button
+                            type="button"
+                            aria-label="Padam tunggakan"
+                            onClick={() => deleteRow(key)}
+                          >
+                            <Icon
+                              icon="delete"
+                              size={16}
+                              weight={700}
+                              className="text-red"
+                            />
+                          </button>
+                        </>
+                      ) : (
+                        <button
+                          type="button"
+                          aria-label="Edit tunggakan"
+                          onClick={() => startEdit(key)}
+                        >
+                          <Icon
+                            icon="edit"
+                            size={16}
+                            weight={700}
+                            className="text-dark-blue"
+                          />
+                        </button>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              );
+            })
+          )}
         </tbody>
       </table>
-      <Pagination label="Memaparkan 1-3 Daripada 45 Rekod" />
+      <Pagination
+        label={`Memaparkan ${paginatedRows.length} Daripada ${savedRows.length} Rekod`}
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+      />
     </div>
   );
+}
+
+function getRowKey(row: ExtractedTunggakanRecord) {
+  return row.arrearsSummaryId ?? `${row.noKadPengenalan}-${row.sourceSheet}-${row.sourceRow}`;
 }

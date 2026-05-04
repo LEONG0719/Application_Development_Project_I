@@ -120,6 +120,54 @@ export async function PATCH(request: Request, context: RouteContext) {
           }
         }
 
+        if (extractResult.documentType === "tunggakan") {
+          const nextArrearsSummaryIds = new Set(
+            extractResult.records
+              .map((record: { arrearsSummaryId?: string }) => record.arrearsSummaryId)
+              .filter(Boolean),
+          );
+
+          const existingArrearsSummaries = await tx.$queryRaw<{ id: string }[]>`
+            SELECT "id"
+            FROM "ArrearsSummary"
+            WHERE "uploadedDocumentId" = ${id}::uuid
+              AND "recordStatus" = 'PENDING'::"RecordStatus"
+          `;
+          const arrearsSummaryIdsToDelete = existingArrearsSummaries
+            .map((summary) => summary.id)
+            .filter((summaryId) => !nextArrearsSummaryIds.has(summaryId));
+
+          if (arrearsSummaryIdsToDelete.length > 0) {
+            await tx.$executeRaw`
+              DELETE FROM "ArrearsSummary"
+              WHERE "id" IN (${Prisma.join(
+                arrearsSummaryIdsToDelete.map(
+                  (summaryId) => Prisma.sql`${summaryId}::uuid`,
+                ),
+              )})
+                AND "uploadedDocumentId" = ${id}::uuid
+                AND "recordStatus" = 'PENDING'::"RecordStatus"
+            `;
+          }
+
+          for (const record of extractResult.records) {
+            if (!record.arrearsSummaryId) {
+              continue;
+            }
+
+            await tx.$executeRaw`
+              UPDATE "ArrearsSummary"
+              SET
+                "totalArrearsAmount" = ${record.jumlahTunggakan || "0"}::numeric,
+                "description" = ${"tunggakan"},
+                "updatedAt" = NOW()
+              WHERE "id" = ${record.arrearsSummaryId}::uuid
+                AND "uploadedDocumentId" = ${id}::uuid
+                AND "recordStatus" = 'PENDING'::"RecordStatus"
+            `;
+          }
+        }
+
         return tx.uploadedDocument.update({
           where: { id },
           data: {
