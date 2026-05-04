@@ -126,7 +126,7 @@ export default function MuatNaikPage() {
       return;
     }
 
-    if (activeCategory !== "Penghuni" && activeCategory !== "Kuarters") {
+    if (activeCategory === "Tunggakan") {
       router.push(`${ROUTES.muatNaik}/semakan/${reviewRoutes[activeCategory]}`);
       return;
     }

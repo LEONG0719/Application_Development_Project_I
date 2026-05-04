@@ -49,6 +49,30 @@ export type KuartersExtractResult = {
   records: ExtractedQuarterRecord[];
 };
 
+export type ExtractedBayaranRecord = {
+  page: number;
+  jabatanCode: string;
+  jabatanName: string;
+  ptjpkCode: string;
+  ptjpkName: string;
+  bil: string;
+  noRujukan: string;
+  noGajiNoKp: string;
+  nama: string;
+  amaunRm: string;
+  tarikh: string;
+  noResit: string;
+  catatan: string;
+};
+
+export type BayaranExtractResult = {
+  documentType: "bayaran";
+  recordCount: number;
+  totalAmount: string;
+  paymentMonth: string;
+  records: ExtractedBayaranRecord[];
+};
+
 export const sampleResidents = [
   {
     name: "Ahmad Azam bin Sulaiman",
