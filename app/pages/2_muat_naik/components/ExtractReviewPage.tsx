@@ -1,14 +1,16 @@
 "use client";
 
-import { useMemo, useSyncExternalStore } from "react";
+import { useMemo, useState, useSyncExternalStore } from "react";
 import Icon from "../../../components/Icon";
 import BayaranReviewTable from "./BayaranReviewTable";
 import KuartersReviewTable from "./KuartersReviewTable";
 import PenghuniReviewTable from "./PenghuniReviewTable";
 import TunggakanReviewTable from "./TunggakanReviewTable";
 import type {
+  BayaranExtractResult,
   ExtractedPenghuniRecord,
   ExtractedQuarterRecord,
+  ExtractedBayaranRecord,
   KuartersExtractResult,
   PenghuniExtractResult,
 } from "./extract-review-shared";
@@ -160,15 +162,24 @@ const subscribeToSessionStorage = () => () => {};
 
 function ReviewTable({
   kind,
+  bayaranRecords,
+  onBayaranTotalAmountChange,
   penghuniRecords,
   kuartersRecords,
 }: {
   kind: ReviewKind;
+  bayaranRecords: ExtractedBayaranRecord[];
+  onBayaranTotalAmountChange?: (totalAmount: string) => void;
   penghuniRecords: ExtractedPenghuniRecord[];
   kuartersRecords: ExtractedQuarterRecord[];
 }) {
   if (kind === "bayaran") {
-    return <BayaranReviewTable />;
+    return (
+      <BayaranReviewTable
+        records={bayaranRecords}
+        onTotalAmountChange={onBayaranTotalAmountChange}
+      />
+    );
   }
 
   if (kind === "tunggakan") {
@@ -183,10 +194,13 @@ function ReviewTable({
 }
 
 export default function ExtractReviewPage({ kind }: { kind: ReviewKind }) {
+  const [bayaranEditedTotalAmount, setBayaranEditedTotalAmount] = useState<
+    string | null
+  >(null);
   const storedExtract = useSyncExternalStore(
     subscribeToSessionStorage,
     () =>
-      kind === "penghuni" || kind === "kuarters"
+      kind === "bayaran" || kind === "penghuni" || kind === "kuarters"
         ? window.sessionStorage.getItem(`${kind}ExtractResult`) ?? ""
         : "",
     () => "",
@@ -194,7 +208,7 @@ export default function ExtractReviewPage({ kind }: { kind: ReviewKind }) {
   const uploadedFileName = useSyncExternalStore(
     subscribeToSessionStorage,
     () =>
-      kind === "penghuni" || kind === "kuarters"
+      kind === "bayaran" || kind === "penghuni" || kind === "kuarters"
         ? window.sessionStorage.getItem(`${kind}ExtractFileName`) ?? ""
         : "",
     () => "",
@@ -205,11 +219,16 @@ export default function ExtractReviewPage({ kind }: { kind: ReviewKind }) {
     }
 
     try {
-      return JSON.parse(storedExtract) as PenghuniExtractResult | KuartersExtractResult;
+      return JSON.parse(storedExtract) as
+        | BayaranExtractResult
+        | PenghuniExtractResult
+        | KuartersExtractResult;
     } catch {
       return null;
     }
   }, [storedExtract]);
+  const bayaranExtract =
+    extractResult?.documentType === "bayaran" ? extractResult : null;
   const penghuniExtract =
     extractResult?.documentType === "penghuni" ? extractResult : null;
   const kuartersExtract =
@@ -217,6 +236,43 @@ export default function ExtractReviewPage({ kind }: { kind: ReviewKind }) {
 
   const content = useMemo(() => {
     const baseContent = reviewContent[kind];
+
+    if (kind === "bayaran" && bayaranExtract) {
+      return {
+        ...baseContent,
+        fileName: uploadedFileName || baseContent.fileName,
+        stats: baseContent.stats.map((stat) => {
+          if (stat.label === "Tarikh Bayaran") {
+            return {
+              ...stat,
+              value: bayaranExtract.paymentMonth || "-",
+            };
+          }
+
+          if (stat.label === "Jumlah Rekod") {
+            return {
+              ...stat,
+              value: String(bayaranExtract.recordCount),
+            };
+          }
+
+          if (stat.label === "Jumlah Bayaran (RM)") {
+            const totalAmount =
+              bayaranEditedTotalAmount ?? bayaranExtract.totalAmount;
+
+            return {
+              ...stat,
+              value: `RM ${Number(totalAmount).toLocaleString("ms-MY", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}`,
+            };
+          }
+
+          return stat;
+        }),
+      };
+    }
 
     if (kind === "kuarters" && kuartersExtract) {
       return {
@@ -258,7 +314,14 @@ export default function ExtractReviewPage({ kind }: { kind: ReviewKind }) {
     }
 
     return baseContent;
-  }, [kind, kuartersExtract, penghuniExtract, uploadedFileName]);
+  }, [
+    kind,
+    bayaranEditedTotalAmount,
+    bayaranExtract,
+    kuartersExtract,
+    penghuniExtract,
+    uploadedFileName,
+  ]);
 
   return (
     <section className="min-h-full bg-background">
@@ -301,6 +364,8 @@ export default function ExtractReviewPage({ kind }: { kind: ReviewKind }) {
           <div className="px-2 pb-2">
             <ReviewTable
               kind={kind}
+              bayaranRecords={bayaranExtract?.records ?? []}
+              onBayaranTotalAmountChange={setBayaranEditedTotalAmount}
               penghuniRecords={penghuniExtract?.records ?? []}
               kuartersRecords={kuartersExtract?.records ?? []}
             />

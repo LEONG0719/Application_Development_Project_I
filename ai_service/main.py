@@ -1,7 +1,11 @@
 from fastapi import FastAPI, File, HTTPException, Query, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 
-from extractor import extract_kuarters_from_xlsx, extract_penghuni_from_xlsx
+from extractor import (
+    extract_bayaran_from_pdf,
+    extract_kuarters_from_xlsx,
+    extract_penghuni_from_xlsx,
+)
 
 
 app = FastAPI(
@@ -45,6 +49,27 @@ async def extract_penghuni(
         raise HTTPException(
             status_code=422,
             detail=f"Gagal mengekstrak data penghuni: {error}",
+        ) from error
+
+
+@app.post("/extract/bayaran")
+async def extract_bayaran(
+    file: UploadFile = File(...),
+    limit: int | None = Query(default=None, ge=1, le=1000),
+) -> dict:
+    if not file.filename or not file.filename.lower().endswith(".pdf"):
+        raise HTTPException(status_code=400, detail="Sila muat naik fail .pdf sahaja.")
+
+    file_bytes = await file.read()
+    if not file_bytes:
+        raise HTTPException(status_code=400, detail="Fail kosong.")
+
+    try:
+        return extract_bayaran_from_pdf(file_bytes, limit=limit)
+    except Exception as error:
+        raise HTTPException(
+            status_code=422,
+            detail=f"Gagal mengekstrak data bayaran: {error}",
         ) from error
 
 

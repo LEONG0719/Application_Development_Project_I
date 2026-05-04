@@ -2,113 +2,174 @@
 
 import { useState } from "react";
 import Icon from "../../../components/Icon";
-import { Pagination, sampleResidents } from "./extract-review-shared";
+import {
+  type ExtractedBayaranRecord,
+  Pagination,
+  RESIDENTS_PER_PAGE,
+} from "./extract-review-shared";
 
-export default function BayaranReviewTable() {
-  const initialRows = sampleResidents.map((resident) => ({
-    ...resident,
-    note: "N/A",
+export default function BayaranReviewTable({
+  records,
+  onTotalAmountChange,
+}: {
+  records: ExtractedBayaranRecord[];
+  onTotalAmountChange?: (totalAmount: string) => void;
+}) {
+  const initialRows = records.map((record, index) => ({
+    ...record,
+    catatan: record.catatan || "bayaran",
+    id: `${record.page}-${record.bil}-${record.noGajiNoKp}-${index}`,
   }));
   const [savedRows, setSavedRows] = useState(initialRows);
   const [draftRows, setDraftRows] = useState(initialRows);
-  const [editingIc, setEditingIc] = useState<string | null>(initialRows[0]?.ic ?? null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  const totalPages = Math.max(1, Math.ceil(savedRows.length / RESIDENTS_PER_PAGE));
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+  const pageStartIndex = (safeCurrentPage - 1) * RESIDENTS_PER_PAGE;
+  const pageRows = savedRows.slice(pageStartIndex, pageStartIndex + RESIDENTS_PER_PAGE);
+  const displayStart = savedRows.length === 0 ? 0 : pageStartIndex + 1;
+  const displayEnd = pageStartIndex + pageRows.length;
+  const pendingDeleteRow =
+    savedRows.find((row) => row.id === pendingDeleteId) ?? null;
 
-  const updateDraft = (ic: string, field: "amount" | "note", value: string) => {
+  const calculateTotalAmount = (rows: typeof draftRows) =>
+    rows.reduce((total, row) => total + (Number(row.amaunRm) || 0), 0).toFixed(2);
+
+  const updateDraft = (id: string, field: "amaunRm" | "catatan", value: string) => {
     setDraftRows((currentRows) =>
-      currentRows.map((row) => (row.ic === ic ? { ...row, [field]: value } : row)),
+      currentRows.map((row) => (row.id === id ? { ...row, [field]: value } : row)),
     );
   };
 
-  const saveRow = (ic: string) => {
-    const draft = draftRows.find((row) => row.ic === ic);
+  const saveRow = (id: string) => {
+    const draft = draftRows.find((row) => row.id === id);
 
     if (!draft) {
-      setEditingIc(null);
+      setEditingId(null);
       return;
     }
 
     setSavedRows((currentRows) =>
-      currentRows.map((row) => (row.ic === ic ? { ...row, ...draft } : row)),
+      {
+        const nextRows = currentRows.map((row) =>
+          row.id === id ? { ...row, ...draft } : row,
+        );
+        onTotalAmountChange?.(calculateTotalAmount(nextRows));
+        return nextRows;
+      },
     );
-    setEditingIc(null);
+    setEditingId(null);
   };
 
-  const startEdit = (ic: string) => {
-    const saved = savedRows.find((row) => row.ic === ic);
+  const confirmDeleteRow = () => {
+    if (!pendingDeleteId) {
+      return;
+    }
+
+    const id = pendingDeleteId;
+    setSavedRows((currentRows) => {
+      const nextRows = currentRows.filter((row) => row.id !== id);
+      onTotalAmountChange?.(calculateTotalAmount(nextRows));
+      return nextRows;
+    });
+    setDraftRows((currentRows) => currentRows.filter((row) => row.id !== id));
+    setEditingId((currentId) => (currentId === id ? null : currentId));
+    setPendingDeleteId(null);
+  };
+
+  const startEdit = (id: string) => {
+    const saved = savedRows.find((row) => row.id === id);
 
     if (saved) {
       setDraftRows((currentRows) =>
-        currentRows.map((row) => (row.ic === ic ? { ...row, ...saved } : row)),
+        currentRows.map((row) => (row.id === id ? { ...row, ...saved } : row)),
       );
     }
 
-    setEditingIc(ic);
+    setEditingId(id);
   };
 
   return (
-    <div className="overflow-hidden rounded-lg border border-[#DCE2F1] bg-white">
-      <table className="w-full table-fixed text-left text-xs">
+    <div className="overflow-x-auto rounded-lg border border-[#DCE2F1] bg-white">
+      <table className="min-w-[1280px] table-fixed text-left text-xs">
         <thead className="bg-[#F7F9FF] text-[10px] font-extrabold uppercase text-[#667085]">
           <tr>
-            <th className="w-10 px-5 py-4">
+            <th className="w-14 px-5 py-4">
               <input type="checkbox" className="h-4 w-4" />
             </th>
-            <th className="px-4 py-4">Penghuni</th>
-            <th className="w-[14%] px-4 py-4">Tarikh</th>
-            <th className="w-[16%] px-4 py-4">No. Resit</th>
-            <th className="w-[18%] px-4 py-4">Catatan</th>
-            <th className="w-[18%] px-4 py-4 text-right">Amaun Bayar (RM)</th>
-            <th className="w-[16%] px-4 py-4 text-center">Tindakan</th>
+            <th className="w-56 px-4 py-4">Penghuni</th>
+            <th className="w-40 px-4 py-4 whitespace-nowrap">PTJPK / Jabatan</th>
+            <th className="w-72 px-4 py-4">Nama PTJPK</th>
+            <th className="w-48 px-4 py-4 whitespace-nowrap">No. Rujukan</th>
+            <th className="w-56 px-4 py-4">Catatan</th>
+            <th className="w-44 px-4 py-4 text-right whitespace-nowrap">
+              Amaun Bayar (RM)
+            </th>
+            <th className="w-36 px-4 py-4 text-center">Tindakan</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-[#EEF1F7]">
-          {savedRows.map((resident, index) => {
-            const isEditing = editingIc === resident.ic;
-            const draft = draftRows.find((row) => row.ic === resident.ic) ?? resident;
+          {pageRows.map((resident, index) => {
+            const isEditing = editingId === resident.id;
+            const draft = draftRows.find((row) => row.id === resident.id) ?? resident;
 
             return (
-            <tr key={resident.ic}>
+            <tr key={resident.id}>
               <td className="px-5 py-4">
                 <input
                   type="checkbox"
-                  defaultChecked={index === 0}
+                  defaultChecked={pageStartIndex + index === 0}
                   className="h-4 w-4 accent-dark-blue"
                 />
               </td>
               <td className="px-4 py-4">
-                <p className="font-extrabold text-[#172033]">{resident.name}</p>
+                <p className="font-extrabold leading-5 text-[#172033]">
+                  {resident.nama}
+                </p>
                 <p className="text-[10px] font-semibold text-[#667085]">
-                  {resident.ic}
+                  {resident.noGajiNoKp}
                 </p>
               </td>
-              <td className="px-4 py-4">{resident.date}</td>
-              <td className="px-4 py-4">{resident.receipt}</td>
+              <td className="px-4 py-4">
+                <p className="whitespace-nowrap font-extrabold text-[#172033]">
+                  {resident.ptjpkCode}
+                </p>
+                <p className="whitespace-nowrap text-[10px] font-medium text-[#667085]">
+                  Jabatan {resident.jabatanCode}
+                </p>
+              </td>
+              <td className="px-4 py-4 font-semibold leading-5 text-[#172033]">
+                {resident.ptjpkName || "-"}
+              </td>
+              <td className="px-4 py-4 break-words">{resident.noRujukan || "-"}</td>
               <td className="px-4 py-4">
                 {isEditing ? (
                   <input
                     className="h-10 w-full rounded-lg border border-[#E6EAF2] px-3 text-xs"
                     placeholder="Tambah catatan..."
-                    value={draft.note === "N/A" ? "" : draft.note}
+                    value={draft.catatan}
                     onChange={(event) =>
-                      updateDraft(resident.ic, "note", event.target.value)
+                      updateDraft(resident.id, "catatan", event.target.value)
                     }
                   />
                 ) : (
-                  resident.note || "N/A"
+                  resident.catatan || "bayaran"
                 )}
               </td>
               <td className="px-4 py-4 text-right">
                 {isEditing ? (
                   <input
                     className="h-10 w-23 rounded-lg border border-[#E6EAF2] px-3 text-right font-extrabold"
-                    value={draft.amount}
+                    value={draft.amaunRm}
                     onChange={(event) =>
-                      updateDraft(resident.ic, "amount", event.target.value)
+                      updateDraft(resident.id, "amaunRm", event.target.value)
                     }
                   />
                 ) : (
                   <span className="font-extrabold text-[#172033]">
-                    {resident.amount}
+                    {resident.amaunRm}
                   </span>
                 )}
               </td>
@@ -119,11 +180,15 @@ export default function BayaranReviewTable() {
                       <button
                         type="button"
                         aria-label="Simpan perubahan bayaran"
-                        onClick={() => saveRow(resident.ic)}
+                        onClick={() => saveRow(resident.id)}
                       >
                         <Icon icon="save" size={16} weight={700} className="text-green" />
                       </button>
-                      <button type="button" aria-label="Padam bayaran">
+                      <button
+                        type="button"
+                        aria-label="Padam bayaran"
+                        onClick={() => setPendingDeleteId(resident.id)}
+                      >
                         <Icon icon="delete" size={16} weight={700} className="text-red" />
                       </button>
                     </>
@@ -131,7 +196,7 @@ export default function BayaranReviewTable() {
                     <button
                       type="button"
                       aria-label="Edit bayaran"
-                      onClick={() => startEdit(resident.ic)}
+                      onClick={() => startEdit(resident.id)}
                     >
                       <Icon icon="edit" size={16} weight={700} className="text-dark-blue" />
                     </button>
@@ -142,7 +207,61 @@ export default function BayaranReviewTable() {
           )})}
         </tbody>
       </table>
-      <Pagination label="Memaparkan 1-3 Daripada 45 Rekod" />
+      <Pagination
+        currentPage={safeCurrentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+        label={`Memaparkan ${displayStart}-${displayEnd} Daripada ${savedRows.length} Rekod`}
+      />
+      {pendingDeleteRow ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#07162F]/35 px-4">
+          <div className="w-full max-w-md rounded-xl border border-[#F3C7C7] bg-white p-6 shadow-[0_22px_55px_rgba(15,23,42,0.22)]">
+            <div className="flex items-start gap-4">
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-[#FFF0F0] text-red">
+                <Icon icon="delete" size={24} weight={700} />
+              </span>
+              <div className="min-w-0">
+                <h3 className="text-lg font-extrabold leading-6 text-[#07162F]">
+                  Padam Rekod Bayaran?
+                </h3>
+                <p className="mt-2 text-sm font-medium leading-6 text-[#4B5567]">
+                  Sahkan untuk memadam maklumat bayaran penghuni ini daripada
+                  senarai semakan.
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-5 rounded-lg border border-[#EEF1F7] bg-[#F8FAFF] px-4 py-3">
+              <p className="text-[10px] font-extrabold uppercase text-[#667085]">
+                Penghuni
+              </p>
+              <p className="mt-1 font-extrabold text-[#172033]">
+                {pendingDeleteRow.nama}
+              </p>
+              <p className="mt-1 text-xs font-semibold text-[#667085]">
+                {pendingDeleteRow.noGajiNoKp} · RM {pendingDeleteRow.amaunRm}
+              </p>
+            </div>
+
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                type="button"
+                className="h-11 rounded-lg border border-[#DCE2F1] bg-white px-5 text-xs font-extrabold text-[#344054] shadow-sm transition hover:bg-[#F8FAFF]"
+                onClick={() => setPendingDeleteId(null)}
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                className="h-11 rounded-lg bg-red px-5 text-xs font-extrabold text-white shadow-sm transition hover:bg-[#B42318]"
+                onClick={confirmDeleteRow}
+              >
+                Ya, Padam
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
