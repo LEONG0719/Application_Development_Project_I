@@ -720,8 +720,8 @@ export default function KuartersUnitsPanel({
       </div>
       ) : null}
 
-      <div className="mt-5 overflow-hidden rounded-2xl border border-light-grey/20 bg-white">
-        <div className="overflow-x-auto">
+      <div className="mt-5 flex min-h-120 flex-col overflow-hidden rounded-2xl border border-light-grey/20 bg-white">
+        <div className="flex-1 overflow-x-auto">
           <table className="w-full min-w-260 table-fixed border-collapse">
             <thead className="bg-background">
               <tr>
@@ -781,10 +781,32 @@ export default function KuartersUnitsPanel({
                     </p>
                   </td>
                   <td className="px-6 py-4 text-center align-middle text-sm font-semibold text-grey">
-                    N/A
+                    {editor.draft.occupantIcNumber.trim().length > 0 ? (
+                      <DatePickerField
+                        value={editor.draft.moveInDate}
+                        disabled={pendingUnitId === EMPTY_QUARTER_UNIT_ID}
+                        required
+                        maxDate={
+                          editor.draft.moveOutDate || getTodayDateInputValue()
+                        }
+                        onChange={(value) => onDraftChange("moveInDate", value)}
+                      />
+                    ) : (
+                      "N/A"
+                    )}
                   </td>
                   <td className="px-6 py-4 text-center align-middle text-sm font-semibold text-grey">
-                    N/A
+                    {editor.draft.occupantIcNumber.trim().length > 0 ? (
+                      <DatePickerField
+                        value={editor.draft.moveOutDate}
+                        disabled={pendingUnitId === EMPTY_QUARTER_UNIT_ID}
+                        minDate={editor.draft.moveInDate}
+                        maxDate={getTodayDateInputValue()}
+                        onChange={(value) => onDraftChange("moveOutDate", value)}
+                      />
+                    ) : (
+                      "N/A"
+                    )}
                   </td>
                   <td className="px-6 py-4 align-middle">
                     <div className="flex justify-center">

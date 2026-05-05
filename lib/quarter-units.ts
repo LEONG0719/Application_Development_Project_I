@@ -73,6 +73,8 @@ export type QuarterCategoryUnitsDetail = {
 export type QuarterUnitCreateInput = {
   unitCode: string;
   occupantIcNumber: string | null;
+  moveInDate?: Date;
+  moveOutDate?: Date | null;
 };
 
 export type QuarterUnitUpdateInput = {
@@ -297,11 +299,44 @@ export function parseQuarterUnitCreateBody(
     return parsedOccupantIcNumber;
   }
 
+  const hasMoveInDateField = hasOwn(payload, "moveInDate");
+  const hasMoveOutDateField = hasOwn(payload, "moveOutDate");
+  const dates: Pick<QuarterUnitCreateInput, "moveInDate" | "moveOutDate"> = {};
+
+  if (hasMoveInDateField) {
+    const parsedMoveInDate = parseOccupancyDate(payload.moveInDate, {
+      required: true,
+      label: "Tarikh masuk",
+    });
+
+    if (!parsedMoveInDate.ok) {
+      return parsedMoveInDate;
+    }
+
+    if (parsedMoveInDate.data) {
+      dates.moveInDate = parsedMoveInDate.data;
+    }
+  }
+
+  if (hasMoveOutDateField) {
+    const parsedMoveOutDate = parseOccupancyDate(payload.moveOutDate, {
+      required: false,
+      label: "Tarikh keluar",
+    });
+
+    if (!parsedMoveOutDate.ok) {
+      return parsedMoveOutDate;
+    }
+
+    dates.moveOutDate = parsedMoveOutDate.data;
+  }
+
   return {
     ok: true,
     data: {
       unitCode: parsedUnitCode.data,
       occupantIcNumber: parsedOccupantIcNumber.data,
+      ...dates,
     },
   };
 }

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
-import { mapAvailableResidentForApi } from "@/lib/residents";
 import { prisma } from "@/lib/prisma";
+import { mapAvailableResidentForApi } from "@/lib/residents";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -61,7 +61,10 @@ export async function GET(request: Request) {
       },
     });
   } catch (error) {
-    console.error("Gagal mendapatkan senarai penghuni yang boleh ditetapkan:", error);
+    console.error(
+      "Gagal mendapatkan senarai penghuni yang boleh ditetapkan:",
+      error,
+    );
 
     return NextResponse.json(
       {

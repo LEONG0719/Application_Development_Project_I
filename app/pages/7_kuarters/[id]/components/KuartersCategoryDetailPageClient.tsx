@@ -123,8 +123,8 @@ export default function KuartersCategoryDetailPageClient({
         const queryString = searchParams.toString();
         const response = await fetch(
           queryString.length > 0
-            ? `/api/residents/available?${queryString}`
-            : "/api/residents/available",
+            ? `/api/quarter-categories/residents/available?${queryString}`
+            : "/api/quarter-categories/residents/available",
           {
             signal: controller.signal,
           },
@@ -379,7 +379,7 @@ export default function KuartersCategoryDetailPageClient({
       occupantIcNumber: editor.draft.occupantIcNumber.trim(),
     };
     const shouldSendOccupancyDates =
-      editor.mode === "edit" && editor.draft.occupantIcNumber.trim().length > 0;
+      editor.draft.occupantIcNumber.trim().length > 0;
 
     if (shouldSendOccupancyDates) {
       payload.moveInDate = editor.draft.moveInDate;
