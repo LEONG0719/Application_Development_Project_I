@@ -4,8 +4,6 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "dev:web": "next dev --port 3000",
-    "dev:ai": "cd ai_service && .venv\\bin\\python.exe -m uvicorn main:app --host 127.0.0.1 --port 8000",
     "build": "next build",
     "start": "next start",
     "lint": "eslint"
@@ -31,8 +29,6 @@
     "prisma": "^7.7.0",
     "tailwindcss": "^4",
     "typescript": "^5"
-  },
-  "prisma": {
-    "seed": "npx tsx prisma/seed.ts"
   }
+
 }

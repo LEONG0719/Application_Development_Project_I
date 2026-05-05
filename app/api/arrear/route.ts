@@ -16,7 +16,7 @@ export async function GET() {
           where: { status: "CURRENT" },
           include: {
             unit: {
-              include: { quarterClass: true },
+              include: { quarterCategory: true },
             },
           },
         },
@@ -101,7 +101,7 @@ export async function POST(request: Request) {
       include: {
         occupancies: {
           where: { status: "CURRENT" },
-          include: { unit: { include: { quarterClass: true } } }
+          include: { unit: { include: { quarterCategory: true } } }
         }
       }
     });
@@ -133,7 +133,7 @@ export async function POST(request: Request) {
 
         // A. Handle Senggara (Maintenance) Toggle
         if (cajSenggaraEnabled && resident.occupancies.length > 0) {
-            const maintenanceRate = Number(resident.occupancies[0].unit.quarterClass.maintenancePrice);
+            const maintenanceRate = Number(resident.occupancies[0].unit.quarterCategory.maintenancePrice);
             
             // Only add if they haven't been charged for maintenance this month yet
             if (Number(monthlyCharge.maintenanceAmount) === 0) {

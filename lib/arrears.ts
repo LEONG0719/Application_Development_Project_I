@@ -1,6 +1,6 @@
 import type { 
   Resident, 
-  QuarterClass, 
+  QuarterCategory, 
   Unit, 
   Transaction,
   MonthlyCharge,
@@ -95,14 +95,14 @@ type ParseFailure = {
 export function mapTunggakanForApi(
   resident: Resident & {
       // Include UnitOccupancy base fields, plus the nested unit and class
-      occupancies: (UnitOccupancy & { unit: Unit & { quarterClass: QuarterClass } })[];
+      occupancies: (UnitOccupancy & { unit: Unit & { quarterCategory: QuarterCategory } })[];
       monthlyCharges: (MonthlyCharge & { additionalCharges: AdditionalCharge[], rebates: Rebate[] })[];
   }
 ): TunggakanListItem {
   
   // Get active unit details (TypeScript now knows 'status' exists!)
   const activeOccupancy = resident.occupancies.find(o => o.status === "CURRENT");
-  const quarterClass = activeOccupancy?.unit.quarterClass.className || "Tiada";
+const quarterClass = activeOccupancy?.unit.quarterCategory?.categoryName || "Tiada";
   const unitCode = activeOccupancy?.unit.unitCode || "Tiada";
 
   // Calculate live sums

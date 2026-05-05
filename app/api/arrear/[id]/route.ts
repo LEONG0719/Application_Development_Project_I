@@ -4,10 +4,10 @@ import { mapTunggakanForApi } from "@/lib/arrears"; // Make sure this path is co
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> } // <-- Update the type to a Promise
 ) {
   try {
-    const residentId = params.id;
+    const { id: residentId } = await params;
 
     // 1. Fetch the resident, their active unit, all monthly charges, AND their transactions
     const resident = await prisma.resident.findUnique({
@@ -16,7 +16,7 @@ export async function GET(
         occupancies: {
           where: { status: "CURRENT" },
           include: {
-            unit: { include: { quarterClass: true } },
+            unit: { include: { quarterCategory: true } },
           },
         },
         monthlyCharges: {
@@ -55,7 +55,7 @@ export async function GET(
       fullName: resident.fullName,
       icNumber: resident.icNumber,
       age: age,
-      kelas: activeOccupancy?.unit.quarterClass.className || "Tiada",
+      kelas: activeOccupancy?.unit.quarterCategory.categoryName || "Tiada",
       unit: activeOccupancy?.unit.unitCode || "Tiada",
       tarikhMasuk: activeOccupancy?.createdAt ? new Date(activeOccupancy.createdAt).toLocaleDateString('en-GB') : "N/A",
       tarikhKeluar: "N/A",
