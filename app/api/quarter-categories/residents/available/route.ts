@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
-import { mapAvailableResidentForApi } from "@/lib/residents";
 import { prisma } from "@/lib/prisma";
+import { mapAvailableResidentForApi } from "@/lib/residents";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -13,13 +13,7 @@ export async function GET(request: Request) {
 
     const residents = await prisma.resident.findMany({
       where: {
-        status: "AKTIF",
         recordStatus: "VERIFIED",
-        occupancies: {
-          none: {
-            status: "CURRENT",
-          },
-        },
         ...(query.length > 0
           ? {
               OR: [
@@ -51,6 +45,7 @@ export async function GET(request: Request) {
         id: true,
         icNumber: true,
         fullName: true,
+        status: true,
       },
     });
 
@@ -66,7 +61,10 @@ export async function GET(request: Request) {
       },
     });
   } catch (error) {
-    console.error("Gagal mendapatkan senarai penghuni yang boleh ditetapkan:", error);
+    console.error(
+      "Gagal mendapatkan senarai penghuni yang boleh ditetapkan:",
+      error,
+    );
 
     return NextResponse.json(
       {

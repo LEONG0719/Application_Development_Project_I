@@ -1,10 +1,6 @@
 import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 
-import {
-  applyVerifiedPenghuniOccupancy,
-  parseExtractResult,
-} from "@/lib/uploaded-documents";
 import { prisma } from "@/lib/prisma";
 import type { ExtractResult } from "@/app/pages/2_muat_naik/components/extract-review-shared";
 import type {
@@ -30,6 +26,7 @@ type RouteContext = {
 
 export async function POST(request: Request, context: RouteContext) {
   try {
+    const currentAdmin = await getCurrentAdmin();
     const { id } = await context.params;
     const verifiedAt = new Date();
     const body = await request.json().catch(() => null);
@@ -145,9 +142,6 @@ export async function POST(request: Request, context: RouteContext) {
           WHERE "uploadedDocumentId" = ${id}::uuid
             AND "recordStatus" = 'PENDING'::"RecordStatus"
         `;
-        if (extractResult) {
-          await applyVerifiedPenghuniOccupancy(tx, extractResult);
-        }
         await tx.uploadedDocument.update({
           where: {
             id,
@@ -157,8 +151,6 @@ export async function POST(request: Request, context: RouteContext) {
             verifiedAt,
           },
         });
-
-        return null;
       },
       uploadedDocumentTransactionOptions,
     );
