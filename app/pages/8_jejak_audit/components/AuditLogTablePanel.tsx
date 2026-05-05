@@ -2,9 +2,11 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 
 import Icon from "@/app/components/Icon";
-import ToolbarIconButton from "@/app/components/ToolbarIconButton";
-import type { AuditLogListItem } from "@/lib/audit-logs";
+import type { AuditLogFilters, AuditLogListItem } from "@/lib/audit-logs";
+import { buildAuditLogQueryString } from "@/lib/audit-logs";
 import AuditActionBadge from "./AuditActionBadge";
+import AuditLogDownloadButton from "./AuditLogDownloadButton";
+import AuditLogFilterPanel from "./AuditLogFilterPanel";
 import AuditLogPagination from "./AuditLogPagination";
 
 type AuditPagination = {
@@ -17,9 +19,24 @@ type AuditPagination = {
 
 export default function AuditLogTablePanel({
   auditRows,
+  filterOptions,
+  filters,
+  hasActiveFilters,
   pagination,
 }: {
   auditRows: AuditLogListItem[];
+  filterOptions: {
+    actionTypes: {
+      value: string;
+      label: string;
+    }[];
+    admins: {
+      id: string;
+      name: string;
+    }[];
+  };
+  filters: AuditLogFilters;
+  hasActiveFilters: boolean;
   pagination: AuditPagination;
 }) {
   return (
@@ -35,8 +52,16 @@ export default function AuditLogTablePanel({
         </div>
 
         <div className="flex items-center gap-4 text-[#607083]">
-          <ToolbarIconButton icon="filter" label="Tapis rekod audit" />
-          <ToolbarIconButton icon="download" label="Muat turun rekod audit" />
+          <AuditLogFilterPanel
+            filters={filters}
+            hasActiveFilters={hasActiveFilters}
+            options={filterOptions}
+          />
+          <AuditLogDownloadButton
+            exportHref={`/api/audit-logs/export${buildAuditLogQueryString(
+              filters,
+            )}`}
+          />
         </div>
       </div>
 
@@ -68,7 +93,13 @@ export default function AuditLogTablePanel({
                     <AuditCell strong>{row.target}</AuditCell>
                     <AuditCell className="text-center">
                       <Link
-                        href={`/pages/8_jejak_audit?page=${pagination.currentPage}&auditId=${row.id}`}
+                        href={`/pages/8_jejak_audit${buildAuditLogQueryString(
+                          filters,
+                          {
+                            page: pagination.currentPage,
+                            auditId: row.id,
+                          },
+                        )}`}
                         className="inline-grid h-8 w-8 place-items-center rounded-[5px] text-[#607083] transition hover:bg-[#EEF3FF] hover:text-dark-blue"
                         aria-label={`Lihat butiran audit ${row.target}`}
                       >
@@ -91,7 +122,7 @@ export default function AuditLogTablePanel({
           </table>
         </div>
 
-        <AuditLogPagination pagination={pagination} />
+        <AuditLogPagination filters={filters} pagination={pagination} />
       </div>
     </section>
   );

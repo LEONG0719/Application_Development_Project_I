@@ -4,7 +4,7 @@ export default function AuditLogSummaryCard({
   totalRecords: number;
 }) {
   return (
-    <section className="mb-8 rounded-[7px] border border-[#EDF1F7] bg-white p-6 shadow-[0_4px_10px_rgba(15,23,42,0.03)]">
+    <section className="mb-8 rounded-xl border border-light-grey/20 border-l-4 border-l-dark-blue bg-white px-5 py-5 shadow-sm">
       <div className="text-xs font-bold uppercase tracking-[3px] text-[#555967]">
         Jumlah Aktiviti
       </div>

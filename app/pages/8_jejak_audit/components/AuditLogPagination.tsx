@@ -2,6 +2,8 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 
 import Icon from "@/app/components/Icon";
+import type { AuditLogFilters } from "@/lib/audit-logs";
+import { buildAuditLogQueryString } from "@/lib/audit-logs";
 
 type AuditPagination = {
   currentPage: number;
@@ -13,8 +15,10 @@ type AuditPagination = {
 
 export default function AuditLogPagination({
   pagination,
+  filters,
 }: {
   pagination: AuditPagination;
+  filters: AuditLogFilters;
 }) {
   const isFirstPage = pagination.currentPage <= 1;
   const isLastPage = pagination.currentPage >= pagination.totalPages;
@@ -23,7 +27,7 @@ export default function AuditLogPagination({
     <footer className="flex flex-col gap-3 border-t border-light-grey/20 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5 max-lg:min-w-245">
       <div className="flex flex-wrap items-center gap-2">
         <PageButton
-          href={buildPageHref(Math.max(1, pagination.currentPage - 1))}
+          href={buildPageHref(Math.max(1, pagination.currentPage - 1), filters)}
           label="Halaman sebelumnya"
           disabled={isFirstPage}
         >
@@ -44,7 +48,7 @@ export default function AuditLogPagination({
           ) : (
             <PageButton
               key={item}
-              href={buildPageHref(item)}
+              href={buildPageHref(item, filters)}
               active={item === pagination.currentPage}
             >
               {item}
@@ -54,6 +58,7 @@ export default function AuditLogPagination({
         <PageButton
           href={buildPageHref(
             Math.min(pagination.totalPages, pagination.currentPage + 1),
+            filters,
           )}
           label="Halaman seterusnya"
           disabled={isLastPage}
@@ -85,8 +90,8 @@ function buildPaginationItems(currentPage: number, totalPages: number) {
   return [1, "dots", currentPage, "dots", totalPages] as const;
 }
 
-function buildPageHref(page: number) {
-  return `/pages/8_jejak_audit?page=${page}`;
+function buildPageHref(page: number, filters: AuditLogFilters) {
+  return `/pages/8_jejak_audit${buildAuditLogQueryString(filters, { page })}`;
 }
 
 function PageButton({
