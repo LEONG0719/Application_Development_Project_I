@@ -1,10 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import Icon from "../../../components/Icon";
+import { useState, useEffect, useMemo } from "react";
+import { downloadXlsxFile } from "@/lib/xlsx-export";import TunggakanFilterPanel from "./TunggakanFilterPanel";
+import { defaultFilter, type TunggakanFilter } from "@/lib/arrears";import Icon from "../../../components/Icon";
 import type { TunggakanListItem, TunggakanSummary } from "@/lib/arrears"; // Make sure this path is correct!
 import KemasKiniModal from "./KemasKiniModal";
 import ButiranTunggakanModal from "./ButiranTunggakanModal";
+
 
 export default function TunggakanPageClient() {
   // --- STATE MANAGEMENT ---
@@ -15,16 +17,21 @@ export default function TunggakanPageClient() {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [isKemasKiniModalOpen, setIsKemasKiniModalOpen] = useState(false);
   const [viewResidentId, setViewResidentId] = useState<string | null>(null);
+  const [filters, setFilters] = useState<TunggakanFilter>(defaultFilter);
+  const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);  
   const [currentPage, setCurrentPage] = useState(1);
   const [pageInput, setPageInput] = useState("");
   const ITEMS_PER_PAGE = 5;
 
   // --- DATA FETCHING ---
   const fetchTunggakanData = async () => {
+    console.log(">>> fetch started");
     try {
       setIsLoading(true);
       const response = await fetch("/api/arrear");
+      console.log(">>> response status:", response.status);
       const result = await response.json();
+      console.log(">>> result:", result);
 
       if (result.ok) {
         setData(result.data);
@@ -41,10 +48,16 @@ export default function TunggakanPageClient() {
     }
   };
 
-  // Run the fetch function exactly once when the page loads
+
+  // Fetch on page load
   useEffect(() => {
     fetchTunggakanData();
   }, []);
+
+  // Reset to page 1 whenever a filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filters]);
 
   // --- HANDLERS ---
   const formatRM = (value: number) => {
@@ -55,8 +68,49 @@ export default function TunggakanPageClient() {
     }).format(value).replace("MYR", "RM");
   };
 
-  const totalPages = Math.ceil(data.length / ITEMS_PER_PAGE);
-  const paginatedData = data.slice(
+  const filteredData = useMemo(() => {
+    let result = data;
+
+    if (filters.kelasKuarters.length > 0)
+      result = result.filter((r) => filters.kelasKuarters.includes(r.quarterClass));
+
+    if (filters.blok.length > 0)
+      result = result.filter((r) =>
+        filters.blok.includes(r.unitCode?.split("-")[0]?.trim() ?? "")
+      );
+
+    if (filters.julatMin !== "")
+      result = result.filter((r) => r.jumlahTunggakan >= parseFloat(filters.julatMin));
+
+    if (filters.julatMax !== "")
+      result = result.filter((r) => r.jumlahTunggakan <= parseFloat(filters.julatMax));
+
+    if (filters.statusBayaran !== "SEMUA")
+      result = result.filter((r) => (r as any).statusBayaran === filters.statusBayaran);
+
+    if (filters.mempunyaiPenalti)
+      result = result.filter((r) => r.penalti > 0);
+
+    if (filters.mempunyaiRebat)
+      result = result.filter((r) => r.rebat > 0);
+
+    return result;
+  }, [data, filters]);
+
+  const activeFilterCount = useMemo(() => {
+    let count = 0;
+    if (filters.kelasKuarters.length > 0) count++;
+    if (filters.blok.length > 0) count++;
+    if (filters.julatMin !== "") count++;
+    if (filters.julatMax !== "") count++;
+    if (filters.statusBayaran !== "SEMUA") count++;
+    if (filters.mempunyaiPenalti) count++;
+    if (filters.mempunyaiRebat) count++;
+    return count;
+  }, [filters]);
+
+  const totalPages = Math.ceil(filteredData.length / ITEMS_PER_PAGE);
+  const paginatedData = filteredData.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE
   );
@@ -76,6 +130,62 @@ export default function TunggakanPageClient() {
     if (currentPage <= 4) return [1, 2, 3, 4, 5, "...", totalPages];
     if (currentPage >= totalPages - 3) return [1, "...", totalPages - 4, totalPages - 3, totalPages - 2, totalPages - 1, totalPages];
     return [1, "...", currentPage - 1, currentPage, currentPage + 1, "...", totalPages];
+  };
+
+  const handleExport = () => {
+    const exportData = activeFilterCount > 0 ? filteredData : data;
+    const filename = activeFilterCount > 0
+      ? `Tunggakan_Ditapis_${new Date().toISOString().slice(0, 10)}`
+      : `Tunggakan_Semua_${new Date().toISOString().slice(0, 10)}`;
+
+    downloadXlsxFile({
+      filename,
+      sheets: [
+        {
+          name: "Senarai Tunggakan",
+          columns: [
+            { width: 28 }, // Nama
+            { width: 18 }, // IC
+            { width: 16 }, // Kelas
+            { width: 18 }, // Unit
+            { width: 12 }, // Sewa
+            { width: 12 }, // Senggara
+            { width: 12 }, // Penalti
+            { width: 12 }, // Tambahan
+            { width: 12 }, // Rebat
+            { width: 14 }, // Tunggakan
+          ],
+          rows: [
+            // Header row
+            [
+              { value: "NAMA PENGHUNI",   style: "header" },
+              { value: "NO. KAD PENGENALAN", style: "header" },
+              { value: "KELAS KUARTERS",  style: "header" },
+              { value: "KOD UNIT",        style: "header" },
+              { value: "SEWA (RM)",       style: "header", align: "right" },
+              { value: "SENGGARA (RM)",   style: "header", align: "right" },
+              { value: "PENALTI (RM)",    style: "header", align: "right" },
+              { value: "TAMBAHAN (RM)",   style: "header", align: "right" },
+              { value: "REBAT (RM)",      style: "header", align: "right" },
+              { value: "TUNGGAKAN (RM)",  style: "header", align: "right" },
+            ],
+            // Data rows
+            ...exportData.map((row) => [
+              { value: row.fullName },
+              { value: row.icNumber },
+              { value: row.quarterClass },
+              { value: row.unitCode },
+              { value: row.sewa,             type: "number" as const, align: "right" as const },
+              { value: row.senggara,         type: "number" as const, align: "right" as const },
+              { value: row.penalti,          type: "number" as const, align: "right" as const },
+              { value: row.tambahan,         type: "number" as const, align: "right" as const },
+              { value: row.rebat,            type: "number" as const, align: "right" as const },
+              { value: row.jumlahTunggakan,  type: "number" as const, align: "right" as const },
+            ]),
+          ],
+        },
+      ],
+    });
   };
 
   const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -138,11 +248,24 @@ export default function TunggakanPageClient() {
             <p className="text-sm text-grey mt-1">Klik pada ikon kemaskini untuk mengubah maklumat unit.</p>
           </div>
           <div className="flex gap-4">
-            <button className="p-2 hover:bg-gray-200 rounded text-grey transition-colors">
+            <button
+              onClick={handleExport}
+              disabled={isLoading || data.length === 0}
+              title={activeFilterCount > 0 ? `Eksport ${filteredData.length} rekod ditapis` : `Eksport semua ${data.length} rekod`}
+              className="p-2 hover:bg-gray-200 rounded text-grey transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            >
               <Icon icon="download" size={20} />
             </button>
-            <button className="p-2 hover:bg-gray-200 rounded text-grey transition-colors">
+            <button 
+              onClick={() => setIsFilterPanelOpen(true)}
+              className={`relative p-2 rounded transition-colors ${activeFilterCount > 0 ? "bg-dark-blue text-white hover:bg-opacity-90" : "hover:bg-gray-200 text-grey"}`}
+            >
               <Icon icon="filter" size={20} />
+              {activeFilterCount > 0 && (
+                <span className="absolute -top-1 -right-1 w-4 h-4 bg-(--color-red) text-white text-[9px] font-bold rounded-full flex items-center justify-center">
+                  {activeFilterCount}
+                </span>
+              )}
             </button>
           </div>
         </div>
@@ -311,7 +434,10 @@ export default function TunggakanPageClient() {
               <span className="font-bold">
                 {(currentPage - 1) * ITEMS_PER_PAGE + 1}–{Math.min(currentPage * ITEMS_PER_PAGE, data.length)}
               </span>{" "}
-              Daripada <span className="font-bold">{data.length}</span> Rekod
+              Daripada <span className="font-bold">{filteredData.length}</span> Rekod
+                {activeFilterCount > 0 && (
+                  <span className="ml-2 text-xs text-grey">(ditapis daripada {data.length} jumlah rekod)</span>
+                )}
             </div>
           </div>
         )}
@@ -336,6 +462,16 @@ export default function TunggakanPageClient() {
           // Optional: You can call fetchTunggakanData() here so the table refreshes after they save!
         }} 
         selectedCount={selectedIds.length} 
+      />
+      {/* --- FILTER PANEL --- */}
+      <TunggakanFilterPanel
+        isOpen={isFilterPanelOpen}
+        onClose={() => setIsFilterPanelOpen(false)}
+        data={data}
+        filters={filters}
+        onChange={setFilters}
+        onClear={() => setFilters(defaultFilter)}
+        activeCount={activeFilterCount}
       />
 
       {/* --- BUTIRAN TUNGGAKAN MODAL --- */}

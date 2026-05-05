@@ -234,3 +234,25 @@ function parseMoneyInput(value: unknown, label: string): ParseSuccess<number> | 
   }
   return { ok: true, data: Number(parsedValue.toFixed(2)) };
 }
+
+// --- FILTER TYPES ---
+
+export type TunggakanFilter = {
+  kelasKuarters: string[];
+  blok: string[];
+  julatMin: string;
+  julatMax: string;
+  statusBayaran: string;
+  mempunyaiPenalti: boolean;
+  mempunyaiRebat: boolean;
+};
+
+export const defaultFilter: TunggakanFilter = {
+  kelasKuarters: [],
+  blok: [],
+  julatMin: "",
+  julatMax: "",
+  statusBayaran: "SEMUA",
+  mempunyaiPenalti: false,
+  mempunyaiRebat: false,
+};
