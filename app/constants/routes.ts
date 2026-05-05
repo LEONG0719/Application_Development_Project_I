@@ -34,13 +34,13 @@ export const SHELL_ROUTES = new Set([
 // Shell Route Prefixes are those route prefixes that should show the shell (Sidebar + Header).
 // However, since we have dynamic routes under /pages (e.g. /pages/1_laman_utama/:id), we can't list them all in SHELL_ROUTES. 
 // Instead, we can use SHELL_ROUTE_PREFIXES to specify the prefixes of those routes that should show the shell.
-export const SHELL_ROUTE_PREFIXES = [ROUTES.kuarters] as const; 
+export const SHELL_ROUTE_PREFIXES = [ROUTES.muatNaik, ROUTES.kuarters] as const; 
 
 // Sidebar routes are those routes that should be shown in the sidebar navigation.
 export const SIDEBAR_ROUTES = [
   { href: ROUTES.lamanUtama, label: "Laman Utama", icon: "home" },
   { href: ROUTES.muatNaik, label: "Muat Naik", icon: "upload" },
-  { href: ROUTES.bayaran, label: "Bayaran", icon: "payment" },
+  { href: ROUTES.bayaran, label: "Semakan Bayaran", icon: "payment" },
   { href: ROUTES.tunggakan, label: "Tunggakan", icon: "warning" },
   { href: ROUTES.transaksi, label: "Transaksi", icon: "receipt" },
   { href: ROUTES.penghuni, label: "Pengurusan Penghuni", icon: "group" },

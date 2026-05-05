@@ -2,12 +2,12 @@ import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 
 import {
-  buildQuarterClassCreatedMessage,
-  buildQuarterClassDuplicateMessage,
-  buildQuarterClassSummary,
-  mapQuarterClassForApi,
-  parseQuarterClassCreateBody,
-} from "@/lib/quarter-classes";
+  buildQuarterCategoryCreatedMessage,
+  buildQuarterCategoryDuplicateMessage,
+  buildQuarterCategorySummary,
+  mapQuarterCategoryForApi,
+  parseQuarterCategoryCreateBody,
+} from "@/lib/quarter-categories";
 import { prisma } from "@/lib/prisma";
 
 export const runtime = "nodejs"; // This API route uses Prisma which is not compatible with the Edge runtime, so we specify that it should run in a Node.js environment.
@@ -24,11 +24,14 @@ function isPrismaUniqueError(error: unknown) {
 
 export async function GET() {
   try {
-    const [quarterClasses, totalUnits, occupiedUnits, vacantUnits] =
+    const [quarterCategories, totalUnits, occupiedUnits, vacantUnits] =
       await prisma.$transaction([
-        prisma.quarterClass.findMany({
+        prisma.quarterCategory.findMany({
+          where: {
+            recordStatus: "VERIFIED",
+          },
           orderBy: {
-            className: "asc",
+            categoryName: "asc",
           },
           include: {
             _count: {
@@ -38,41 +41,47 @@ export async function GET() {
             },
           },
         }),
-        prisma.unit.count(),
+        prisma.unit.count({
+          where: {
+            recordStatus: "VERIFIED",
+          },
+        }),
         prisma.unit.count({
           where: {
             status: "OCCUPIED",
+            recordStatus: "VERIFIED",
           },
         }),
         prisma.unit.count({
           where: {
             status: "VACANT",
+            recordStatus: "VERIFIED",
           },
         }),
       ]);
 
     return NextResponse.json({
       success: true,
-      message: "Data kelas kuarters berjaya diambil.",
+      message: "Data kategori kuarters berjaya diambil.",
       data: {
-        summary: buildQuarterClassSummary({
+        summary: buildQuarterCategorySummary({
           totalUnits,
           occupiedUnits,
           vacantUnits,
         }),
-        quarterClasses: quarterClasses.map(mapQuarterClassForApi),
+        quarterCategories: quarterCategories.map(mapQuarterCategoryForApi),
         meta: {
-          totalRecords: quarterClasses.length,
+          totalRecords: quarterCategories.length,
         },
       },
     });
   } catch (error) {
-    console.error("Gagal mendapatkan data kelas kuarters:", error);
+    console.error("Gagal mendapatkan data kategori kuarters:", error);
 
     return NextResponse.json(
       {
         success: false,
-        message: "Ralat pelayan berlaku semasa mendapatkan data kelas kuarters.",
+        message: "Ralat pelayan berlaku semasa mendapatkan data kategori kuarters.",
       },
       {
         status: 500,
@@ -82,7 +91,8 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  let requestedClassName: string | null = null;
+  let requestedCategoryName: string | null = null;
+  let requestedAddress: string | null = null;
 
   try {
     let body: unknown;
@@ -93,7 +103,7 @@ export async function POST(request: Request) {
       return NextResponse.json(
         {
           success: false,
-          message: "Format JSON untuk permintaan tambah kelas tidak sah.",
+          message: "Format JSON untuk permintaan Tambah Kategori tidak sah.",
         },
         {
           status: 400,
@@ -101,7 +111,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const parsedBody = parseQuarterClassCreateBody(body);
+    const parsedBody = parseQuarterCategoryCreateBody(body);
 
     if (!parsedBody.ok) {
       return NextResponse.json(
@@ -115,22 +125,27 @@ export async function POST(request: Request) {
       );
     }
 
-    requestedClassName = parsedBody.data.className;
+    requestedCategoryName = parsedBody.data.categoryName;
+    requestedAddress = parsedBody.data.address;
 
-    const existingQuarterClass = await prisma.quarterClass.findUnique({
+    const existingQuarterCategory = await prisma.quarterCategory.findFirst({
       where: {
-        className: parsedBody.data.className,
+        categoryName: parsedBody.data.categoryName,
+        address: parsedBody.data.address,
       },
       select: {
         id: true,
       },
     });
 
-    if (existingQuarterClass) {
+    if (existingQuarterCategory) {
       return NextResponse.json(
         {
           success: false,
-          message: buildQuarterClassDuplicateMessage(parsedBody.data.className),
+          message: buildQuarterCategoryDuplicateMessage(
+            parsedBody.data.categoryName,
+            parsedBody.data.address,
+          ),
         },
         {
           status: 409,
@@ -138,7 +153,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const createdQuarterClass = await prisma.quarterClass.create({
+    const createdQuarterCategory = await prisma.quarterCategory.create({
       data: parsedBody.data,
       include: {
         _count: {
@@ -154,9 +169,9 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         success: true,
-        message: buildQuarterClassCreatedMessage(createdQuarterClass.className),
+        message: buildQuarterCategoryCreatedMessage(createdQuarterCategory.categoryName),
         data: {
-          quarterClass: mapQuarterClassForApi(createdQuarterClass),
+          quarterCategory: mapQuarterCategoryForApi(createdQuarterCategory),
         },
       },
       {
@@ -168,8 +183,9 @@ export async function POST(request: Request) {
       return NextResponse.json(
         {
           success: false,
-          message: buildQuarterClassDuplicateMessage(
-            requestedClassName ?? "tersebut",
+          message: buildQuarterCategoryDuplicateMessage(
+            requestedCategoryName ?? "tersebut",
+            requestedAddress,
           ),
         },
         {
@@ -178,12 +194,12 @@ export async function POST(request: Request) {
       );
     }
 
-    console.error("Gagal menambah kelas kuarters:", error);
+    console.error("Gagal menambah kategori kuarters:", error);
 
     return NextResponse.json(
       {
         success: false,
-        message: "Ralat pelayan berlaku semasa menambah kelas kuarters.",
+        message: "Ralat pelayan berlaku semasa menambah kategori kuarters.",
       },
       {
         status: 500,
