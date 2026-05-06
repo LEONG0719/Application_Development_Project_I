@@ -124,10 +124,10 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Listen for any UPDATE on Resident table.
+-- Listen for any INSERT, UPDATE on Resident table.
 DROP TRIGGER IF EXISTS check_status_on_resident_update ON "Resident";
 CREATE TRIGGER check_status_on_resident_update
-AFTER UPDATE ON "Resident"
+AFTER INSERT OR UPDATE ON "Resident"
 FOR EACH ROW EXECUTE FUNCTION trigger_on_resident_change();
 
 
