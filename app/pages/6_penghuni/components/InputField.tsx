@@ -16,6 +16,7 @@ type BaseFieldStyleProps = {
     inactiveBackgroundClass?: string;
 };
 
+// Reusable input field component with customizable styling and state management.
 export function InputField({
     label,
     value,
@@ -56,6 +57,7 @@ export function InputField({
     );
 }
 
+// Reusable input field component with formatting capabilities (e.g., for phone numbers, IC numbers, etc.).
 export function InputFieldFormat({
     label,
     format,
@@ -98,6 +100,7 @@ export function InputFieldFormat({
     );
 }
 
+// Reusable textarea field component for longer text inputs, with customizable styling and state management.
 export function InputBox({
     label,
     value,
@@ -137,11 +140,13 @@ export function InputBox({
     );
 }
 
+// Reusable dropdown field component with customizable styling, options and state management.
 export type DropdownOption = {
     label: string;
     color?: string; // e.g., "text-aktif", "text-x-layak", etc.
 };
 
+// Reusable dropdown field component with customizable styling, options and state management.
 export function DropdownField({
     label,
     options,

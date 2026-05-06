@@ -17,7 +17,6 @@ enum ResidentStatus {
   TIDAK_LAYAK
   PENCEN_MENDATANG
   DATA_TIDAK_LENGKAP
-  KELUAR
 }
 
 enum UnitStatus {
@@ -43,7 +42,7 @@ enum TransactionCategory {
 
 enum TransactionStatus {
   NORMAL
-  DIBATALKAN
+  DIBALIKAN
   DILARASKAN
   PEMBALIKAN
   PELARASAN
