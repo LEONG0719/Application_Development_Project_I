@@ -189,3 +189,47 @@ export async function adjustTransaction(
     return pelarasan;
   });
 }
+
+/**
+ * Generates a custom transaction ID: YYYYMMDD-0000000X
+ * We pass the `txClient` so it works safely inside Prisma $transactions.
+ */
+export async function generateTransactionNo(txClient: any = prisma): Promise<string> {
+  const today = new Date();
+  
+  // Format date as YYYYMMDD
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const day = String(today.getDate()).padStart(2, '0');
+  const datePrefix = `${year}${month}${day}`;
+
+  // Find the last transaction created today
+  const lastTransaction = await txClient.transaction.findFirst({
+    where: {
+      transactionNo: {
+        startsWith: datePrefix,
+      },
+    },
+    orderBy: {
+      transactionNo: 'desc',
+    },
+    select: {
+      transactionNo: true,
+    }
+  });
+
+  let nextSequence = 1;
+
+  if (lastTransaction && lastTransaction.transactionNo) {
+    // Extract the sequence number after the "-" and add 1
+    const lastSequenceStr = lastTransaction.transactionNo.split('-')[1];
+    if (lastSequenceStr) {
+      nextSequence = parseInt(lastSequenceStr, 10) + 1;
+    }
+  }
+
+  // Pad the sequence with zeros to ensure it is 8 digits long
+  const sequenceStr = String(nextSequence).padStart(8, '0');
+  
+  return `${datePrefix}-${sequenceStr}`;
+}
