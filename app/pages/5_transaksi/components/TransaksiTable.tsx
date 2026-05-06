@@ -19,7 +19,7 @@ export default function TransaksiTable({ transactions, isLoading, onView, onReve
   const getStatusBadge = (status: string) => {
     switch(status) {
       case "NORMAL": return <span className="bg-teal-50 text-teal-700 px-2 py-1 rounded text-[10px] font-bold uppercase border border-teal-100">NORMAL</span>;
-      case "DIBATALKAN": return <span className="bg-red-50 text-red-700 px-2 py-1 rounded text-[10px] font-bold uppercase border border-red-100">DIBATALKAN</span>;
+      case "DIBALIKAN": return <span className="bg-red-50 text-red-700 px-2 py-1 rounded text-[10px] font-bold uppercase border border-red-100">DIBALIKAN</span>;
       case "DILARASKAN": return <span className="bg-yellow-50 text-yellow-700 px-2 py-1 rounded text-[10px] font-bold uppercase border border-yellow-100">DILARASKAN</span>;
       case "PEMBALIKAN": return <span className="bg-red-600 text-white px-2 py-1 rounded text-[10px] font-bold uppercase">PEMBALIKAN</span>;
       case "PELARASAN": return <span className="bg-yellow-500 text-white px-2 py-1 rounded text-[10px] font-bold uppercase">PELARASAN</span>;

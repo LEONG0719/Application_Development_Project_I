@@ -18,7 +18,7 @@ interface TransaksiFilterPanelProps {
 
 const STATUS_OPTIONS = [
   { value: "NORMAL", label: "NORMAL", color: "bg-blue-100 text-blue-700" },
-  { value: "DIBATALKAN", label: "DIBATALKAN", color: "bg-red-100 text-red-700" },
+  { value: "DIBALIKAN", label: "DIBALIKAN", color: "bg-red-100 text-red-700" },
   { value: "DILARASKAN", label: "DILARASKAN", color: "bg-yellow-100 text-yellow-700" },
   { value: "PEMBALIKAN", label: "PEMBALIKAN", color: "bg-red-600 text-white" },
   { value: "PELARASAN", label: "PELARASAN", color: "bg-yellow-500 text-white" },
@@ -36,7 +36,7 @@ export default function TransaksiFilterPanel({ onSearch, isLoading }: TransaksiF
     startDate: "",
     endDate: "",
     categories: [],
-    statuses: ["NORMAL", "DIBATALKAN", "DILARASKAN", "PEMBALIKAN", "PELARASAN"], // Default all selected
+    statuses: ["NORMAL", "DIBALIKAN", "DILARASKAN", "PEMBALIKAN", "PELARASAN"], // Default all selected
   });
 
   const handleStatusToggle = (status: string) => {
@@ -54,7 +54,7 @@ export default function TransaksiFilterPanel({ onSearch, isLoading }: TransaksiF
       startDate: "",
       endDate: "",
       categories: [],
-      statuses: ["NORMAL", "DIBATALKAN", "DILARASKAN", "PEMBALIKAN", "PELARASAN"],
+      statuses: ["NORMAL", "DIBALIKAN", "DILARASKAN", "PEMBALIKAN", "PELARASAN"],
     };
     setFilters(resetState);
     onSearch(resetState); // Instantly search with reset values
