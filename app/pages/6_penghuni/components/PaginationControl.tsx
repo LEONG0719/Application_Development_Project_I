@@ -17,17 +17,11 @@ export function usePaginationLogic(totalItems: number, itemsPerPage: number) {
 
     const handlePageChange = (action: 'prev' | 'next' | 'goto', pageNum?: number) => {
         switch (action) {
-            case 'prev':
-                setCurrentPage(prev => Math.max(prev - 1, 1));
-                break;
-            case 'next':
-                setCurrentPage(prev => Math.min(prev + 1, totalPages));
-                break;
-            case 'goto':
-                if (pageNum !== undefined && pageNum >= 1 && pageNum <= totalPages) {
-                    setCurrentPage(pageNum);
-                }
-                break;
+            case 'prev': setCurrentPage(prev => Math.max(prev - 1, 1)); break;
+            case 'next': setCurrentPage(prev => Math.min(prev + 1, totalPages)); break;
+            case 'goto': if (pageNum !== undefined && pageNum >= 1 && pageNum <= totalPages)
+                            setCurrentPage(pageNum);
+                         break;
         }
     };
 
@@ -78,15 +72,15 @@ export function PaginationControls({
 }) {
     const PageButtonComponent = ({ item, currentPage, onPageChange }: { item: number | "ellipsis"; currentPage: number; onPageChange: (action: 'prev' | 'next' | 'goto', pageNum?: number) => void }) => {
         if (item === "ellipsis") {
+            // Pagination component for ellipsis (non-clickable).
             return (
-                <span className="px-1 text-sm font-semibold text-grey" aria-hidden="true">
-                    ...
-                </span>
+                <span className="px-1 text-sm font-semibold text-grey" aria-hidden="true">...</span>
             );
         }
 
         const isActive = item === currentPage;
 
+        // Pagination component for individual page buttons.
         return (
             <button
                 type="button"
@@ -103,6 +97,7 @@ export function PaginationControls({
         );
     };
 
+    // Pagination component that includes Previous/Next buttons, page number buttons and record range info.
     return (
         <div className="flex flex-row items-center justify-between w-full">
             {/* Pagination Buttons */}
