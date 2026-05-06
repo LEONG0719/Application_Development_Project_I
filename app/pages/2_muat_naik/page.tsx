@@ -35,6 +35,7 @@ export default function MuatNaikPage() {
   const [selectedFileName, setSelectedFileName] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [processingStep, setProcessingStep] = useState("");
   const [processingError, setProcessingError] = useState("");
   const [processingDrafts, setProcessingDrafts] = useState<ProcessingDraft[]>(
     [],
@@ -106,6 +107,7 @@ export default function MuatNaikPage() {
     }
 
     setIsProcessing(true);
+    setProcessingStep("Mengekstrak data daripada dokumen...");
     setProcessingError("");
 
     try {
@@ -127,6 +129,7 @@ export default function MuatNaikPage() {
       }
 
       const extractedData = await response.json();
+      setProcessingStep("Menyimpan hasil ekstrak untuk semakan...");
       const saveResponse = await fetch("/api/uploaded-documents", {
         method: "POST",
         headers: {
@@ -163,6 +166,7 @@ export default function MuatNaikPage() {
       );
     } finally {
       setIsProcessing(false);
+      setProcessingStep("");
     }
   }
 
@@ -245,7 +249,35 @@ export default function MuatNaikPage() {
           </button>
         </div>
 
-        <div className="flex min-h-82.5 flex-col items-center justify-center rounded-2xl border-2 border-dashed border-[#C6CDDD] bg-white px-6 text-center">
+        <div className="relative flex min-h-82.5 flex-col items-center justify-center overflow-hidden rounded-2xl border-2 border-dashed border-[#C6CDDD] bg-white px-6 text-center">
+          {isProcessing ? (
+            <div
+              className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-white/88 px-6 backdrop-blur-[2px]"
+              role="status"
+              aria-live="polite"
+            >
+              <div className="relative flex h-20 w-20 items-center justify-center">
+                <div className="absolute inset-0 rounded-full border-4 border-light-blue" />
+                <div className="absolute inset-0 animate-spin rounded-full border-4 border-transparent border-t-dark-blue" />
+                <Icon
+                  icon="document_scanner"
+                  size={30}
+                  weight={700}
+                  className="text-dark-blue"
+                />
+              </div>
+              <h2 className="mt-5 text-xl font-extrabold text-[#07162F]">
+                Sedang Memproses Dokumen
+              </h2>
+              <p className="mt-2 max-w-md text-sm font-semibold leading-6 text-[#667085]">
+                {processingStep || "Mengekstrak data daripada dokumen..."}
+              </p>
+              <div className="mt-5 h-2 w-full max-w-72 overflow-hidden rounded-full bg-light-blue">
+                <div className="h-full w-1/2 animate-[loading-slide_1.2s_ease-in-out_infinite] rounded-full bg-dark-blue" />
+              </div>
+            </div>
+          ) : null}
+
           <div className="mb-6 flex h-18 w-18 items-center justify-center rounded-xl bg-light-blue text-dark-blue">
             <Icon icon="cloud_upload" size={38} weight={700} />
           </div>
