@@ -2,6 +2,8 @@ import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 
 import {
+  buildQuarterCategoryUnitsDetailInclude,
+  buildQuarterUnitCurrentOccupancyInclude,
   buildQuarterUnitCreatedMessage,
   buildQuarterUnitDuplicateMessage,
   buildQuarterUnitOccupancyConflictMessage,
@@ -9,9 +11,9 @@ import {
   mapQuarterCategoryUnitsDetailForApi,
   mapQuarterUnitForApi,
   parseQuarterUnitCreateBody,
-  QuarterCategoryUnitsDetailInclude,
-  quarterUnitCurrentOccupancyInclude,
 } from "@/lib/quarter-units";
+import { createAuditLog } from "@/lib/audit-logs";
+import { getCurrentAdmin } from "@/lib/current-admin";
 import { prisma } from "@/lib/prisma";
 
 type RouteContext = {
@@ -41,7 +43,7 @@ export async function GET(_request: Request, context: RouteContext) {
         id,
         recordStatus: "VERIFIED",
       },
-      include: QuarterCategoryUnitsDetailInclude,
+      include: buildQuarterCategoryUnitsDetailInclude(),
     });
 
     if (!quarterCategory) {
@@ -88,6 +90,7 @@ export async function POST(request: Request, context: RouteContext) {
   let requestedUnitCode: string | null = null;
 
   try {
+    const currentAdmin = await getCurrentAdmin();
     let body: unknown;
 
     try {
@@ -198,23 +201,50 @@ export async function POST(request: Request, context: RouteContext) {
         );
       }
 
-      const conflictingOccupancy = await prisma.unitOccupancy.findFirst({
-        where: {
-          residentId: resident.id,
-          status: "CURRENT",
-        },
-        include: {
-          unit: {
-            select: {
-              unitCode: true,
-              quarterCategory: {
-                select: {
-                  categoryName: true,
-                },
-              },
-            },
+      const moveInDate = parsedBody.data.moveInDate ?? getTodayStartInMalaysia();
+      const moveOutDate = parsedBody.data.moveOutDate ?? null;
+      const todayStart = getTodayStartInMalaysia();
+
+      if (moveInDate.getTime() > todayStart.getTime()) {
+        return NextResponse.json(
+          {
+            success: false,
+            message: "Tarikh masuk tidak boleh selepas hari ini.",
           },
-        },
+          {
+            status: 400,
+          },
+        );
+      }
+
+      if (moveOutDate && moveOutDate.getTime() > todayStart.getTime()) {
+        return NextResponse.json(
+          {
+            success: false,
+            message: "Tarikh keluar tidak boleh selepas hari ini.",
+          },
+          {
+            status: 400,
+          },
+        );
+      }
+
+      if (moveOutDate && moveOutDate.getTime() < moveInDate.getTime()) {
+        return NextResponse.json(
+          {
+            success: false,
+            message: "Tarikh keluar tidak boleh lebih awal daripada tarikh masuk.",
+          },
+          {
+            status: 400,
+          },
+        );
+      }
+
+      const conflictingOccupancy = await findOverlappingResidentOccupancy({
+        residentId: resident.id,
+        moveInDate,
+        moveOutDate,
       });
 
       if (conflictingOccupancy) {
@@ -238,22 +268,40 @@ export async function POST(request: Request, context: RouteContext) {
       }
     }
 
-    const createdUnit = await prisma.unit.create({
-      data: {
-        unitCode: parsedBody.data.unitCode,
-        status: resident ? "OCCUPIED" : "VACANT",
-        categoryId: id,
-        occupancies: resident
-          ? {
-              create: {
-                residentId: resident.id,
-                moveInDate: new Date(),
-                status: "CURRENT",
-              },
-            }
-          : undefined,
-      },
-      include: quarterUnitCurrentOccupancyInclude,
+    const createdUnit = await prisma.$transaction(async (tx) => {
+      const moveInDate = parsedBody.data.moveInDate ?? getTodayStartInMalaysia();
+      const moveOutDate = parsedBody.data.moveOutDate ?? null;
+      const isPastOccupancy = Boolean(moveOutDate);
+      const unit = await tx.unit.create({
+        data: {
+          unitCode: parsedBody.data.unitCode,
+          status: resident && !isPastOccupancy ? "OCCUPIED" : "VACANT",
+          categoryId: id,
+          occupancies: resident
+            ? {
+                create: {
+                  residentId: resident.id,
+                  moveInDate,
+                  moveOutDate,
+                  status: isPastOccupancy ? "PAST" : "CURRENT",
+                },
+              }
+            : undefined,
+        },
+        include: buildQuarterUnitCurrentOccupancyInclude(),
+      });
+
+      await createAuditLog(tx, {
+        actor: currentAdmin,
+        moduleName: "Pengurusan Kuarters",
+        targetData: `${quarterCategory.categoryName} / Unit ${unit.unitCode}`,
+        actionType: "CREATE",
+        entityType: "UNIT",
+        entityId: unit.id,
+        description: `Menambah unit ${unit.unitCode} dalam kategori ${quarterCategory.categoryName}${resident ? ` dan menetapkan penghuni ${resident.fullName}` : ""}.`,
+      });
+
+      return unit;
     });
 
     revalidatePath("/pages/7_kuarters");
@@ -301,4 +349,59 @@ export async function POST(request: Request, context: RouteContext) {
       },
     );
   }
+}
+
+async function findOverlappingResidentOccupancy({
+  residentId,
+  moveInDate,
+  moveOutDate,
+}: {
+  residentId: string;
+  moveInDate: Date;
+  moveOutDate: Date | null;
+}) {
+  return prisma.unitOccupancy.findFirst({
+    where: {
+      residentId,
+      moveInDate: {
+        lte: moveOutDate ?? new Date("9999-12-31T23:59:59.999Z"),
+      },
+      OR: [
+        {
+          moveOutDate: null,
+        },
+        {
+          moveOutDate: {
+            gte: moveInDate,
+          },
+        },
+      ],
+    },
+    include: {
+      unit: {
+        select: {
+          unitCode: true,
+          quarterCategory: {
+            select: {
+              categoryName: true,
+            },
+          },
+        },
+      },
+    },
+  });
+}
+
+function getTodayStartInMalaysia() {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Kuala_Lumpur",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(new Date());
+  const year = parts.find((part) => part.type === "year")?.value;
+  const month = parts.find((part) => part.type === "month")?.value;
+  const day = parts.find((part) => part.type === "day")?.value;
+
+  return new Date(`${year}-${month}-${day}T00:00:00.000+08:00`);
 }

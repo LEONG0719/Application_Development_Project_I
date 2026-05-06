@@ -43,7 +43,7 @@ enum TransactionCategory {
 
 enum TransactionStatus {
   NORMAL
-  DIBALIKAN
+  DIBATALKAN
   DILARASKAN
   PEMBALIKAN
   PELARASAN
