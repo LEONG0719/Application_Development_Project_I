@@ -21,6 +21,7 @@ const uploadedDocumentTransactionOptions = {
   timeout: 300000,
 };
 
+// GET handler to fetch pending uploaded documents for processing queue
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);

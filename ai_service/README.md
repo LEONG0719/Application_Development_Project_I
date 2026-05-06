@@ -1,18 +1,6 @@
 # AI Extraction Service
 
-This project currently uses a Python venv created by MSYS Python:
-
-```txt
-C:\msys64\ucrt64\bin\python.exe
-```
-
-Because of that, the venv folder is:
-
-```txt
-.venv\bin
-```
-
-not the usual Windows:
+This project uses a Python virtual environment under:
 
 ```txt
 .venv\Scripts
@@ -24,18 +12,28 @@ not the usual Windows:
 npm run dev:ai
 ```
 
+## Environment
+
+The AI service owns its own environment config in `ai_service/.env`:
+
+```txt
+AI_SERVICE_ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
+```
+
+For deployment, add the deployed frontend URL to this comma-separated list.
+
 ## Run From ai_service
 
 ```powershell
 cd D:\AP1\Application_Development_Project_I\ai_service
-.\.venv\bin\python.exe -m uvicorn main:app --host 127.0.0.1 --port 8000
+.\.venv\Scripts\python.exe -m uvicorn main:app --host 127.0.0.1 --port 8000
 ```
 
 ## Activate The Venv
 
 ```powershell
 cd D:\AP1\Application_Development_Project_I\ai_service
-.\.venv\bin\Activate.ps1
+.\.venv\Scripts\Activate.ps1
 ```
 
 Then run:

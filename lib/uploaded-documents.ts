@@ -12,6 +12,7 @@ export type UploadedDocumentWithUploader = UploadedDocument & {
   } | null;
 };
 
+// Define a list of valid document categories for filtering
 export function parseExtractResult(value: string | null): ExtractResult | null {
   if (!value) {
     return null;
@@ -34,6 +35,7 @@ export function parseExtractResult(value: string | null): ExtractResult | null {
   return null;
 }
 
+// Define valid document categories for filtering in GET handler
 export function mapUploadedDocumentForQueue(
   document: UploadedDocumentWithUploader,
 ): ProcessingDraft | null {

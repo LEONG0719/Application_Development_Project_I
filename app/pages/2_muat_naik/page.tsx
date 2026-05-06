@@ -50,6 +50,7 @@ export default function MuatNaikPage() {
     [activeDraftKind, processingDrafts],
   );
 
+  // Load processing drafts when active category changes or on initial mount
   useEffect(() => {
     async function loadProcessingDrafts() {
       if (!activeDraftKind) {
@@ -84,10 +85,12 @@ export default function MuatNaikPage() {
     void loadProcessingDrafts();
   }, [activeDraftKind]);
 
+  // Handler for file selection button click
   function handleChooseFile() {
     fileInputRef.current?.click();
   }
 
+  // Handler for file input change event
   function handleFileChange(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     setSelectedFileName(file?.name ?? "");
@@ -95,6 +98,7 @@ export default function MuatNaikPage() {
     setProcessingError("");
   }
 
+  // Handler for upload button click - initiates file processing
   async function handleUploadAction() {
     if (!selectedFile) {
       handleChooseFile();
@@ -108,8 +112,7 @@ export default function MuatNaikPage() {
       const formData = new FormData();
       formData.append("file", selectedFile);
 
-      const apiBaseUrl =
-        process.env.NEXT_PUBLIC_AI_SERVICE_URL ?? "http://127.0.0.1:8000";
+      const apiBaseUrl = process.env.NEXT_PUBLIC_AI_SERVICE_URL ?? "http://127.0.0.1:8000";
       const extractKind = reviewRoutes[activeCategory];
       const response = await fetch(`${apiBaseUrl}/extract/${extractKind}`, {
         method: "POST",
