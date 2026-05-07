@@ -1,12 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import Icon from "../../../../../components/Icon";
 import {
   type ExtractedPenghuniRecord,
   Pagination,
   RESIDENTS_PER_PAGE,
-} from "../../../components/extract-review-shared";
+} from "../../../../components/extract-review-shared";
+import { getPenghuniRecordKey } from "./helpers";
+import PenghuniReviewRow from "./PenghuniReviewRow";
 
 export default function PenghuniReviewTable({
   records,
@@ -69,46 +70,12 @@ export default function PenghuniReviewTable({
             </tr>
           ) : (
             pageRecords.map((resident) => (
-              <tr key={`${resident.sourceSheet}-${resident.sourceRow}`}>
-                <td className="px-5 py-4">
-                  <input
-                    type="checkbox"
-                    checked={selectedKeySet.has(getPenghuniRecordKey(resident))}
-                    className="h-4 w-4 accent-dark-blue"
-                    onChange={(event) =>
-                      toggleSelectedRow(
-                        getPenghuniRecordKey(resident),
-                        event.target.checked,
-                      )
-                    }
-                  />
-                </td>
-                <td className="px-4 py-4">
-                  <p className="font-extrabold text-[#172033]">{resident.nama}</p>
-                  <p className="text-[10px] font-semibold text-[#667085]">
-                    {resident.noKadPengenalan}
-                  </p>
-                </td>
-                <td className="whitespace-pre-line px-4 py-4">
-                  {[resident.kuarters, resident.unit, resident.alamatKuarters]
-                    .filter(Boolean)
-                    .join("\n")}
-                </td>
-                <td className="whitespace-pre-line px-4 py-4">
-                  {resident.perhubungan || "-"}
-                </td>
-                <td className="whitespace-pre-line px-4 py-4">
-                  {[resident.pekerjaan, resident.jabatan].filter(Boolean).join("\n")}
-                </td>
-                <td className="px-4 py-4 text-center">
-                  <Icon
-                    icon="visibility"
-                    size={17}
-                    weight={700}
-                    className="text-dark-blue"
-                  />
-                </td>
-              </tr>
+              <PenghuniReviewRow
+                key={`${resident.sourceSheet}-${resident.sourceRow}`}
+                resident={resident}
+                isSelected={selectedKeySet.has(getPenghuniRecordKey(resident))}
+                onSelectionChange={toggleSelectedRow}
+              />
             ))
           )}
         </tbody>
@@ -120,12 +87,5 @@ export default function PenghuniReviewTable({
         label={`Memaparkan ${displayStart}-${displayEnd} Daripada ${displayRecords.length} Rekod`}
       />
     </div>
-  );
-}
-
-function getPenghuniRecordKey(record: ExtractedPenghuniRecord) {
-  return (
-    record.residentId ??
-    `${record.noKadPengenalan}-${record.sourceSheet}-${record.sourceRow}`
   );
 }

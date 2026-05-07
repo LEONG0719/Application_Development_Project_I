@@ -2,263 +2,32 @@
 
 import { useMemo, useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
-import Icon from "../../../../../components/Icon";
 import { ROUTES } from "../../../../../constants/routes";
-import BayaranReviewTable from "./BayaranReviewTable";
-import KuartersReviewTable from "./KuartersReviewTable";
-import PenghuniReviewTable from "./PenghuniReviewTable";
-import TunggakanReviewTable from "./TunggakanReviewTable";
 import {
   CURRENT_EXTRACT_DRAFT_ID_STORAGE_KEY,
 } from "../../../components/extract-review-shared";
 import type {
   BayaranExtractResult,
-  ExtractedPenghuniRecord,
-  ExtractedQuarterRecord,
   ExtractedBayaranRecord,
   ExtractedTunggakanRecord,
   ExtractResult,
   TunggakanExtractResult,
 } from "../../../components/extract-review-shared";
-
-export type ReviewKind = "bayaran" | "tunggakan" | "penghuni" | "kuarters";
-
-type StatCard = {
-  label: string;
-  value: string;
-  helper: string;
-  icon: string;
-  tone: "blue" | "green";
-};
-
-const reviewContent: Record<
+import { getReviewContent } from "./review_page_components/get-review-content";
+import ReviewActions from "./review_page_components/ReviewActions";
+import ReviewHeader from "./review_page_components/ReviewHeader";
+import ReviewPreviewPanel from "./review_page_components/ReviewPreviewPanel";
+import {
+  notifySessionStorageChange,
+  subscribeToSessionStorage,
+} from "./review_page_components/session-storage";
+import StatCards from "./review_page_components/StatCards";
+import type {
   ReviewKind,
-  {
-    fileName: string;
-    stats: StatCard[];
-    addLabel: string;
-  }
-> = {
-  bayaran: {
-    fileName: "Penyata_Gaji_Jan_2024.pdf",
-    stats: [
-      {
-        label: "Tarikh Bayaran",
-        value: "Julai 2024",
-        helper: "Data Bulanan",
-        icon: "calendar_month",
-        tone: "blue",
-      },
-      {
-        label: "Jumlah Rekod",
-        value: "45",
-        helper: "Perlu Disemak",
-        icon: "fact_check",
-        tone: "green",
-      },
-      {
-        label: "Jumlah Bayaran (RM)",
-        value: "RM 15,450.00",
-        helper: "Telah Dikumpul",
-        icon: "payments",
-        tone: "green",
-      },
-    ],
-    addLabel: "Tambah Bayaran",
-  },
-  tunggakan: {
-    fileName: "Penyata_Tunggakan_Jan_2024.pdf",
-    stats: [
-      {
-        label: "Tarikh Tunggakan",
-        value: "12 Januari 2024",
-        helper: "Data Bulanan",
-        icon: "calendar_month",
-        tone: "blue",
-      },
-      {
-        label: "Jumlah Rekod",
-        value: "45",
-        helper: "Perlu Disemak",
-        icon: "fact_check",
-        tone: "green",
-      },
-      {
-        label: "Jumlah Tunggakan (RM)",
-        value: "RM 15,450.00",
-        helper: "Telah Tertunggak",
-        icon: "payments",
-        tone: "green",
-      },
-    ],
-    addLabel: "Tambah Tunggakan",
-  },
-  penghuni: {
-    fileName: "Penyata_Penghuni_Jan_2024.pdf",
-    stats: [
-      {
-        label: "Jumlah Rekod",
-        value: "45",
-        helper: "Perlu Disemak",
-        icon: "fact_check",
-        tone: "green",
-      },
-    ],
-    addLabel: "Tambah Penghuni",
-  },
-  kuarters: {
-    fileName: "Penyata_Kuarters_Jan_2024.pdf",
-    stats: [
-      {
-        label: "Jumlah Rekod",
-        value: "158",
-        helper: "Perlu Disemak",
-        icon: "fact_check",
-        tone: "green",
-      },
-      {
-        label: "Total Kategori",
-        value: "12",
-        helper: "Kategori Aktif",
-        icon: "category",
-        tone: "blue",
-      },
-      {
-        label: "Total Unit",
-        value: "146",
-        helper: "Unit Berdaftar",
-        icon: "apartment",
-        tone: "blue",
-      },
-    ],
-    addLabel: "Tambah Kategori",
-  },
-};
+  VerifyingMode,
+} from "./review_page_components/types";
 
-function StatCards({ stats }: { stats: StatCard[] }) {
-  return (
-    <div className="grid gap-4 md:grid-cols-3">
-      {stats.map((stat) => (
-        <div
-          key={stat.label}
-          className="min-h-29 rounded border border-[#E7EAF2] bg-white px-6 py-5 shadow-sm"
-        >
-          <p className="text-[10px] font-extrabold uppercase text-[#667085]">
-            {stat.label}
-          </p>
-          <p className="mt-2 text-[30px] font-extrabold leading-none text-[#07162F]">
-            {stat.value}
-          </p>
-          <div
-            className={[
-              "mt-4 flex items-center gap-1 text-[10px] font-extrabold",
-              stat.tone === "green" ? "text-green" : "text-blue-500",
-            ].join(" ")}
-          >
-            <Icon icon={stat.icon} size={12} weight={700} />
-            {stat.helper}
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-const SESSION_STORAGE_CHANGE_EVENT = "extract-review-storage";
-
-const subscribeToSessionStorage = (onStoreChange: () => void) => {
-  window.addEventListener(SESSION_STORAGE_CHANGE_EVENT, onStoreChange);
-  window.addEventListener("storage", onStoreChange);
-
-  return () => {
-    window.removeEventListener(SESSION_STORAGE_CHANGE_EVENT, onStoreChange);
-    window.removeEventListener("storage", onStoreChange);
-  };
-};
-
-const notifySessionStorageChange = () => {
-  window.dispatchEvent(new Event(SESSION_STORAGE_CHANGE_EVENT));
-};
-
-function ReviewTable({
-  kind,
-  bayaranRecords,
-  onBayaranTotalAmountChange,
-  onBayaranRecordsChange,
-  penghuniRecords,
-  kuartersRecords,
-  tunggakanRecords,
-  onTunggakanRecordsChange,
-  selectedKeys,
-  onSelectedKeysChange,
-}: {
-  kind: ReviewKind;
-  bayaranRecords: ExtractedBayaranRecord[];
-  onBayaranTotalAmountChange?: (totalAmount: string) => void;
-  onBayaranRecordsChange?: (
-    records: ExtractedBayaranRecord[],
-    totalAmount: string,
-  ) => void;
-  penghuniRecords: ExtractedPenghuniRecord[];
-  kuartersRecords: ExtractedQuarterRecord[];
-  tunggakanRecords: ExtractedTunggakanRecord[];
-  onTunggakanRecordsChange?: (
-    records: ExtractedTunggakanRecord[],
-    totalAmount: string,
-  ) => void;
-  selectedKeys: string[];
-  onSelectedKeysChange: (keys: string[]) => void;
-}) {
-  if (kind === "bayaran") {
-    return (
-      <BayaranReviewTable
-        key={bayaranRecords
-          .map((record) => record.paymentId ?? `${record.page}-${record.bil}-${record.noGajiNoKp}`)
-          .join("|")}
-        records={bayaranRecords}
-        onTotalAmountChange={onBayaranTotalAmountChange}
-        onRecordsChange={onBayaranRecordsChange}
-        selectedKeys={selectedKeys}
-        onSelectedKeysChange={onSelectedKeysChange}
-      />
-    );
-  }
-
-  if (kind === "tunggakan") {
-    return (
-      <TunggakanReviewTable
-        key={tunggakanRecords
-          .map((record) => record.arrearsSummaryId ?? record.sourceRow)
-          .join("|")}
-        records={tunggakanRecords}
-        onRecordsChange={onTunggakanRecordsChange}
-        selectedKeys={selectedKeys}
-        onSelectedKeysChange={onSelectedKeysChange}
-      />
-    );
-  }
-
-  if (kind === "penghuni") {
-    return (
-      <PenghuniReviewTable
-        records={penghuniRecords}
-        selectedKeys={selectedKeys}
-        onSelectedKeysChange={onSelectedKeysChange}
-      />
-    );
-  }
-
-  return (
-    <KuartersReviewTable
-      key={kuartersRecords
-        .map((record) => record.categoryId ?? record.id)
-        .join("|")}
-      records={kuartersRecords}
-      selectedKeys={selectedKeys}
-      onSelectedKeysChange={onSelectedKeysChange}
-    />
-  );
-}
+export type { ReviewKind } from "./review_page_components/types";
 
 export default function ExtractReviewPage({ kind }: { kind: ReviewKind }) {
   const router = useRouter();
@@ -266,9 +35,7 @@ export default function ExtractReviewPage({ kind }: { kind: ReviewKind }) {
     string | null
   >(null);
   const [verificationMessage, setVerificationMessage] = useState("");
-  const [verifyingMode, setVerifyingMode] = useState<"selected" | "all" | null>(
-    null,
-  );
+  const [verifyingMode, setVerifyingMode] = useState<VerifyingMode | null>(null);
   const [selectedRecordKeys, setSelectedRecordKeys] = useState<string[]>([]);
   const storedExtract = useSyncExternalStore(
     subscribeToSessionStorage,
@@ -380,7 +147,7 @@ export default function ExtractReviewPage({ kind }: { kind: ReviewKind }) {
     router.push(ROUTES.muatNaik);
   };
 
-  const handleVerifyData = async (mode: "selected" | "all") => {
+  const handleVerifyData = async (mode: VerifyingMode) => {
     if (verifyingMode) {
       return;
     }
@@ -443,223 +210,46 @@ export default function ExtractReviewPage({ kind }: { kind: ReviewKind }) {
     }
   };
 
-  const content = useMemo(() => {
-    const baseContent = reviewContent[kind];
-
-    if (kind === "bayaran" && bayaranExtract) {
-      return {
-        ...baseContent,
-        fileName: uploadedFileName || baseContent.fileName,
-        stats: baseContent.stats.map((stat) => {
-          if (stat.label === "Tarikh Bayaran") {
-            return {
-              ...stat,
-              value: bayaranExtract.paymentMonth || "-",
-            };
-          }
-
-          if (stat.label === "Jumlah Rekod") {
-            return {
-              ...stat,
-              value: String(bayaranExtract.recordCount),
-            };
-          }
-
-          if (stat.label === "Jumlah Bayaran (RM)") {
-            const totalAmount =
-              bayaranEditedTotalAmount ?? bayaranExtract.totalAmount;
-
-            return {
-              ...stat,
-              value: `RM ${Number(totalAmount).toLocaleString("ms-MY", {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              })}`,
-            };
-          }
-
-          return stat;
-        }),
-      };
-    }
-
-    if (kind === "kuarters" && kuartersExtract) {
-      return {
-        ...baseContent,
-        fileName: uploadedFileName || baseContent.fileName,
-        stats: baseContent.stats.map((stat) => {
-          if (stat.label === "Jumlah Rekod" || stat.label === "Total Kategori") {
-            return {
-              ...stat,
-              value: String(kuartersExtract.recordCount),
-            };
-          }
-
-          if (stat.label === "Total Unit") {
-            return {
-              ...stat,
-              value: String(kuartersExtract.totalUnits),
-            };
-          }
-
-          return stat;
-        }),
-      };
-    }
-
-    if (kind === "tunggakan" && tunggakanExtract) {
-      return {
-        ...baseContent,
-        fileName: uploadedFileName || baseContent.fileName,
-        stats: baseContent.stats.map((stat) => {
-          if (stat.label === "Tarikh Tunggakan") {
-            return {
-              ...stat,
-              value: "-",
-            };
-          }
-
-          if (stat.label === "Jumlah Rekod") {
-            return {
-              ...stat,
-              value: String(tunggakanExtract.recordCount),
-            };
-          }
-
-          if (stat.label === "Jumlah Tunggakan (RM)") {
-            return {
-              ...stat,
-              value: `RM ${Number(tunggakanExtract.totalAmount).toLocaleString(
-                "ms-MY",
-                {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                },
-              )}`,
-            };
-          }
-
-          return stat;
-        }),
-      };
-    }
-
-    if (kind === "penghuni" && penghuniExtract) {
-      return {
-        ...baseContent,
-        fileName: uploadedFileName || baseContent.fileName,
-        stats: baseContent.stats.map((stat) =>
-          stat.label === "Jumlah Rekod"
-            ? {
-                ...stat,
-                value: String(penghuniExtract.recordCount),
-              }
-            : stat,
-        ),
-      };
-    }
-
-    return baseContent;
-  }, [
-    kind,
-    bayaranEditedTotalAmount,
-    bayaranExtract,
-    kuartersExtract,
-    penghuniExtract,
-    tunggakanExtract,
-    uploadedFileName,
-  ]);
+  const content = useMemo(
+    () =>
+      getReviewContent({
+        kind,
+        extractResult,
+        uploadedFileName,
+        bayaranEditedTotalAmount,
+      }),
+    [kind, extractResult, uploadedFileName, bayaranEditedTotalAmount],
+  );
 
   return (
     <section className="min-h-full bg-background">
       <div className="flex w-full flex-col gap-8">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="flex min-w-0 items-start gap-4">
-            <span className="mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded bg-[#FFEAEA] text-red">
-              <Icon icon="picture_as_pdf" size={22} filled weight={700} />
-            </span>
-            <div className="min-w-0">
-              <h1 className="truncate text-[26px] font-extrabold leading-tight text-[#07162F]">
-                {content.fileName}
-              </h1>
-              <p className="mt-1 text-sm font-medium text-[#667085]">
-                Sila sahkan ketepatan data yang telah diekstrak secara automatik.
-              </p>
-            </div>
-          </div>
-
-          <button
-            type="button"
-            className="inline-flex h-11 items-center justify-center gap-2 rounded border border-[#E1E5EF] bg-white px-6 text-xs font-extrabold text-[#344054] shadow-sm"
-            onClick={handleReviewLater}
-          >
-            <Icon icon="history" size={16} weight={600} />
-            Semak Nanti
-          </button>
-        </div>
+        <ReviewHeader
+          fileName={content.fileName}
+          onReviewLater={handleReviewLater}
+        />
 
         <StatCards stats={content.stats} />
 
-        <div className="overflow-hidden rounded-xl border border-[#DCE7FF] bg-light-blue shadow-sm">
-          <div className="flex items-start justify-between px-5 py-5">
-            <div>
-              <h2 className="text-lg font-extrabold text-[#07162F]">
-                Pratinjau Data Ekstrak
-              </h2>
-              <p className="text-xs font-medium text-[#344054]">
-                Sila semak maklumat sebelum pengesahan.
-              </p>
-            </div>
-            <Icon icon="filter_alt" size={22} weight={500} className="text-[#667085]" />
-          </div>
-          <div className="px-2 pb-2">
-            <ReviewTable
-              kind={kind}
-              bayaranRecords={bayaranExtract?.records ?? []}
-              onBayaranTotalAmountChange={setBayaranEditedTotalAmount}
-              onBayaranRecordsChange={updateCurrentBayaranDraft}
-              penghuniRecords={penghuniExtract?.records ?? []}
-              kuartersRecords={kuartersExtract?.records ?? []}
-              tunggakanRecords={tunggakanExtract?.records ?? []}
-              onTunggakanRecordsChange={updateCurrentTunggakanDraft}
-              selectedKeys={selectedRecordKeys}
-              onSelectedKeysChange={setSelectedRecordKeys}
-            />
-          </div>
-        </div>
+        <ReviewPreviewPanel
+          kind={kind}
+          bayaranRecords={bayaranExtract?.records ?? []}
+          onBayaranTotalAmountChange={setBayaranEditedTotalAmount}
+          onBayaranRecordsChange={updateCurrentBayaranDraft}
+          penghuniRecords={penghuniExtract?.records ?? []}
+          kuartersRecords={kuartersExtract?.records ?? []}
+          tunggakanRecords={tunggakanExtract?.records ?? []}
+          onTunggakanRecordsChange={updateCurrentTunggakanDraft}
+          selectedKeys={selectedRecordKeys}
+          onSelectedKeysChange={setSelectedRecordKeys}
+        />
 
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <button className="inline-flex h-11 items-center justify-center gap-2 rounded bg-dark-blue px-6 text-xs font-extrabold text-white shadow-sm">
-            <Icon icon="add" size={16} weight={700} />
-            {content.addLabel}
-          </button>
-
-          <div className="flex flex-wrap gap-3">
-            <button
-              type="button"
-              className="inline-flex h-11 items-center justify-center gap-2 rounded bg-dark-blue px-7 text-xs font-extrabold text-white shadow-sm disabled:cursor-not-allowed disabled:bg-[#6B7280]"
-              onClick={() => handleVerifyData("selected")}
-              disabled={verifyingMode === "selected"}
-            >
-              <Icon icon="settings_backup_restore" size={15} weight={700} />
-              {verifyingMode === "selected" ? "Mengesahkan..." : "Sahkan Data"}
-            </button>
-            <button
-              type="button"
-              className="inline-flex h-11 items-center justify-center gap-2 rounded bg-green px-7 text-xs font-extrabold text-white shadow-sm disabled:cursor-not-allowed disabled:bg-[#6B7280]"
-              onClick={() => handleVerifyData("all")}
-              disabled={verifyingMode === "all"}
-            >
-              <Icon icon="done_all" size={15} weight={700} />
-              {verifyingMode === "all" ? "Mengesahkan..." : "Sahkan Semua Data"}
-            </button>
-          </div>
-        </div>
-        {verificationMessage ? (
-          <p className="text-right text-xs font-bold text-red">
-            {verificationMessage}
-          </p>
-        ) : null}
+        <ReviewActions
+          addLabel={content.addLabel}
+          verifyingMode={verifyingMode}
+          verificationMessage={verificationMessage}
+          onVerify={handleVerifyData}
+        />
       </div>
     </section>
   );
