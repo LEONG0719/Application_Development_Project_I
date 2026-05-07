@@ -5,9 +5,8 @@ export function getKuartersRecordKey(record: ExtractedQuarterRecord) {
 }
 
 export function getUnitKey(unit: {
-  sourceSheet: string;
-  sourceRow: number;
+  unitId?: string;
   unitCode: string;
 }) {
-  return `${unit.sourceSheet}-${unit.sourceRow}-${unit.unitCode}`;
+  return unit.unitId ?? unit.unitCode;
 }

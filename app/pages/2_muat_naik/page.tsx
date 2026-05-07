@@ -4,19 +4,21 @@ import { ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ROUTES } from "../../constants/routes";
 import CategoryTabs from "./components/CategoryTabs";
+import DemoDocumentButton from "./components/DemoDocumentButton";
+import ParsingModeTabs from "./components/ParsingModeTabs";
 import ProcessingQueueTable from "./components/ProcessingQueueTable";
 import UploadDropzone from "./components/UploadDropzone";
 import { draftKindByCategory, reviewRoutes } from "./components/constants";
 import {
-  CURRENT_EXTRACT_DRAFT_ID_STORAGE_KEY,
   type ExtractResult,
   type ProcessingDraft,
 } from "./components/extract-review-shared";
-import type { Category } from "./components/types";
+import type { Category, ParsingMode } from "./components/types";
 
 export default function MuatNaikPage() {
   const router = useRouter();
   const [activeCategory, setActiveCategory] = useState<Category>("Bayaran");
+  const [parsingMode, setParsingMode] = useState<ParsingMode>("strict");
   const [selectedFileName, setSelectedFileName] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -135,12 +137,12 @@ export default function MuatNaikPage() {
     try {
       const formData = new FormData();
       formData.append("file", selectedFile);
+      formData.append("parsingMode", parsingMode);
 
-      const apiBaseUrl = process.env.NEXT_PUBLIC_AI_SERVICE_URL ?? "http://127.0.0.1:8000";
       const extractKind = reviewRoutes[activeCategory];
       setProcessingProgress(18);
       setProcessingStage(`Mengekstrak data ${extractKind}...`);
-      const response = await fetch(`${apiBaseUrl}/extract/${extractKind}`, {
+      const response = await fetch(`/api/extract/${extractKind}`, {
         method: "POST",
         body: formData,
         signal: abortController.signal,
@@ -149,11 +151,15 @@ export default function MuatNaikPage() {
       if (!response.ok) {
         const errorBody = await response.json().catch(() => null);
         throw new Error(
-          errorBody?.detail ?? `Gagal mengekstrak data ${extractKind}.`,
+          errorBody?.message ?? `Gagal mengekstrak data ${extractKind}.`,
         );
       }
 
-      const extractedData = await response.json();
+      const extractionResult = await response.json();
+      const extractedData = extractionResult.data?.extractResult;
+      if (!extractedData) {
+        throw new Error(`Gagal mengekstrak data ${extractKind}.`);
+      }
       const saveResponse = await fetch("/api/uploaded-documents", {
         method: "POST",
         headers: {
@@ -180,13 +186,9 @@ export default function MuatNaikPage() {
       setProcessingProgress(96);
       setProcessingStage("Membuka halaman semakan...");
       setProcessingDrafts((currentDrafts) => [draft, ...currentDrafts]);
-      sessionStorage.setItem(CURRENT_EXTRACT_DRAFT_ID_STORAGE_KEY, draft.id);
-      sessionStorage.setItem(
-        `${extractKind}ExtractResult`,
-        JSON.stringify(draft.extractResult),
+      router.push(
+        `${ROUTES.muatNaik}/semakan/${extractKind}?draftId=${encodeURIComponent(draft.id)}`,
       );
-      sessionStorage.setItem(`${extractKind}ExtractFileName`, selectedFile.name);
-      router.push(`${ROUTES.muatNaik}/semakan/${extractKind}`);
     } catch (error) {
       const extractKind = reviewRoutes[activeCategory];
       if (error instanceof DOMException && error.name === "AbortError") {
@@ -214,13 +216,9 @@ export default function MuatNaikPage() {
   }
 
   function handleContinueDraft(draft: ProcessingDraft) {
-    sessionStorage.setItem(CURRENT_EXTRACT_DRAFT_ID_STORAGE_KEY, draft.id);
-    sessionStorage.setItem(
-      `${draft.kind}ExtractResult`,
-      JSON.stringify(draft.extractResult),
+    router.push(
+      `${ROUTES.muatNaik}/semakan/${draft.kind}?draftId=${encodeURIComponent(draft.id)}`,
     );
-    sessionStorage.setItem(`${draft.kind}ExtractFileName`, draft.fileName);
-    router.push(`${ROUTES.muatNaik}/semakan/${draft.kind}`);
   }
 
   async function handleDeleteDraft(draftId: string) {
@@ -242,19 +240,30 @@ export default function MuatNaikPage() {
   return (
     <section className="min-h-full bg-background">
       <div className="flex w-full flex-col gap-6">
-        <div className="flex flex-col gap-1">
-          <h1 className="text-[30px] font-extrabold leading-tight text-[#07162F]">
-            Muat Naik Document
-          </h1>
-          <p className="text-[15px] font-medium text-[#667085]">
-            Sila muat naik fail untuk pemprosesan maklumat sistem.
-          </p>
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="flex min-w-0 flex-col gap-1">
+            <h1 className="text-[30px] font-extrabold leading-tight text-[#07162F]">
+              Muat Naik Document
+            </h1>
+            <p className="text-[15px] font-medium text-[#667085]">
+              Sila muat naik fail untuk pemprosesan maklumat sistem.
+            </p>
+          </div>
+
+          <DemoDocumentButton />
         </div>
 
         <CategoryTabs
           activeCategory={activeCategory}
           disabled={isProcessing}
           onCategoryChange={setActiveCategory}
+          rightContent={
+            <ParsingModeTabs
+              value={parsingMode}
+              disabled={isProcessing}
+              onChange={setParsingMode}
+            />
+          }
         />
 
         <UploadDropzone

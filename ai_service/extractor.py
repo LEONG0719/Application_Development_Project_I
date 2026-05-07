@@ -3,7 +3,7 @@ from __future__ import annotations
 from extractors import (
     extract_bayaran_from_pdf,
     extract_bayaran_from_xlsx,
-    extract_kuarters_from_xlsx,
+    extract_kuarters_document,
     extract_penghuni_from_xlsx,
     extract_tunggakan_from_xlsx,
 )
@@ -12,7 +12,7 @@ from extractors import (
 __all__ = [
     "extract_bayaran_from_xlsx",
     "extract_bayaran_from_pdf",
-    "extract_kuarters_from_xlsx",
+    "extract_kuarters_document",
     "extract_penghuni_from_xlsx",
     "extract_tunggakan_from_xlsx",
 ]

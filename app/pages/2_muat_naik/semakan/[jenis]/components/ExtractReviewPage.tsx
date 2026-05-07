@@ -1,26 +1,22 @@
 "use client";
 
-import { useMemo, useState, useSyncExternalStore } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ROUTES } from "../../../../../constants/routes";
-import {
-  CURRENT_EXTRACT_DRAFT_ID_STORAGE_KEY,
-} from "../../../components/extract-review-shared";
 import type {
   BayaranExtractResult,
   ExtractedBayaranRecord,
+  ExtractedQuarterRecord,
   ExtractedTunggakanRecord,
   ExtractResult,
+  KuartersExtractResult,
+  ProcessingDraft,
   TunggakanExtractResult,
 } from "../../../components/extract-review-shared";
 import { getReviewContent } from "./review_page_components/get-review-content";
 import ReviewActions from "./review_page_components/ReviewActions";
 import ReviewHeader from "./review_page_components/ReviewHeader";
 import ReviewPreviewPanel from "./review_page_components/ReviewPreviewPanel";
-import {
-  notifySessionStorageChange,
-  subscribeToSessionStorage,
-} from "./review_page_components/session-storage";
 import StatCards from "./review_page_components/StatCards";
 import type {
   ReviewKind,
@@ -29,7 +25,13 @@ import type {
 
 export type { ReviewKind } from "./review_page_components/types";
 
-export default function ExtractReviewPage({ kind }: { kind: ReviewKind }) {
+export default function ExtractReviewPage({
+  draftId,
+  kind,
+}: {
+  draftId: string;
+  kind: ReviewKind;
+}) {
   const router = useRouter();
   const [bayaranEditedTotalAmount, setBayaranEditedTotalAmount] = useState<
     string | null
@@ -37,28 +39,69 @@ export default function ExtractReviewPage({ kind }: { kind: ReviewKind }) {
   const [verificationMessage, setVerificationMessage] = useState("");
   const [verifyingMode, setVerifyingMode] = useState<VerifyingMode | null>(null);
   const [selectedRecordKeys, setSelectedRecordKeys] = useState<string[]>([]);
-  const storedExtract = useSyncExternalStore(
-    subscribeToSessionStorage,
-    () => window.sessionStorage.getItem(`${kind}ExtractResult`) ?? "",
-    () => "",
-  );
-  const uploadedFileName = useSyncExternalStore(
-    subscribeToSessionStorage,
-    () => window.sessionStorage.getItem(`${kind}ExtractFileName`) ?? "",
-    () => "",
-  );
+  const [extractResult, setExtractResult] = useState<ExtractResult | null>(null);
+  const [uploadedFileName, setUploadedFileName] = useState("");
+  const [isLoadingDraft, setIsLoadingDraft] = useState(true);
 
-  const extractResult = useMemo(() => {
-    if (!storedExtract) {
-      return null;
+  useEffect(() => {
+    let isActive = true;
+
+    async function loadDraft() {
+      if (!draftId) {
+        setVerificationMessage("Dokumen semakan tidak ditemui.");
+        setIsLoadingDraft(false);
+        return;
+      }
+
+      setIsLoadingDraft(true);
+      setVerificationMessage("");
+
+      try {
+        const response = await fetch(`/api/uploaded-documents/${draftId}`);
+        const result = await response.json().catch(() => null);
+
+        if (!response.ok || !result?.data?.document) {
+          throw new Error(result?.message ?? "Gagal mendapatkan draf dokumen.");
+        }
+
+        const document = result.data.document as ProcessingDraft;
+
+        if (document.kind !== kind) {
+          throw new Error("Jenis dokumen semakan tidak sepadan.");
+        }
+
+        if (!isActive) {
+          return;
+        }
+
+        setExtractResult(document.extractResult);
+        setUploadedFileName(document.fileName);
+      } catch (error) {
+        if (!isActive) {
+          return;
+        }
+
+        setExtractResult(null);
+        setUploadedFileName("");
+        setVerificationMessage(
+          error instanceof Error
+            ? error.message
+            : "Gagal mendapatkan draf dokumen.",
+        );
+      } finally {
+        if (isActive) {
+          setIsLoadingDraft(false);
+        }
+      }
     }
 
-    try {
-      return JSON.parse(storedExtract) as ExtractResult;
-    } catch {
-      return null;
-    }
-  }, [storedExtract]);
+    void loadDraft();
+
+    return () => {
+      isActive = false;
+    };
+  }, [draftId, kind]);
+
   const bayaranExtract =
     extractResult?.documentType === "bayaran" ? extractResult : null;
   const penghuniExtract =
@@ -82,18 +125,12 @@ export default function ExtractReviewPage({ kind }: { kind: ReviewKind }) {
       totalAmount,
       records,
     };
-    const draftId = window.sessionStorage.getItem(
-      CURRENT_EXTRACT_DRAFT_ID_STORAGE_KEY,
-    );
-
-    window.sessionStorage.setItem("bayaranExtractResult", JSON.stringify(nextExtract));
-    notifySessionStorageChange();
-
     if (!draftId) {
       return;
     }
 
-    await fetch(`/api/uploaded-documents/${draftId}`, {
+    setExtractResult(nextExtract);
+    const response = await fetch(`/api/uploaded-documents/${draftId}`, {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
@@ -102,6 +139,15 @@ export default function ExtractReviewPage({ kind }: { kind: ReviewKind }) {
         extractResult: nextExtract,
       }),
     });
+    const result = await response.json().catch(() => null);
+
+    if (response.ok && result?.data?.document?.extractResult) {
+      setExtractResult(result.data.document.extractResult as ExtractResult);
+    } else if (!response.ok) {
+      setVerificationMessage(
+        result?.message ?? "Gagal menyimpan perubahan bayaran.",
+      );
+    }
   };
 
   const updateCurrentTunggakanDraft = async (
@@ -118,21 +164,12 @@ export default function ExtractReviewPage({ kind }: { kind: ReviewKind }) {
       totalAmount,
       records,
     };
-    const draftId = window.sessionStorage.getItem(
-      CURRENT_EXTRACT_DRAFT_ID_STORAGE_KEY,
-    );
-
-    window.sessionStorage.setItem(
-      "tunggakanExtractResult",
-      JSON.stringify(nextExtract),
-    );
-    notifySessionStorageChange();
-
     if (!draftId) {
       return;
     }
 
-    await fetch(`/api/uploaded-documents/${draftId}`, {
+    setExtractResult(nextExtract);
+    const response = await fetch(`/api/uploaded-documents/${draftId}`, {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
@@ -141,6 +178,51 @@ export default function ExtractReviewPage({ kind }: { kind: ReviewKind }) {
         extractResult: nextExtract,
       }),
     });
+    const result = await response.json().catch(() => null);
+
+    if (response.ok && result?.data?.document?.extractResult) {
+      setExtractResult(result.data.document.extractResult as ExtractResult);
+    } else if (!response.ok) {
+      setVerificationMessage(
+        result?.message ?? "Gagal menyimpan perubahan tunggakan.",
+      );
+    }
+  };
+
+  const updateCurrentKuartersDraft = async (records: ExtractedQuarterRecord[]) => {
+    if (!kuartersExtract) {
+      return;
+    }
+
+    const nextExtract: KuartersExtractResult = {
+      ...kuartersExtract,
+      recordCount: records.length,
+      totalUnits: records.reduce((total, record) => total + record.units.length, 0),
+      records,
+    };
+    if (!draftId) {
+      return;
+    }
+
+    setExtractResult(nextExtract);
+    const response = await fetch(`/api/uploaded-documents/${draftId}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        extractResult: nextExtract,
+      }),
+    });
+    const result = await response.json().catch(() => null);
+
+    if (response.ok && result?.data?.document?.extractResult) {
+      setExtractResult(result.data.document.extractResult as ExtractResult);
+    } else if (!response.ok) {
+      setVerificationMessage(
+        result?.message ?? "Gagal menyimpan perubahan kuarters.",
+      );
+    }
   };
 
   const handleReviewLater = () => {
@@ -151,10 +233,6 @@ export default function ExtractReviewPage({ kind }: { kind: ReviewKind }) {
     if (verifyingMode) {
       return;
     }
-
-    const draftId = window.sessionStorage.getItem(
-      CURRENT_EXTRACT_DRAFT_ID_STORAGE_KEY,
-    );
 
     if (!draftId) {
       setVerificationMessage("Dokumen semakan tidak ditemui.");
@@ -187,18 +265,10 @@ export default function ExtractReviewPage({ kind }: { kind: ReviewKind }) {
       }
 
       if (result?.data?.remainingExtractResult) {
-        window.sessionStorage.setItem(
-          `${kind}ExtractResult`,
-          JSON.stringify(result.data.remainingExtractResult),
-        );
-        notifySessionStorageChange();
+        setExtractResult(result.data.remainingExtractResult as ExtractResult);
         setSelectedRecordKeys([]);
         setVerificationMessage("Rekod dipilih berjaya disahkan.");
       } else {
-        window.sessionStorage.removeItem(CURRENT_EXTRACT_DRAFT_ID_STORAGE_KEY);
-        window.sessionStorage.removeItem(`${kind}ExtractResult`);
-        window.sessionStorage.removeItem(`${kind}ExtractFileName`);
-        notifySessionStorageChange();
         router.push(ROUTES.muatNaik);
       }
     } catch (error) {
@@ -225,7 +295,7 @@ export default function ExtractReviewPage({ kind }: { kind: ReviewKind }) {
     <section className="min-h-full bg-background">
       <div className="flex w-full flex-col gap-8">
         <ReviewHeader
-          fileName={content.fileName}
+          fileName={isLoadingDraft ? "Memuatkan draf..." : content.fileName}
           onReviewLater={handleReviewLater}
         />
 
@@ -238,6 +308,8 @@ export default function ExtractReviewPage({ kind }: { kind: ReviewKind }) {
           onBayaranRecordsChange={updateCurrentBayaranDraft}
           penghuniRecords={penghuniExtract?.records ?? []}
           kuartersRecords={kuartersExtract?.records ?? []}
+          kuartersParsingMode={kuartersExtract?.parsingMode}
+          onKuartersRecordsChange={updateCurrentKuartersDraft}
           tunggakanRecords={tunggakanExtract?.records ?? []}
           onTunggakanRecordsChange={updateCurrentTunggakanDraft}
           selectedKeys={selectedRecordKeys}

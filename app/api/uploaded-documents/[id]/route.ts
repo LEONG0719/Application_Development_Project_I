@@ -77,7 +77,7 @@ export async function PATCH(request: Request, context: RouteContext) {
     }
 
     const document = await prisma.$transaction(
-      async (tx) => {
+      async (tx: Prisma.TransactionClient) => {
         if (extractResult.documentType === "bayaran") {
           const nextPaymentIds = new Set(
             extractResult.records
@@ -180,6 +180,107 @@ export async function PATCH(request: Request, context: RouteContext) {
           }
         }
 
+        if (extractResult.documentType === "kuarters") {
+          for (const record of extractResult.records) {
+            if (!record.categoryId) {
+              continue;
+            }
+
+            if (!record.address?.trim()) {
+              record.address = "N/A";
+            }
+
+            const duplicateCategories = await tx.$queryRaw<{ id: string }[]>`
+              SELECT "id"
+              FROM "QuarterCategory"
+              WHERE "id" <> ${record.categoryId}::uuid
+                AND UPPER(TRIM(regexp_replace("categoryName", '\\s+', ' ', 'g'))) =
+                  UPPER(TRIM(regexp_replace(${record.categoryName}, '\\s+', ' ', 'g')))
+                AND UPPER(TRIM(regexp_replace(COALESCE("address", ''), '\\s+', ' ', 'g'))) =
+                  UPPER(TRIM(regexp_replace(COALESCE(${record.address}::text, ''), '\\s+', ' ', 'g')))
+              LIMIT 1
+            `;
+
+            if (duplicateCategories.length > 0) {
+              throw new Error(
+                `Kategori dan alamat kuarters telah wujud: ${record.categoryName}.`,
+              );
+            }
+
+            await tx.$executeRaw`
+              UPDATE "QuarterCategory"
+              SET
+                "categoryName" = ${record.categoryName},
+                "address" = ${record.address},
+                "rentalPrice" = ${record.rentalPrice || "0"}::numeric,
+                "maintenancePrice" = ${record.maintenancePrice || "0"}::numeric,
+                "penaltyPrice" = ${record.penaltyPrice || "0"}::numeric,
+                "updatedAt" = NOW()
+              WHERE "id" = ${record.categoryId}::uuid
+                AND "uploadedDocumentId" = ${id}::uuid
+                AND "recordStatus" = 'PENDING'::"RecordStatus"
+            `;
+
+            // Handle units for the category
+            const nextUnitIds = new Set(
+              record.units
+                .map((unit: { unitId?: string }) => unit.unitId)
+                .filter(Boolean),
+            );
+            const existingUnits = await tx.$queryRaw<{ id: string }[]>`
+              SELECT "id"
+              FROM "Unit"
+              WHERE "categoryId" = ${record.categoryId}::uuid
+                AND "uploadedDocumentId" = ${id}::uuid
+                AND "recordStatus" = 'PENDING'::"RecordStatus"
+            `;
+            const unitIdsToDelete = existingUnits
+              .map((unit) => unit.id)
+              .filter((unitId) => !nextUnitIds.has(unitId));
+            
+            if (unitIdsToDelete.length > 0) {
+              await tx.$executeRaw`
+                DELETE FROM "Unit"
+                WHERE "id" IN (${Prisma.join(
+                  unitIdsToDelete.map((unitId) => Prisma.sql`${unitId}::uuid`),
+                )})
+                  AND "uploadedDocumentId" = ${id}::uuid
+                  AND "recordStatus" = 'PENDING'::"RecordStatus"
+              `;
+            }
+
+            for (const unit of record.units) {
+              if (!unit.unitId) {
+                continue;
+              }
+
+              const duplicateUnits = await tx.$queryRaw<{ id: string }[]>`
+                SELECT "id"
+                FROM "Unit"
+                WHERE "id" <> ${unit.unitId}::uuid
+                  AND "categoryId" = ${record.categoryId}::uuid
+                  AND UPPER(TRIM(regexp_replace("unitCode", '\\s+', ' ', 'g'))) =
+                    UPPER(TRIM(regexp_replace(${unit.unitCode}, '\\s+', ' ', 'g')))
+                LIMIT 1
+              `;
+
+              if (duplicateUnits.length > 0) {
+                throw new Error(
+                  `Kod unit telah wujud untuk kategori ini: ${unit.unitCode}.`,
+                );
+              }
+
+              await tx.$executeRaw`
+                UPDATE "Unit"
+                SET "unitCode" = ${unit.unitCode}, "updatedAt" = NOW()
+                WHERE "id" = ${unit.unitId}::uuid
+                  AND "uploadedDocumentId" = ${id}::uuid
+                  AND "recordStatus" = 'PENDING'::"RecordStatus"
+              `;
+            }
+          }
+        }
+
         const updatedDocument = await tx.uploadedDocument.update({
           where: { id },
           data: {
@@ -231,7 +332,7 @@ export async function DELETE(_request: Request, context: RouteContext) {
     const { id } = await context.params;
 
     await prisma.$transaction(
-      async (tx) => {
+      async (tx: Prisma.TransactionClient) => {
         const document = await tx.uploadedDocument.findUnique({
           where: { id },
           select: {

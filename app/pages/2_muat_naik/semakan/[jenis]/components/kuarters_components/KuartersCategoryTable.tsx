@@ -30,6 +30,8 @@ type KuartersCategoryTableProps = {
 };
 
 const priceFields: Array<[KuartersPriceField, string]> = [
+  ["categoryName", "Kategori"],
+  ["address", "Alamat"],
   ["rentalPrice", "Sewa (RM)"],
   ["maintenancePrice", "Senggara (RM)"],
   ["penaltyPrice", "Penalti (RM)"],
@@ -61,9 +63,14 @@ export default function KuartersCategoryTable({
             <th className="w-10 px-5 py-4">
               <input type="checkbox" className="h-4 w-4" />
             </th>
-            <th className="px-4 py-4">Kategori</th>
             {priceFields.map(([, label]) => (
-              <th key={label} className="px-4 py-4 text-right">
+              <th
+                key={label}
+                className={[
+                  "px-4 py-4",
+                  label.includes("RM") ? "text-right" : "",
+                ].join(" ")}
+              >
                 {label}
               </th>
             ))}
@@ -74,7 +81,7 @@ export default function KuartersCategoryTable({
           {pageCategories.length === 0 ? (
             <tr>
               <td
-                colSpan={6}
+                colSpan={7}
                 className="px-6 py-10 text-center text-sm font-semibold text-[#667085]"
               >
                 Tiada kategori atau unit kuarters baharu ditemui.
@@ -103,33 +110,41 @@ export default function KuartersCategoryTable({
                       }
                     />
                   </td>
-                  <td className="px-4 py-4 font-extrabold text-[#172033]">
-                    <p>{category.categoryName}</p>
-                    <p className="text-[10px] font-semibold text-[#667085]">
-                      {category.unitCount} unit
-                    </p>
-                  </td>
                   {priceFields.map(([field]) => {
                     const value = category[field];
                     const draftValue = categoryDrafts[category.id]?.[field] ?? value;
+                    const isMoneyField = field.endsWith("Price");
 
                     return (
                       <td
                         key={`${category.id}-${field}`}
-                        className="px-4 py-4 text-right"
+                        className={[
+                          "px-4 py-4",
+                          isMoneyField ? "text-right" : "",
+                        ].join(" ")}
                       >
                         {isEditing ? (
                           <input
-                            className="h-9 w-22 rounded border border-[#E6EAF2] px-3 text-right font-extrabold"
+                            className={[
+                              "h-9 rounded border border-[#E6EAF2] px-3 font-extrabold",
+                              isMoneyField ? "w-22 text-right" : "w-full min-w-32",
+                            ].join(" ")}
                             value={draftValue}
                             onChange={(event) =>
                               onUpdateDraft(category.id, field, event.target.value)
                             }
                           />
                         ) : (
-                          <span className="font-extrabold text-[#172033]">
-                            {value}
-                          </span>
+                          <>
+                            <span className="font-extrabold text-[#172033]">
+                              {value || "-"}
+                            </span>
+                            {field === "categoryName" ? (
+                              <span className="block text-[10px] font-semibold text-[#667085]">
+                                {category.unitCount} unit
+                              </span>
+                            ) : null}
+                          </>
                         )}
                       </td>
                     );

@@ -1,4 +1,5 @@
-import Icon from "../../../components/Icon";
+import type { ReactNode } from "react";
+
 import { categories } from "./constants";
 import type { Category } from "./types";
 
@@ -6,12 +7,14 @@ type CategoryTabsProps = {
   activeCategory: Category;
   disabled?: boolean;
   onCategoryChange: (category: Category) => void;
+  rightContent?: ReactNode;
 };
 
 export default function CategoryTabs({
   activeCategory,
   disabled = false,
   onCategoryChange,
+  rightContent,
 }: CategoryTabsProps) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-4 pt-3">
@@ -40,13 +43,7 @@ export default function CategoryTabs({
         })}
       </div>
 
-      <button
-        type="button"
-        className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-[#DCE2F1] bg-white px-5 text-xs font-extrabold text-dark-blue shadow-sm transition hover:border-[#C8D2EA] hover:bg-[#FBFCFF]"
-      >
-        <Icon icon="download" size={17} weight={600} />
-        Demo Document
-      </button>
+      {rightContent}
     </div>
   );
 }

@@ -31,22 +31,17 @@ export type ExtractedQuarterUnit = {
   unitId?: string;
   unitCode: string;
   address: string;
-  sourceSheet: string;
-  sourceRow: number;
 };
 
 export type ExtractedQuarterRecord = {
   id: string;
   categoryId?: string;
   categoryName: string;
-  kawasan: string;
-  typeLabel: string;
+  address: string;
   rentalPrice: string;
   maintenancePrice: string;
   penaltyPrice: string;
   unitCount: number;
-  sourceSheet: string;
-  sourceRow: number;
   units: ExtractedQuarterUnit[];
 };
 
@@ -54,6 +49,7 @@ export type KuartersExtractResult = {
   documentType: "kuarters";
   recordCount: number;
   totalUnits: number;
+  parsingMode?: "strict" | "assisted";
   records: ExtractedQuarterRecord[];
 };
 
@@ -120,8 +116,6 @@ export type ProcessingDraft = {
   uploadedAt: string;
   extractResult: ExtractResult;
 };
-
-export const CURRENT_EXTRACT_DRAFT_ID_STORAGE_KEY = "currentExtractDraftId";
 
 export function formatDraftDateTime(value: string) {
   const date = new Date(value);

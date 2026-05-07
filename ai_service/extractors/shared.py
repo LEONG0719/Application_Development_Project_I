@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta
 from io import BytesIO
+import posixpath
 import re
 import zipfile
 import xml.etree.ElementTree as ET
@@ -133,9 +134,27 @@ def _read_sheet_paths(archive: zipfile.ZipFile) -> list[tuple[str, str]]:
         if not target:
             continue
 
-        sheet_paths.append((sheet.attrib["name"], f"xl/{target.lstrip('/')}"))
+        normalized_target = _workbook_relationship_path(target, archive)
+
+        sheet_paths.append((sheet.attrib["name"], normalized_target))
 
     return sheet_paths
+
+def _workbook_relationship_path(target: str, archive: zipfile.ZipFile) -> str:
+    normalized_target = posixpath.normpath(target.replace("\\", "/").lstrip("/"))
+    candidates = []
+
+    if normalized_target.startswith("xl/"):
+        candidates.append(normalized_target)
+    else:
+        candidates.append(posixpath.normpath(f"xl/{normalized_target}"))
+        candidates.append(normalized_target)
+
+    for candidate in candidates:
+        if candidate in archive.namelist():
+            return candidate
+
+    return candidates[0]
 
 
 def _read_sheet_rows(

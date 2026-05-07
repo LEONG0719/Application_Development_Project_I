@@ -623,7 +623,7 @@ export async function createPendingKuartersRows(
   const enrichedRecords = [];
 
   for (const record of extractResult.records) {
-    const categoryAddress = record.kawasan || null;
+    const categoryAddress = record.address?.trim() || "N/A";
     let resolvedCategoryId = await findQuarterCategoryByNameAddress(
       tx,
       record.categoryName,
@@ -653,7 +653,8 @@ export async function createPendingKuartersRows(
           categoryAddress,
         ));
     }
-
+    
+    // If the category still cannot be resolved, skip processing this record
     if (!resolvedCategoryId) {
       continue;
     }

@@ -29,6 +29,7 @@ type RouteContext = {
   }>;
 };
 
+// This route handler is responsible for verifying the selected records from the extract result of an uploaded document. It updates the record status of the selected records to "VERIFIED" and sets the verifiedAt timestamp. If all records are verified, it also updates the uploaded document's record status to "VERIFIED". If there are remaining unverified records, it updates the uploaded document's remark with the remaining extract result and keeps the record status as "PENDING".
 export async function POST(request: Request, context: RouteContext) {
   try {
     const currentAdmin = await getCurrentAdmin();
@@ -44,7 +45,7 @@ export async function POST(request: Request, context: RouteContext) {
       : null;
 
     const remainingExtractResult = await prisma.$transaction(
-      async (tx) => {
+      async (tx: Prisma.TransactionClient) => {
         const document = await tx.uploadedDocument.findUnique({
           where: { id },
           select: {

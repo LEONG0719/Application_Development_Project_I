@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import type { Prisma } from "@prisma/client";
 
 import {
   createPendingBayaranRows,
@@ -94,7 +95,7 @@ export async function POST(request: Request) {
     }
 
     const document = await prisma.$transaction(
-      async (tx) => {
+      async (tx: Prisma.TransactionClient) => {
         const createdDocument = await tx.uploadedDocument.create({
           data: {
             fileName,

@@ -13,12 +13,14 @@ import type { KuartersCategoryDraft, KuartersPriceField } from "./types";
 
 type KuartersReviewTableProps = {
   records: ExtractedQuarterRecord[];
+  onRecordsChange?: (records: ExtractedQuarterRecord[]) => void;
   selectedKeys?: string[];
   onSelectedKeysChange?: (keys: string[]) => void;
 };
 
 export default function KuartersReviewTable({
   records,
+  onRecordsChange,
   selectedKeys = [],
   onSelectedKeysChange,
 }: KuartersReviewTableProps) {
@@ -81,6 +83,8 @@ export default function KuartersReviewTable({
     setCategoryDrafts((currentDrafts) => ({
       ...currentDrafts,
       [category.id]: {
+        categoryName: category.categoryName,
+        address: category.address,
         rentalPrice: category.rentalPrice,
         maintenancePrice: category.maintenancePrice,
         penaltyPrice: category.penaltyPrice,
@@ -97,6 +101,8 @@ export default function KuartersReviewTable({
     setCategoryDrafts((currentDrafts) => ({
       ...currentDrafts,
       [categoryId]: {
+        categoryName: currentDrafts[categoryId]?.categoryName ?? "",
+        address: currentDrafts[categoryId]?.address ?? "",
         rentalPrice: currentDrafts[categoryId]?.rentalPrice ?? "",
         maintenancePrice: currentDrafts[categoryId]?.maintenancePrice ?? "",
         penaltyPrice: currentDrafts[categoryId]?.penaltyPrice ?? "",
@@ -113,11 +119,13 @@ export default function KuartersReviewTable({
       return;
     }
 
-    setCategories((currentCategories) =>
-      currentCategories.map((category) =>
+    setCategories((currentCategories) => {
+      const nextCategories = currentCategories.map((category) =>
         category.id === categoryId ? { ...category, ...draft } : category,
-      ),
-    );
+      );
+      onRecordsChange?.(nextCategories);
+      return nextCategories;
+    });
     setEditingCategoryId(null);
   };
 
@@ -137,8 +145,8 @@ export default function KuartersReviewTable({
       return;
     }
 
-    setCategories((currentCategories) =>
-      currentCategories.map((category) =>
+    setCategories((currentCategories) => {
+      const nextCategories = currentCategories.map((category) =>
         category.id === selectedCategory.id
           ? {
               ...category,
@@ -149,8 +157,10 @@ export default function KuartersReviewTable({
               ),
             }
           : category,
-      ),
-    );
+      );
+      onRecordsChange?.(nextCategories);
+      return nextCategories;
+    });
     setEditingUnitKey(null);
   };
 
