@@ -6,7 +6,7 @@ import {
   type ExtractedBayaranRecord,
   Pagination,
   RESIDENTS_PER_PAGE,
-} from "./extract-review-shared";
+} from "../../../components/extract-review-shared";
 
 export default function BayaranReviewTable({
   records,

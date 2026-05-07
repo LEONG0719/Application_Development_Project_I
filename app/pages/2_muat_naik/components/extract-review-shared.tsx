@@ -1,6 +1,6 @@
 "use client";
 
-import Icon from "../../../../../components/Icon";
+import Icon from "../../../components/Icon";
 
 export type ExtractedPenghuniRecord = {
   residentId?: string;
@@ -138,39 +138,6 @@ export function formatDraftDateTime(value: string) {
     minute: "2-digit",
   });
 }
-
-export const sampleResidents = [
-  {
-    name: "Ahmad Azam bin Sulaiman",
-    ic: "850412-81-5543",
-    date: "12 Julai 2024",
-    receipt: "RES-2024-001",
-    amount: "450.00",
-    quarters: "Kategori C\nUnit 12-A, Blok B",
-    contact: "012-3456789\nazam.sul@gmail.com",
-    job: "Penolong Jurutera\nJA29\nJKR Daerah Johor Bahru",
-  },
-  {
-    name: "Siti Yasmin binti Abdullah",
-    ic: "920115-81-6622",
-    date: "12 Julai 2024",
-    receipt: "RES-2024-002",
-    amount: "320.00",
-    quarters: "Kategori D\nUnit 05-C, Blok E",
-    contact: "019-8765432\nyasmin.abd@moe.gov.my",
-    job: "Guru Siswazah DG41\nSK Taman Universiti",
-  },
-  {
-    name: "Mohd Khairul bin Idris",
-    ic: "780922-81-4431",
-    date: "12 Julai 2024",
-    receipt: "RES-2024-003",
-    amount: "150.00",
-    quarters: "Kategori B\nNo. 22, Jalan Perdana 4",
-    contact: "017-1122334\nkhairul.idris@health.gov.my",
-    job: "Pegawai Perubatan\nUD48\nHospital Sultanah Aminah",
-  },
-];
 
 export const RESIDENTS_PER_PAGE = 10;
 export const QUARTER_CATEGORIES_PER_PAGE = 10;

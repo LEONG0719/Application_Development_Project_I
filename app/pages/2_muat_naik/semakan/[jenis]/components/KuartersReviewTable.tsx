@@ -7,7 +7,7 @@ import {
   Pagination,
   QUARTER_CATEGORIES_PER_PAGE,
   QUARTER_UNITS_PER_PAGE,
-} from "./extract-review-shared";
+} from "../../../components/extract-review-shared";
 
 export default function KuartersReviewTable({
   records,

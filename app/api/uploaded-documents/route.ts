@@ -103,6 +103,7 @@ export async function POST(request: Request) {
             fileSize,
             category: documentCategoryForKind(kind),
             recordStatus: "PENDING",
+            uploadedById: currentAdmin?.profile.id ?? null,
             description: "Menunggu semakan dan pengesahan data ekstrak.",
             remark: JSON.stringify(extractResult),
           },

@@ -6,7 +6,7 @@ import {
   Pagination,
   RESIDENTS_PER_PAGE,
   type ExtractedTunggakanRecord,
-} from "./extract-review-shared";
+} from "../../../components/extract-review-shared";
 
 type TunggakanReviewTableProps = {
   records: ExtractedTunggakanRecord[];

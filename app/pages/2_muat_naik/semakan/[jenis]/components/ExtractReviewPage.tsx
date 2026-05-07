@@ -10,7 +10,7 @@ import PenghuniReviewTable from "./PenghuniReviewTable";
 import TunggakanReviewTable from "./TunggakanReviewTable";
 import {
   CURRENT_EXTRACT_DRAFT_ID_STORAGE_KEY,
-} from "./extract-review-shared";
+} from "../../../components/extract-review-shared";
 import type {
   BayaranExtractResult,
   ExtractedPenghuniRecord,
@@ -19,7 +19,7 @@ import type {
   ExtractedTunggakanRecord,
   ExtractResult,
   TunggakanExtractResult,
-} from "./extract-review-shared";
+} from "../../../components/extract-review-shared";
 
 export type ReviewKind = "bayaran" | "tunggakan" | "penghuni" | "kuarters";
 

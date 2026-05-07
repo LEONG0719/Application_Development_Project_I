@@ -6,7 +6,7 @@ import {
   type ExtractedPenghuniRecord,
   Pagination,
   RESIDENTS_PER_PAGE,
-} from "./extract-review-shared";
+} from "../../../components/extract-review-shared";
 
 export default function PenghuniReviewTable({
   records,
