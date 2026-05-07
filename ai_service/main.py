@@ -40,7 +40,7 @@ def load_local_env() -> None:
         if not separator:
             continue
 
-        os.environ.setdefault(key.strip(), value.strip().strip("\"'"))
+        os.environ[key.strip()] = value.strip().strip("\"'")
 
 
 def get_allowed_origins() -> list[str]:

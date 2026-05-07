@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import re
 
-from extractor_shared import (
+from extractors.shared import (
     build_header_map_for,
     clean_header,
     get_cell,
