@@ -36,6 +36,7 @@ export type ExtractedQuarterUnit = {
 export type ExtractedQuarterRecord = {
   id: string;
   categoryId?: string;
+  categoryRecordStatus?: "PENDING" | "VERIFIED" | "REJECTED";
   categoryName: string;
   address: string;
   rentalPrice: string;

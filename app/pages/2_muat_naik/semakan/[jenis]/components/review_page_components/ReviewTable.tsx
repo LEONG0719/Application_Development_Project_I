@@ -21,6 +21,19 @@ type ReviewTableProps = {
   penghuniRecords: ExtractedPenghuniRecord[];
   kuartersRecords: ExtractedQuarterRecord[];
   onKuartersRecordsChange?: (records: ExtractedQuarterRecord[]) => Promise<void>;
+  onKuartersCategoryChange?: (params: {
+    categoryId: string;
+    categoryName: string;
+    address: string;
+    rentalPrice: string;
+    maintenancePrice: string;
+    penaltyPrice: string;
+  }) => Promise<void>;
+  onKuartersUnitChange?: (params: {
+    categoryId: string;
+    unitId: string;
+    unitCode: string;
+  }) => Promise<void>;
   tunggakanRecords: ExtractedTunggakanRecord[];
   onTunggakanRecordsChange?: (
     records: ExtractedTunggakanRecord[],
@@ -38,6 +51,8 @@ export default function ReviewTable({
   penghuniRecords,
   kuartersRecords,
   onKuartersRecordsChange,
+  onKuartersCategoryChange,
+  onKuartersUnitChange,
   tunggakanRecords,
   onTunggakanRecordsChange,
   selectedKeys,
@@ -91,6 +106,8 @@ export default function ReviewTable({
       key={kuartersRecords.map((record) => record.categoryId ?? record.id).join("|")}
       records={kuartersRecords}
       onRecordsChange={onKuartersRecordsChange}
+      onCategoryChange={onKuartersCategoryChange}
+      onUnitChange={onKuartersUnitChange}
       selectedKeys={selectedKeys}
       onSelectedKeysChange={onSelectedKeysChange}
     />

@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import KuartersFeedbackBanner from "@/app/pages/7_kuarters/components/KuartersFeedbackBanner";
+import type { KuartersNotice } from "@/app/pages/7_kuarters/components/kuartersHelpers";
 import {
   type ExtractedQuarterRecord,
   QUARTER_CATEGORIES_PER_PAGE,
@@ -14,6 +16,19 @@ import type { KuartersCategoryDraft, KuartersPriceField } from "./types";
 type KuartersReviewTableProps = {
   records: ExtractedQuarterRecord[];
   onRecordsChange?: (records: ExtractedQuarterRecord[]) => Promise<void>;
+  onCategoryChange?: (params: {
+    categoryId: string;
+    categoryName: string;
+    address: string;
+    rentalPrice: string;
+    maintenancePrice: string;
+    penaltyPrice: string;
+  }) => Promise<void>;
+  onUnitChange?: (params: {
+    categoryId: string;
+    unitId: string;
+    unitCode: string;
+  }) => Promise<void>;
   selectedKeys?: string[];
   onSelectedKeysChange?: (keys: string[]) => void;
 };
@@ -21,10 +36,12 @@ type KuartersReviewTableProps = {
 export default function KuartersReviewTable({
   records,
   onRecordsChange,
+  onCategoryChange,
+  onUnitChange,
   selectedKeys = [],
   onSelectedKeysChange,
 }: KuartersReviewTableProps) {
-  const [categories, setCategories] = useState<ExtractedQuarterRecord[]>(records);
+  const categories = records;
   const [categoryDrafts, setCategoryDrafts] = useState<
     Record<string, KuartersCategoryDraft>
   >({});
@@ -34,8 +51,11 @@ export default function KuartersReviewTable({
   );
   const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
   const [editingUnitKey, setEditingUnitKey] = useState<string | null>(null);
+  const [savingTarget, setSavingTarget] = useState<string | null>(null);
+  const [notice, setNotice] = useState<KuartersNotice | null>(null);
   const [categoryPage, setCategoryPage] = useState(1);
   const [unitPage, setUnitPage] = useState(1);
+  const isSaving = savingTarget !== null;
 
   const selectedCategory =
     categories.find((category) => category.id === selectedCategoryId) ??
@@ -70,12 +90,23 @@ export default function KuartersReviewTable({
     allCategoryKeys.length > 0 &&
     allCategoryKeys.every((key) => selectedKeySet.has(key));
 
+  const showNotice = (noticeTone: KuartersNotice["tone"], message: string) => {
+    setNotice({ tone: noticeTone, message });
+  };
+
+  const getSaveErrorMessage = (error: unknown, fallbackMessage: string) =>
+    error instanceof Error ? error.message : fallbackMessage;
+
   useEffect(() => {
     if (!editingCategoryId && !editingUnitKey) {
       return;
     }
 
     const handlePointerDown = (event: PointerEvent) => {
+      if (isSaving) {
+        return;
+      }
+
       const target = event.target;
 
       if (!(target instanceof Element)) {
@@ -97,15 +128,23 @@ export default function KuartersReviewTable({
     return () => {
       document.removeEventListener("pointerdown", handlePointerDown);
     };
-  }, [editingCategoryId, editingUnitKey]);
+  }, [editingCategoryId, editingUnitKey, isSaving]);
 
   const selectCategory = (categoryId: string) => {
+    if (isSaving) {
+      return;
+    }
+
     setSelectedCategoryId(categoryId);
     setUnitPage(1);
     setEditingUnitKey(null);
   };
 
   const toggleSelectedCategory = (categoryKey: string, checked: boolean) => {
+    if (isSaving) {
+      return;
+    }
+
     const nextKeys = new Set(selectedKeys);
 
     if (checked) {
@@ -118,6 +157,10 @@ export default function KuartersReviewTable({
   };
 
   const toggleAllCategories = (checked: boolean) => {
+    if (isSaving) {
+      return;
+    }
+
     const nextKeys = new Set(selectedKeys);
 
     allCategoryKeys.forEach((key) => {
@@ -132,6 +175,10 @@ export default function KuartersReviewTable({
   };
 
   const startCategoryEdit = (category: ExtractedQuarterRecord) => {
+    if (isSaving) {
+      return;
+    }
+
     setCategoryDrafts((currentDrafts) => ({
       ...currentDrafts,
       [category.id]: {
@@ -150,6 +197,10 @@ export default function KuartersReviewTable({
     field: KuartersPriceField,
     value: string,
   ) => {
+    if (isSaving) {
+      return;
+    }
+
     setCategoryDrafts((currentDrafts) => ({
       ...currentDrafts,
       [categoryId]: {
@@ -164,9 +215,14 @@ export default function KuartersReviewTable({
   };
 
   const saveCategory = async (categoryId: string) => {
-    const draft = categoryDrafts[categoryId];
+    if (isSaving) {
+      return;
+    }
 
-    if (!draft) {
+    const draft = categoryDrafts[categoryId];
+    const targetCategory = categories.find((category) => category.id === categoryId);
+
+    if (!draft || !targetCategory) {
       setEditingCategoryId(null);
       return;
     }
@@ -175,21 +231,46 @@ export default function KuartersReviewTable({
       category.id === categoryId ? { ...category, ...draft } : category,
     );
 
+    setSavingTarget(`category:${categoryId}`);
     try {
-      await onRecordsChange?.(nextCategories);
-      setCategories(nextCategories);
+      if (onCategoryChange && targetCategory.categoryId) {
+        await onCategoryChange({
+          categoryId: targetCategory.categoryId,
+          categoryName: draft.categoryName,
+          address: draft.address,
+          rentalPrice: draft.rentalPrice,
+          maintenancePrice: draft.maintenancePrice,
+          penaltyPrice: draft.penaltyPrice,
+        });
+      } else {
+        await onRecordsChange?.(nextCategories);
+      }
       setEditingCategoryId(null);
-    } catch {
-      // Keep edit mode open; the parent displays the backend error message.
+      showNotice("success", "Perubahan kategori kuarters berjaya disimpan.");
+    } catch (error) {
+      showNotice(
+        "error",
+        getSaveErrorMessage(error, "Gagal menyimpan perubahan kategori kuarters."),
+      );
+    } finally {
+      setSavingTarget(null);
     }
   };
 
   const cancelEditing = () => {
+    if (isSaving) {
+      return;
+    }
+
     setEditingCategoryId(null);
     setEditingUnitKey(null);
   };
 
   const startUnitEdit = (unitKey: string, unitCode: string) => {
+    if (isSaving) {
+      return;
+    }
+
     setUnitDrafts((currentDrafts) => ({
       ...currentDrafts,
       [unitKey]: unitCode,
@@ -198,6 +279,10 @@ export default function KuartersReviewTable({
   };
 
   const saveUnit = async (unitKey: string) => {
+    if (isSaving) {
+      return;
+    }
+
     const draftUnitCode = unitDrafts[unitKey];
 
     if (!draftUnitCode || !selectedCategory) {
@@ -205,69 +290,94 @@ export default function KuartersReviewTable({
       return;
     }
 
-    const nextCategories = categories.map((category) =>
-      category.id === selectedCategory.id
-        ? {
-            ...category,
-            units: category.units.map((unit) =>
-              getUnitKey(unit) === unitKey
-                ? { ...unit, unitCode: draftUnitCode }
-                : unit,
-            ),
-          }
-        : category,
+    const targetUnit = selectedCategory.units.find(
+      (unit) => getUnitKey(unit) === unitKey,
     );
 
+    if (!targetUnit?.unitId || !selectedCategory.categoryId) {
+      showNotice("error", "Maklumat unit kuarters tidak lengkap untuk dikemas kini.");
+      return;
+    }
+
+    setSavingTarget(`unit:${unitKey}`);
     try {
-      await onRecordsChange?.(nextCategories);
-      setCategories(nextCategories);
+      await onUnitChange?.({
+        categoryId: selectedCategory.categoryId,
+        unitId: targetUnit.unitId,
+        unitCode: draftUnitCode,
+      });
       setEditingUnitKey(null);
-    } catch {
-      // Keep edit mode open; the parent displays the backend error message.
+      showNotice("success", "Perubahan unit kuarters berjaya disimpan.");
+    } catch (error) {
+      showNotice(
+        "error",
+        getSaveErrorMessage(error, "Gagal menyimpan perubahan unit kuarters."),
+      );
+    } finally {
+      setSavingTarget(null);
     }
   };
 
   return (
-    <div
-      className="grid overflow-hidden rounded-2xl border border-light-grey/20 bg-white lg:grid-cols-[1fr_260px]"
-    >
-      <KuartersCategoryTable
-        categories={categories}
-        pageCategories={pageCategories}
-        selectedCategoryId={resolvedSelectedCategoryId}
-        selectedKeys={selectedKeySet}
-        isAllSelected={isAllCategoriesSelected}
-        editingCategoryId={editingCategoryId}
-        categoryDrafts={categoryDrafts}
-        currentPage={safeCategoryPage}
-        totalPages={totalCategoryPages}
-        displayStart={categoryDisplayStart}
-        displayEnd={categoryDisplayEnd}
-        onPageChange={setCategoryPage}
-        onSelectCategory={selectCategory}
-        onToggleCategory={toggleSelectedCategory}
-        onToggleAllCategories={toggleAllCategories}
-        onStartEdit={startCategoryEdit}
-        onUpdateDraft={updateCategoryDraft}
-        onSaveCategory={saveCategory}
-        onCancelEdit={cancelEditing}
-      />
+    <>
+      <div
+        className="mb-6 grid overflow-hidden rounded-2xl border border-light-grey/20 bg-white lg:grid-cols-[1fr_260px]"
+      >
+        <KuartersCategoryTable
+          categories={categories}
+          pageCategories={pageCategories}
+          selectedCategoryId={resolvedSelectedCategoryId}
+          selectedKeys={selectedKeySet}
+          isAllSelected={isAllCategoriesSelected}
+          editingCategoryId={editingCategoryId}
+          savingCategoryId={
+            savingTarget?.startsWith("category:") ? savingTarget.slice(9) : null
+          }
+          isSaving={isSaving}
+          categoryDrafts={categoryDrafts}
+          currentPage={safeCategoryPage}
+          totalPages={totalCategoryPages}
+          displayStart={categoryDisplayStart}
+          displayEnd={categoryDisplayEnd}
+          onPageChange={(page) => {
+            if (!isSaving) {
+              setCategoryPage(page);
+            }
+          }}
+          onSelectCategory={selectCategory}
+          onToggleCategory={toggleSelectedCategory}
+          onToggleAllCategories={toggleAllCategories}
+          onStartEdit={startCategoryEdit}
+          onUpdateDraft={updateCategoryDraft}
+          onSaveCategory={saveCategory}
+          onCancelEdit={cancelEditing}
+        />
 
-      <KuartersUnitPanel
-        units={units}
-        pageUnits={pageUnits}
-        unitDrafts={unitDrafts}
-        editingUnitKey={editingUnitKey}
-        currentPage={safeUnitPage}
-        totalPages={totalUnitPages}
-        displayStart={unitDisplayStart}
-        displayEnd={unitDisplayEnd}
-        onPageChange={setUnitPage}
-        onDraftsChange={setUnitDrafts}
-        onStartEdit={startUnitEdit}
-        onSaveUnit={saveUnit}
-        onCancelEdit={cancelEditing}
-      />
-    </div>
+        <KuartersUnitPanel
+          units={units}
+          pageUnits={pageUnits}
+          unitDrafts={unitDrafts}
+          editingUnitKey={editingUnitKey}
+          savingUnitKey={
+            savingTarget?.startsWith("unit:") ? savingTarget.slice(5) : null
+          }
+          isSaving={isSaving}
+          currentPage={safeUnitPage}
+          totalPages={totalUnitPages}
+          displayStart={unitDisplayStart}
+          displayEnd={unitDisplayEnd}
+          onPageChange={(page) => {
+            if (!isSaving) {
+              setUnitPage(page);
+            }
+          }}
+          onDraftsChange={setUnitDrafts}
+          onStartEdit={startUnitEdit}
+          onSaveUnit={saveUnit}
+          onCancelEdit={cancelEditing}
+        />
+      </div>
+      <KuartersFeedbackBanner notice={notice} onDismiss={() => setNotice(null)} />
+    </>
   );
 }

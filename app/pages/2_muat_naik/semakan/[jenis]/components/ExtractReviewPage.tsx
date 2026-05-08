@@ -36,7 +36,7 @@ export default function ExtractReviewPage({
   const [bayaranEditedTotalAmount, setBayaranEditedTotalAmount] = useState<
     string | null
   >(null);
-  const [verificationMessage, setVerificationMessage] = useState("");
+  const [, setVerificationMessage] = useState("");
   const [verifyingMode, setVerifyingMode] = useState<VerifyingMode | null>(null);
   const [selectedRecordKeys, setSelectedRecordKeys] = useState<string[]>([]);
   const [extractResult, setExtractResult] = useState<ExtractResult | null>(null);
@@ -203,7 +203,6 @@ export default function ExtractReviewPage({
       return;
     }
 
-    setExtractResult(nextExtract);
     const response = await fetch(`/api/uploaded-documents/${draftId}`, {
       method: "PATCH",
       headers: {
@@ -222,6 +221,91 @@ export default function ExtractReviewPage({
     }
 
     const message = result?.message ?? "Gagal menyimpan perubahan kuarters.";
+    setVerificationMessage(message);
+    throw new Error(message);
+  };
+
+  const updateKuartersCategoryDraft = async ({
+    categoryId,
+    categoryName,
+    address,
+    rentalPrice,
+    maintenancePrice,
+    penaltyPrice,
+  }: {
+    categoryId: string;
+    categoryName: string;
+    address: string;
+    rentalPrice: string;
+    maintenancePrice: string;
+    penaltyPrice: string;
+  }) => {
+    if (!draftId) {
+      throw new Error("Dokumen semakan tidak ditemui.");
+    }
+
+    const response = await fetch(`/api/uploaded-documents/${draftId}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        action: "update-kuarters-category",
+        categoryId,
+        categoryName,
+        address,
+        rentalPrice,
+        maintenancePrice,
+        penaltyPrice,
+      }),
+    });
+    const result = await response.json().catch(() => null);
+
+    if (response.ok && result?.data?.document?.extractResult) {
+      setExtractResult(result.data.document.extractResult as ExtractResult);
+      setVerificationMessage("");
+      return;
+    }
+
+    const message = result?.message ?? "Gagal menyimpan perubahan kategori kuarters.";
+    setVerificationMessage(message);
+    throw new Error(message);
+  };
+
+  const updateKuartersUnitDraft = async ({
+    categoryId,
+    unitId,
+    unitCode,
+  }: {
+    categoryId: string;
+    unitId: string;
+    unitCode: string;
+  }) => {
+    if (!draftId) {
+      throw new Error("Dokumen semakan tidak ditemui.");
+    }
+
+    const response = await fetch(`/api/uploaded-documents/${draftId}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        action: "update-kuarters-unit",
+        categoryId,
+        unitId,
+        unitCode,
+      }),
+    });
+    const result = await response.json().catch(() => null);
+
+    if (response.ok && result?.data?.document?.extractResult) {
+      setExtractResult(result.data.document.extractResult as ExtractResult);
+      setVerificationMessage("");
+      return;
+    }
+
+    const message = result?.message ?? "Gagal menyimpan perubahan unit kuarters.";
     setVerificationMessage(message);
     throw new Error(message);
   };
@@ -301,6 +385,7 @@ export default function ExtractReviewPage({
 
         <ReviewPreviewPanel
           kind={kind}
+          isLoading={isLoadingDraft}
           bayaranRecords={bayaranExtract?.records ?? []}
           onBayaranTotalAmountChange={setBayaranEditedTotalAmount}
           onBayaranRecordsChange={updateCurrentBayaranDraft}
@@ -308,6 +393,8 @@ export default function ExtractReviewPage({
           kuartersRecords={kuartersExtract?.records ?? []}
           kuartersParsingMode={kuartersExtract?.parsingMode}
           onKuartersRecordsChange={updateCurrentKuartersDraft}
+          onKuartersCategoryChange={updateKuartersCategoryDraft}
+          onKuartersUnitChange={updateKuartersUnitDraft}
           tunggakanRecords={tunggakanExtract?.records ?? []}
           onTunggakanRecordsChange={updateCurrentTunggakanDraft}
           selectedKeys={selectedRecordKeys}
@@ -316,7 +403,6 @@ export default function ExtractReviewPage({
 
         <ReviewActions
           verifyingMode={verifyingMode}
-          verificationMessage={verificationMessage}
           onVerify={handleVerifyData}
         />
       </div>

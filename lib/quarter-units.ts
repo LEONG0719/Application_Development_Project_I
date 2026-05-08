@@ -170,6 +170,9 @@ export function buildQuarterCategoryUnitsDetailInclude(
 ) {
   return {
     units: {
+      where: {
+        recordStatus: "VERIFIED",
+      },
       orderBy: {
         unitCode: "asc",
       },

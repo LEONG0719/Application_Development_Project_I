@@ -91,7 +91,7 @@ export default function UploadDropzone({
         type="button"
         onClick={onUploadAction}
         disabled={isProcessing}
-        className="mt-6 inline-flex h-12 items-center justify-center gap-2 rounded-lg bg-dark-blue px-8 text-sm font-extrabold text-white shadow-[0_14px_24px_rgba(21,30,102,0.22)] transition hover:bg-[#202A78] disabled:cursor-not-allowed disabled:bg-[#6B7280]"
+        className="mt-6 inline-flex h-12 items-center justify-center gap-2 rounded-lg bg-dark-blue px-8 text-sm font-extrabold text-white shadow-[0_14px_24px_rgba(21,30,102,0.22)] transition-all duration-150 hover:-translate-y-0.5 hover:bg-[#202A78] hover:shadow-[0_18px_30px_rgba(21,30,102,0.26)] active:translate-y-0 active:scale-[0.97] active:bg-[#172062] active:shadow-[0_8px_16px_rgba(21,30,102,0.2)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-dark-blue/20 disabled:cursor-not-allowed disabled:bg-[#6B7280] disabled:shadow-none disabled:hover:translate-y-0"
       >
         <Icon
           icon={

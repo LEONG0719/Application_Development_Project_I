@@ -11,6 +11,7 @@ import type { ReviewKind } from "./types";
 
 type ReviewPreviewPanelProps = {
   kind: ReviewKind;
+  isLoading?: boolean;
   bayaranRecords: ExtractedBayaranRecord[];
   onBayaranTotalAmountChange?: (totalAmount: string) => void;
   onBayaranRecordsChange?: (
@@ -21,6 +22,19 @@ type ReviewPreviewPanelProps = {
   kuartersRecords: ExtractedQuarterRecord[];
   kuartersParsingMode?: KuartersExtractResult["parsingMode"];
   onKuartersRecordsChange?: (records: ExtractedQuarterRecord[]) => Promise<void>;
+  onKuartersCategoryChange?: (params: {
+    categoryId: string;
+    categoryName: string;
+    address: string;
+    rentalPrice: string;
+    maintenancePrice: string;
+    penaltyPrice: string;
+  }) => Promise<void>;
+  onKuartersUnitChange?: (params: {
+    categoryId: string;
+    unitId: string;
+    unitCode: string;
+  }) => Promise<void>;
   tunggakanRecords: ExtractedTunggakanRecord[];
   onTunggakanRecordsChange?: (
     records: ExtractedTunggakanRecord[],
@@ -32,7 +46,7 @@ type ReviewPreviewPanelProps = {
 
 export default function ReviewPreviewPanel(props: ReviewPreviewPanelProps) {
   return (
-    <div className="overflow-hidden rounded-xl border border-[#DCE7FF] bg-light-blue shadow-sm">
+    <div className="mb-10 overflow-hidden rounded-xl border border-[#DCE7FF] bg-light-blue shadow-sm">
       <div className="flex flex-wrap items-start justify-between gap-3 px-5 py-5">
         <div>
           <h2 className="text-lg font-extrabold text-[#07162F]">
@@ -55,7 +69,26 @@ export default function ReviewPreviewPanel(props: ReviewPreviewPanelProps) {
         )}
       </div>
       <div className="px-2 pb-2">
-        <ReviewTable {...props} />
+        {props.isLoading ? <ReviewTableLoading /> : <ReviewTable {...props} />}
+      </div>
+    </div>
+  );
+}
+
+function ReviewTableLoading() {
+  return (
+    <div className="flex min-h-80 flex-col items-center justify-center gap-4 rounded-xl border border-light-grey/20 bg-white px-6 py-16 text-center">
+      <div
+        className="h-10 w-10 animate-spin rounded-full border-4 border-light-grey/40 border-t-dark-blue"
+        aria-hidden="true"
+      />
+      <div>
+        <p className="text-sm font-extrabold text-dark-blue">
+          Memuatkan data semakan...
+        </p>
+        <p className="mt-1 text-xs font-medium text-grey">
+          Sila tunggu sebentar sementara rekod disediakan.
+        </p>
       </div>
     </div>
   );

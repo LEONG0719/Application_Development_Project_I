@@ -2,9 +2,12 @@ import type { DocumentCategory, Prisma, UploadedDocument } from "@prisma/client"
 import { randomUUID } from "crypto";
 
 import type {
+  ExtractedQuarterRecord,
   ExtractResult,
+  KuartersExtractResult,
   ProcessingDraft,
 } from "@/app/pages/2_muat_naik/components/extract-review-shared";
+import { prisma } from "@/lib/prisma";
 
 export type UploadedDocumentWithUploader = UploadedDocument & {
   uploadedBy?: {
@@ -55,6 +58,147 @@ export function mapUploadedDocumentForQueue(
     uploadedAt: document.uploadedAt.toISOString(),
     extractResult,
   };
+}
+
+export async function mapUploadedDocumentForReview(
+  document: UploadedDocumentWithUploader,
+): Promise<ProcessingDraft | null> {
+  const snapshotExtractResult = parseExtractResult(document.remark);
+  const documentType =
+    snapshotExtractResult?.documentType ?? document.category.toLowerCase();
+
+  if (documentType === "kuarters") {
+    const extractResult = await buildKuartersExtractResultFromPendingRows(
+      document.id,
+      snapshotExtractResult?.documentType === "kuarters"
+        ? snapshotExtractResult
+        : null,
+    );
+
+    if (!extractResult) {
+      return null;
+    }
+
+    return buildProcessingDraft(document, extractResult);
+  }
+
+  if (!snapshotExtractResult) {
+    return null;
+  }
+
+  return buildProcessingDraft(document, snapshotExtractResult);
+}
+
+function buildProcessingDraft(
+  document: UploadedDocumentWithUploader,
+  extractResult: ExtractResult,
+): ProcessingDraft {
+  return {
+    id: document.id,
+    kind: extractResult.documentType,
+    fileName: document.originalName ?? document.fileName,
+    fileType: document.fileType,
+    fileSize: document.fileSize,
+    uploadedBy: document.uploadedBy?.fullName ?? "Username",
+    uploadedAt: document.uploadedAt.toISOString(),
+    extractResult,
+  };
+}
+
+async function buildKuartersExtractResultFromPendingRows(
+  uploadedDocumentId: string,
+  snapshotExtractResult: KuartersExtractResult | null,
+): Promise<KuartersExtractResult | null> {
+  const pendingCategories = await prismaQuarterCategoriesForReview(uploadedDocumentId);
+  const pendingUnits = await prismaUnitsForReview(uploadedDocumentId);
+
+  if (pendingCategories.length === 0 && pendingUnits.length === 0) {
+    return snapshotExtractResult;
+  }
+
+  const categoriesById = new Map<
+    string,
+    | (typeof pendingCategories)[number]
+    | (typeof pendingUnits)[number]["quarterCategory"]
+  >();
+
+  pendingCategories.forEach((category) => {
+    categoriesById.set(category.id, category);
+  });
+  pendingUnits.forEach((unit) => {
+    categoriesById.set(unit.quarterCategory.id, unit.quarterCategory);
+  });
+
+  const unitsByCategoryId = new Map<string, typeof pendingUnits>();
+  pendingUnits.forEach((unit) => {
+    const units = unitsByCategoryId.get(unit.categoryId) ?? [];
+    units.push(unit);
+    unitsByCategoryId.set(unit.categoryId, units);
+  });
+
+  const snapshotRecordsByCategoryId = new Map(
+    snapshotExtractResult?.records
+      .filter((record) => record.categoryId)
+      .map((record) => [record.categoryId as string, record]) ?? [],
+  );
+
+  const records: ExtractedQuarterRecord[] = [...categoriesById.values()]
+    .map((category) => {
+      const units = unitsByCategoryId.get(category.id) ?? [];
+      const snapshotRecord = snapshotRecordsByCategoryId.get(category.id);
+
+      return {
+        id: snapshotRecord?.id ?? category.id,
+        categoryId: category.id,
+        categoryRecordStatus: category.recordStatus,
+        categoryName: category.categoryName,
+        address: category.address ?? "N/A",
+        rentalPrice: category.rentalPrice.toFixed(2),
+        maintenancePrice: category.maintenancePrice.toFixed(2),
+        penaltyPrice: category.penaltyPrice.toFixed(2),
+        unitCount: units.length,
+        units: units.map((unit) => ({
+          unitId: unit.id,
+          unitCode: unit.unitCode,
+          address: category.address ?? "N/A",
+        })),
+      };
+    })
+    .filter((record) => record.units.length > 0)
+    .sort((firstRecord, secondRecord) =>
+      firstRecord.categoryName.localeCompare(secondRecord.categoryName, "ms"),
+    );
+
+  return {
+    documentType: "kuarters",
+    parsingMode: snapshotExtractResult?.parsingMode,
+    recordCount: records.length,
+    totalUnits: records.reduce((total, record) => total + record.units.length, 0),
+    records,
+  };
+}
+
+function prismaQuarterCategoriesForReview(uploadedDocumentId: string) {
+  return prisma.quarterCategory.findMany({
+    where: {
+      uploadedDocumentId,
+      recordStatus: "PENDING",
+    },
+    orderBy: [{ categoryName: "asc" }, { createdAt: "asc" }],
+  });
+}
+
+function prismaUnitsForReview(uploadedDocumentId: string) {
+  return prisma.unit.findMany({
+    where: {
+      uploadedDocumentId,
+      recordStatus: "PENDING",
+    },
+    include: {
+      quarterCategory: true,
+    },
+    orderBy: [{ unitCode: "asc" }, { createdAt: "asc" }],
+  });
 }
 
 export function documentCategoryForKind(kind: ProcessingDraft["kind"]) {

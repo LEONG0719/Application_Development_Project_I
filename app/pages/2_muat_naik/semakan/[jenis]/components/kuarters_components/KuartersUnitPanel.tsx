@@ -10,6 +10,8 @@ type KuartersUnitPanelProps = {
   pageUnits: ExtractedQuarterUnit[];
   unitDrafts: Record<string, string>;
   editingUnitKey: string | null;
+  savingUnitKey: string | null;
+  isSaving: boolean;
   currentPage: number;
   totalPages: number;
   displayStart: number;
@@ -25,22 +27,31 @@ function ActionButton({
   icon,
   label,
   textClass,
+  iconClass,
   onClick,
+  disabled = false,
 }: {
   icon: string;
   label: string;
   textClass: string;
+  iconClass?: string;
   onClick?: () => void;
+  disabled?: boolean;
 }) {
   return (
     <button
       type="button"
       aria-label={label}
       title={label}
-      className={`inline-flex items-center justify-center rounded-lg p-2 transition-colors hover:bg-background ${textClass}`}
-      onClick={onClick}
+      disabled={disabled}
+      className={`inline-flex items-center justify-center rounded-lg p-2 transition-colors hover:bg-background disabled:cursor-not-allowed disabled:opacity-35 ${textClass}`}
+      onClick={() => {
+        if (!disabled) {
+          onClick?.();
+        }
+      }}
     >
-      <Icon icon={icon} size={18} />
+      <Icon icon={icon} size={18} className={iconClass} />
     </button>
   );
 }
@@ -50,6 +61,8 @@ export default function KuartersUnitPanel({
   pageUnits,
   unitDrafts,
   editingUnitKey,
+  savingUnitKey,
+  isSaving,
   currentPage,
   totalPages,
   displayStart,
@@ -77,6 +90,7 @@ export default function KuartersUnitPanel({
         pageUnits.map((unit) => {
           const unitKey = getUnitKey(unit);
           const isEditing = editingUnitKey === unitKey;
+          const isSavingUnit = savingUnitKey === unitKey;
 
           return (
             <div
@@ -90,6 +104,8 @@ export default function KuartersUnitPanel({
                     className="min-h-8 w-full rounded-lg border border-light-grey/35 bg-white px-3 py-1.5 text-xs font-medium text-dark-blue outline-none transition-colors placeholder:text-light-grey focus:border-dark-blue"
                     placeholder="Masukkan kod unit"
                     value={unitDrafts[unitKey] ?? unit.unitCode}
+                    disabled={isSaving}
+                    aria-busy={isSavingUnit}
                     onChange={(event) =>
                       onDraftsChange((currentDrafts) => ({
                         ...currentDrafts,
@@ -107,9 +123,15 @@ export default function KuartersUnitPanel({
                 {isEditing ? (
                   <>
                     <ActionButton
-                      icon="save"
-                      label="Simpan perubahan unit"
-                      textClass="text-green"
+                      icon={isSavingUnit ? "progress_activity" : "save"}
+                      label={
+                        isSavingUnit
+                          ? "Menyimpan perubahan unit"
+                          : "Simpan perubahan unit"
+                      }
+                      textClass={isSavingUnit ? "text-dark-blue" : "text-green"}
+                      iconClass={isSavingUnit ? "animate-spin" : undefined}
+                      disabled={isSaving && !isSavingUnit}
                       onClick={() => {
                         void onSaveUnit(unitKey);
                       }}
@@ -118,6 +140,7 @@ export default function KuartersUnitPanel({
                       icon="delete"
                       label="Batal edit unit"
                       textClass="text-red"
+                      disabled={isSaving}
                       onClick={onCancelEdit}
                     />
                   </>
@@ -126,6 +149,7 @@ export default function KuartersUnitPanel({
                     icon="edit"
                     label="Edit unit"
                     textClass="text-dark-blue"
+                    disabled={isSaving}
                     onClick={() => onStartEdit(unitKey, unit.unitCode)}
                   />
                 )}

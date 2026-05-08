@@ -13,6 +13,8 @@ type KuartersCategoryTableProps = {
   selectedKeys: Set<string>;
   isAllSelected: boolean;
   editingCategoryId: string | null;
+  savingCategoryId: string | null;
+  isSaving: boolean;
   categoryDrafts: Record<string, KuartersCategoryDraft>;
   currentPage: number;
   totalPages: number;
@@ -44,22 +46,34 @@ function ActionButton({
   icon,
   label,
   textClass,
+  iconClass,
   onClick,
+  disabled = false,
 }: {
   icon: string;
   label: string;
   textClass: string;
+  iconClass?: string;
   onClick: (event: React.MouseEvent<HTMLButtonElement>) => void;
+  disabled?: boolean;
 }) {
   return (
     <button
       type="button"
       aria-label={label}
       title={label}
-      className={`inline-flex items-center justify-center rounded-lg p-2 transition-colors hover:bg-background ${textClass}`}
-      onClick={onClick}
+      disabled={disabled}
+      className={`inline-flex items-center justify-center rounded-lg p-2 transition-colors hover:bg-background disabled:cursor-not-allowed disabled:opacity-35 ${textClass}`}
+      onClick={(event) => {
+        if (disabled) {
+          event.stopPropagation();
+          return;
+        }
+
+        onClick(event);
+      }}
     >
-      <Icon icon={icon} size={18} />
+      <Icon icon={icon} size={18} className={iconClass} />
     </button>
   );
 }
@@ -81,6 +95,8 @@ export default function KuartersCategoryTable({
   selectedKeys,
   isAllSelected,
   editingCategoryId,
+  savingCategoryId,
+  isSaving,
   categoryDrafts,
   currentPage,
   totalPages,
@@ -105,6 +121,7 @@ export default function KuartersCategoryTable({
                 type="checkbox"
                 aria-label="Pilih semua rekod kuarters"
                 checked={isAllSelected}
+                disabled={isSaving}
                 className="h-4 w-4 accent-dark-blue"
                 onChange={(event) => onToggleAllCategories(event.target.checked)}
               />
@@ -141,6 +158,8 @@ export default function KuartersCategoryTable({
               const isSelected = category.id === selectedCategoryId;
               const selectionKey = getKuartersRecordKey(category);
               const isEditing = editingCategoryId === category.id;
+              const isSavingCategory = savingCategoryId === category.id;
+              const canEditCategory = category.categoryRecordStatus !== "VERIFIED";
 
               return (
                 <tr
@@ -156,6 +175,7 @@ export default function KuartersCategoryTable({
                     <input
                       type="checkbox"
                       checked={selectedKeys.has(selectionKey)}
+                      disabled={isSaving}
                       className="h-4 w-4 accent-dark-blue"
                       onClick={(event) => event.stopPropagation()}
                       onChange={(event) =>
@@ -189,6 +209,8 @@ export default function KuartersCategoryTable({
                             ].join(" ")}
                             placeholder={isMoneyField ? "0.00" : "Masukkan maklumat"}
                             value={draftValue}
+                            disabled={isSaving}
+                            aria-busy={isSavingCategory}
                             onChange={(event) =>
                               onUpdateDraft(category.id, field, event.target.value)
                             }
@@ -207,6 +229,9 @@ export default function KuartersCategoryTable({
                             {field === "categoryName" ? (
                               <span className="block text-[10px] font-medium text-grey">
                                 {category.unitCount} unit
+                                {category.categoryRecordStatus === "VERIFIED"
+                                  ? " - kategori sedia ada"
+                                  : ""}
                               </span>
                             ) : null}
                           </>
@@ -219,9 +244,15 @@ export default function KuartersCategoryTable({
                       {isEditing ? (
                         <>
                           <ActionButton
-                            icon="save"
-                            label="Simpan perubahan kategori"
-                            textClass="text-green"
+                            icon={isSavingCategory ? "progress_activity" : "save"}
+                            label={
+                              isSavingCategory
+                                ? "Menyimpan perubahan kategori"
+                                : "Simpan perubahan kategori"
+                            }
+                            textClass={isSavingCategory ? "text-dark-blue" : "text-green"}
+                            iconClass={isSavingCategory ? "animate-spin" : undefined}
+                            disabled={isSaving && !isSavingCategory}
                             onClick={(event) => {
                               event.stopPropagation();
                               void onSaveCategory(category.id);
@@ -231,12 +262,14 @@ export default function KuartersCategoryTable({
                             icon="delete"
                             label="Padam kategori"
                             textClass="text-red"
+                            disabled={isSaving}
                             onClick={(event) => event.stopPropagation()}
                           />
                           <ActionButton
                             icon="chevron_left"
                             label="Sembunyikan senarai unit"
                             textClass="text-grey"
+                            disabled={isSaving}
                             onClick={(event) => {
                               event.stopPropagation();
                               onCancelEdit();
@@ -246,11 +279,18 @@ export default function KuartersCategoryTable({
                       ) : (
                         <ActionButton
                           icon="edit"
-                          label="Edit kategori"
-                          textClass="text-dark-blue"
+                          label={
+                            canEditCategory
+                              ? "Edit kategori"
+                              : "Kategori sedia ada tidak boleh diedit di semakan"
+                          }
+                          textClass={canEditCategory ? "text-dark-blue" : "text-grey"}
+                          disabled={!canEditCategory || isSaving}
                           onClick={(event) => {
                             event.stopPropagation();
-                            onStartEdit(category);
+                            if (canEditCategory) {
+                              onStartEdit(category);
+                            }
                           }}
                         />
                       )}

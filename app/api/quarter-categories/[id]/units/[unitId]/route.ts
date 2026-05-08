@@ -130,9 +130,10 @@ export async function PATCH(request: Request, context: RouteContext) {
       );
     }
 
-    const existingUnit = await prisma.unit.findUnique({
+    const existingUnit = await prisma.unit.findFirst({
       where: {
         id: unitId,
+        recordStatus: "VERIFIED",
       },
       include: {
         ...buildQuarterUnitCurrentOccupancyInclude(),
@@ -679,9 +680,10 @@ export async function DELETE(_request: Request, context: RouteContext) {
 
   try {
     const currentAdmin = await getCurrentAdmin();
-    const existingUnit = await prisma.unit.findUnique({
+    const existingUnit = await prisma.unit.findFirst({
       where: {
         id: unitId,
+        recordStatus: "VERIFIED",
       },
       include: {
         quarterCategory: {
