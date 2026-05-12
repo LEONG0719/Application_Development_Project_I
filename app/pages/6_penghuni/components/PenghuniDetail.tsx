@@ -293,6 +293,7 @@ export default function PenghuniDetail(props?: PenghuniDetailWithCloseProps) {
                                     <div className="grid grid-cols-2 gap-4">
                                         <InputField label="KATEGORI" value={displayValue(formData.quarters?.quarterName)} state="inactive" className="col-span-1"/>
                                         <InputField label="UNIT KUARTERS" value={displayValue(formData.quarters?.unitCode)} state="inactive" className="col-span-1"/>
+                                        <InputField label="ALAMAT KUARTERS" value={displayValue(formData.quarters?.address)} state="inactive" className="col-span-2"/>
                                         <div className="col-span-1 grid grid-cols-2 gap-4">
                                             <InputField label="TARIKH MASUK" value={displayValue(formatDate(formData.quarters?.moveInDate ?? ""))} state="inactive" className="col-span-1"/>
                                             <InputField label="TARIKH KELUAR" value={displayValue(formData.quarters?.moveOutDate ? formatDate(formData.quarters.moveOutDate) : "")} state="inactive" className="col-span-1"/>

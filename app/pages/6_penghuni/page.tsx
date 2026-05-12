@@ -10,6 +10,7 @@ import { handleCreateSuccess } from "./controller/DatabaseControl";
 export type ResidentsQuarterInfo = {
     unitCode: string;
     quarterName: string;
+    address: string | null;
     moveInDate: string | null;
     moveOutDate: string | null;
 };
