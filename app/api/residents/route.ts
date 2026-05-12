@@ -118,6 +118,7 @@ export async function GET(request: Request) {
                 quarterCategory: {
                   select: {
                     categoryName: true,
+                    address: true,
                   },
                 },
               },
@@ -149,6 +150,7 @@ export async function GET(request: Request) {
           ? {
               unitCode: r.occupancies[0].unit.unitCode,
               quarterName: r.occupancies[0].unit.quarterCategory.categoryName,
+              address: r.occupancies[0].unit.quarterCategory.address ?? null,
               moveInDate: r.occupancies[0].moveInDate
                 ? r.occupancies[0].moveInDate.toISOString()
                 : null,

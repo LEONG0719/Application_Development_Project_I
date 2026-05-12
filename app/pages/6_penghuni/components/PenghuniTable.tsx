@@ -137,13 +137,14 @@ export default function PenghuniTable({ residents, isLoading, errorMessage, setR
             }
 
             {/* Table */}
-            <div className="rounded-lg overflow-y-auto">
-                <table className="w-full overflow-x-auto">
+            <div className="rounded-lg overflow-x-auto overflow-y-auto">
+                <table className="w-full">
                     {/* Table Header */}
                     <thead>
                         <tr className="font-bold text-xs text-grey bg-background">
                             <th className="text-left px-3 py-3">Penghuni</th>
                             <th className="text-left px-3 py-3">Kuarters</th>
+                            <th className="text-left px-3 py-3">Alamat Kuarters</th>
                             <th className="text-left px-3 py-3">Perhubungan</th>
                             <th className="text-right px-3 py-3">Tunggakan (RM)</th>
                             <th className="text-center px-3 py-3">Tindakan</th>
@@ -154,19 +155,19 @@ export default function PenghuniTable({ residents, isLoading, errorMessage, setR
                     <tbody className="bg-white">
                         {isLoading ? (
                             <tr className="text-sm">
-                                <td className="px-3 py-4 text-center text-grey" colSpan={5}>Sedang membaca data penghuni...</td>
+                                <td className="px-3 py-4 text-center text-grey" colSpan={6}>Sedang membaca data penghuni...</td>
                             </tr>
                         ) : errorMessage ? (
                             <tr className="text-sm">
-                                <td className="px-3 py-4 text-center text-red" colSpan={5}>{errorMessage}</td>
+                                <td className="px-3 py-4 text-center text-red" colSpan={6}>{errorMessage}</td>
                             </tr>
                         ) : residents.length === 0 ? (
                             <tr className="text-sm">
-                                <td className="px-3 py-4 text-center text-grey" colSpan={5}>Tiada data penghuni ditemui.</td>
+                                <td className="px-3 py-4 text-center text-grey" colSpan={6}>Tiada data penghuni ditemui.</td>
                             </tr>
                         ) : filteredResidents.length === 0 ? (
                             <tr className="text-sm">
-                                <td className="px-3 py-4 text-center text-grey" colSpan={5}>Tiada hasil mencari dengan penapis yang dipilih.</td>
+                                <td className="px-3 py-4 text-center text-grey" colSpan={6}>Tiada hasil mencari dengan penapis yang dipilih.</td>
                             </tr>
                         ) : (
                             // Render residents for the current page.
@@ -184,6 +185,11 @@ export default function PenghuniTable({ residents, isLoading, errorMessage, setR
                                     <td className="px-3 py-2 text-left">
                                         <div className={`font-bold ${mainTextSize}`}>{resident.quarters?.quarterName ?? "N/A"}</div>
                                         <div className={`font-extralight ${subTextSize} text-grey`}>{resident.quarters?.unitCode ?? "N/A"}</div>
+                                    </td>
+
+                                    {/* Alamat Kuarters */}
+                                    <td className="px-3 py-2 text-left">
+                                        <div className={`${mainTextSize}`}>{resident.quarters?.address ?? "N/A"}</div>
                                     </td>
 
                                     {/* Perhubungan */}
@@ -226,7 +232,7 @@ export default function PenghuniTable({ residents, isLoading, errorMessage, setR
                     {!isLoading && filteredResidents.length > 0 && (
                         <tfoot>
                             <tr>
-                                <td colSpan={5} className="bg-white border-t border-light-grey/20 px-3 py-4">
+                                <td colSpan={6} className="bg-white border-t border-light-grey/20 px-3 py-4">
                                     <PaginationControls
                                         currentPage={currentPage}
                                         totalPages={totalPages}
