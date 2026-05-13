@@ -27,6 +27,13 @@ function getCategoryFromParam(categoryParam: string | null): Category {
   return categoryByDraftKind[categoryParam as ProcessingDraft["kind"]] ?? "Bayaran";
 }
 
+const uploadRouteByKind: Record<ProcessingDraft["kind"], string> = {
+  bayaran: "/api/uploaded-documents/bayaran/upload",
+  tunggakan: "/api/uploaded-documents/tunggakan/upload",
+  penghuni: "/api/uploaded-documents/penghuni/upload",
+  kuarters: "/api/uploaded-documents/kuarters/upload",
+};
+
 export default function MuatNaikPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -175,13 +182,12 @@ export default function MuatNaikPage() {
       if (!extractedData) {
         throw new Error(`Gagal mengekstrak data ${extractKind}.`);
       }
-      const saveResponse = await fetch("/api/uploaded-documents", {
+      const saveResponse = await fetch(uploadRouteByKind[extractKind], {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          kind: extractKind,
           fileName: selectedFile.name,
           fileType: selectedFile.type || selectedFile.name.split(".").pop() || "file",
           fileSize: selectedFile.size,

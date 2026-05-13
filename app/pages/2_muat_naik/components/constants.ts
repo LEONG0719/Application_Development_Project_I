@@ -8,7 +8,7 @@ export const categories: Category[] = [
   "Kuarters",
 ];
 
-export const reviewRoutes: Record<Category, string> = {
+export const reviewRoutes: Record<Category, ProcessingDraft["kind"]> = {
   Bayaran: "bayaran",
   Tunggakan: "tunggakan",
   Penghuni: "penghuni",

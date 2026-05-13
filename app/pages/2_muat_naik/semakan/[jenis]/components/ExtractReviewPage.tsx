@@ -27,6 +27,20 @@ import type {
 
 export type { ReviewKind } from "./review_page_components/types";
 
+const verifyRouteByKind: Record<ReviewKind, (draftId: string) => string> = {
+  bayaran: (draftId) => `/api/uploaded-documents/bayaran/verify/${draftId}`,
+  tunggakan: (draftId) => `/api/uploaded-documents/tunggakan/verify/${draftId}`,
+  penghuni: (draftId) => `/api/uploaded-documents/penghuni/verify/${draftId}`,
+  kuarters: (draftId) => `/api/uploaded-documents/kuarters/verify/${draftId}`,
+};
+
+const draftUpdateRouteByKind: Record<ReviewKind, (draftId: string) => string> = {
+  bayaran: (draftId) => `/api/uploaded-documents/bayaran/${draftId}`,
+  tunggakan: (draftId) => `/api/uploaded-documents/tunggakan/${draftId}`,
+  penghuni: (draftId) => `/api/uploaded-documents/penghuni/${draftId}`,
+  kuarters: (draftId) => `/api/uploaded-documents/kuarters/${draftId}`,
+};
+
 export default function ExtractReviewPage({
   draftId,
   kind,
@@ -144,7 +158,7 @@ export default function ExtractReviewPage({
       throw new Error("Dokumen semakan tidak ditemui.");
     }
 
-    const response = await fetch(`/api/uploaded-documents/${draftId}`, {
+    const response = await fetch(draftUpdateRouteByKind.bayaran(draftId), {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
@@ -184,7 +198,7 @@ export default function ExtractReviewPage({
     }
 
     setExtractResult(nextExtract);
-    const response = await fetch(`/api/uploaded-documents/${draftId}`, {
+    const response = await fetch(draftUpdateRouteByKind.tunggakan(draftId), {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
@@ -220,7 +234,7 @@ export default function ExtractReviewPage({
       return;
     }
 
-    const response = await fetch(`/api/uploaded-documents/${draftId}`, {
+    const response = await fetch(draftUpdateRouteByKind.kuarters(draftId), {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
@@ -261,7 +275,7 @@ export default function ExtractReviewPage({
       throw new Error("Dokumen semakan tidak ditemui.");
     }
 
-    const response = await fetch(`/api/uploaded-documents/${draftId}`, {
+    const response = await fetch(draftUpdateRouteByKind.kuarters(draftId), {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
@@ -302,7 +316,7 @@ export default function ExtractReviewPage({
       throw new Error("Dokumen semakan tidak ditemui.");
     }
 
-    const response = await fetch(`/api/uploaded-documents/${draftId}`, {
+    const response = await fetch(draftUpdateRouteByKind.kuarters(draftId), {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
@@ -353,7 +367,7 @@ export default function ExtractReviewPage({
     clearVerificationNotice();
 
     try {
-      const response = await fetch(`/api/uploaded-documents/${draftId}/verify`, {
+      const response = await fetch(verifyRouteByKind[kind](draftId), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
