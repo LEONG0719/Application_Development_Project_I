@@ -92,7 +92,7 @@ HEADER_ALIASES: dict[str, tuple[str, ...]] = {
         "BAYARAN SEWA",
         "SEWA RM",
     ),
-    "catatan": ("CATATAN", "NOTA", "REMARK", "REMARKS", "ULASAN", "STATUS"),
+    "catatan": ("CATATAN", "NOTA", "REMARK", "REMARKS", "ULASAN"),
 }
 
 REQUIRED_FIELDS = ("nama", "noKadPengenalan")

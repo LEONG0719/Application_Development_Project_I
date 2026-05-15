@@ -19,6 +19,7 @@ type ReviewTableProps = {
     totalAmount: string,
   ) => void;
   penghuniRecords: ExtractedPenghuniRecord[];
+  onPenghuniRecordsChange?: (records: ExtractedPenghuniRecord[]) => void;
   kuartersRecords: ExtractedQuarterRecord[];
   onKuartersRecordsChange?: (records: ExtractedQuarterRecord[]) => Promise<void>;
   onKuartersCategoryChange?: (params: {
@@ -49,6 +50,7 @@ export default function ReviewTable({
   onBayaranTotalAmountChange,
   onBayaranRecordsChange,
   penghuniRecords,
+  onPenghuniRecordsChange,
   kuartersRecords,
   onKuartersRecordsChange,
   onKuartersCategoryChange,
@@ -95,6 +97,7 @@ export default function ReviewTable({
     return (
       <PenghuniReviewTable
         records={penghuniRecords}
+        onRecordsChange={onPenghuniRecordsChange}
         selectedKeys={selectedKeys}
         onSelectedKeysChange={onSelectedKeysChange}
       />

@@ -63,6 +63,7 @@ export async function verifyPenghuniDrafts(
       perhubungan: draft.phone ?? "",
       pekerjaan: draft.position ?? "",
       jabatan: draft.department ?? "",
+      tarafPerkhidmatan: draft.serviceLevel ?? "",
       sourceSheet: "sourceSheet" in rawRecord ? String(rawRecord.sourceSheet) : "",
       sourceRow: "sourceRow" in rawRecord ? Number(rawRecord.sourceRow) : 0,
     });

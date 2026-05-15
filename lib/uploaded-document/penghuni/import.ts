@@ -32,6 +32,7 @@ export async function createPendingPenghuniRows(
         phone: record.perhubungan || null,
         position: record.pekerjaan || null,
         department: record.jabatan || null,
+        serviceLevel: record.tarafPerkhidmatan || null,
         description: record.alamatKuarters || null,
         uploadedDocumentId,
         originalResidentId: residentId || null,

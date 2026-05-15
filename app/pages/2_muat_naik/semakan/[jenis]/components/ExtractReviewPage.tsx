@@ -8,6 +8,7 @@ import { ROUTES } from "../../../../../constants/routes";
 import type {
   BayaranExtractResult,
   ExtractedBayaranRecord,
+  ExtractedPenghuniRecord,
   ExtractedQuarterRecord,
   ExtractedTunggakanRecord,
   ExtractResult,
@@ -217,6 +218,41 @@ export default function ExtractReviewPage({
         result?.message ?? "Gagal menyimpan perubahan tunggakan.",
       );
     }
+  };
+
+  const updateCurrentPenghuniDraft = async (
+    records: ExtractedPenghuniRecord[],
+  ) => {
+    if (!penghuniExtract || !draftId) {
+      return;
+    }
+
+    const nextExtract = {
+      ...penghuniExtract,
+      recordCount: records.length,
+      records,
+    };
+
+    const response = await fetch(draftUpdateRouteByKind.penghuni(draftId), {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        extractResult: nextExtract,
+      }),
+    });
+    const result = await response.json().catch(() => null);
+
+    if (response.ok && result?.data?.document?.extractResult) {
+      setExtractResult(result.data.document.extractResult as ExtractResult);
+      return;
+    }
+
+    showVerificationNotice(
+      "error",
+      result?.message ?? "Gagal menyimpan perubahan penghuni.",
+    );
   };
 
   const updateCurrentKuartersDraft = async (records: ExtractedQuarterRecord[]) => {
@@ -442,6 +478,7 @@ export default function ExtractReviewPage({
           onBayaranTotalAmountChange={setBayaranEditedTotalAmount}
           onBayaranRecordsChange={updateCurrentBayaranDraft}
           penghuniRecords={penghuniExtract?.records ?? []}
+          onPenghuniRecordsChange={updateCurrentPenghuniDraft}
           kuartersRecords={kuartersExtract?.records ?? []}
           kuartersParsingMode={kuartersExtract?.parsingMode}
           onKuartersRecordsChange={updateCurrentKuartersDraft}

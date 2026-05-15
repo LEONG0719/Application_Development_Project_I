@@ -27,6 +27,7 @@ export async function buildPenghuniExtractResultFromDraftRows(
       perhubungan: row.phone ?? "",
       pekerjaan: row.position ?? "",
       jabatan: row.department ?? "",
+      tarafPerkhidmatan: row.serviceLevel ?? "",
       sourceSheet: "",
       sourceRow: 0,
     }),

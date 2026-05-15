@@ -14,6 +14,7 @@ export type ExtractedPenghuniRecord = {
   perhubungan: string;
   pekerjaan: string;
   jabatan: string;
+  tarafPerkhidmatan?: string;
   tarikhMasuk?: string;
   tarikhKeluar?: string;
   sewaBulanan?: string;
