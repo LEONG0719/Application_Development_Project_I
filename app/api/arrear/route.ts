@@ -15,6 +15,7 @@ export async function GET() {
         recordStatus: "VERIFIED",
       },
       include: {
+        arrearsSummary: true, 
         occupancies: {
           where: { status: "CURRENT" },
           include: {
