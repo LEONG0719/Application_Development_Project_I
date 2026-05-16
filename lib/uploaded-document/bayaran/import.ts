@@ -21,42 +21,91 @@ export async function createPendingBayaranRows(
 
   const paymentDate = getBayaranPaymentDate(extractResult.paymentMonth);
   const records: ExtractedBayaranRecord[] = [];
+  const seen = new Set<string>();
 
   for (const record of extractResult.records) {
-    const residentId = await findResidentByNormalizedIc(tx, record.noGajiNoKp);
-    const existingPayment = await tx.payment.findFirst({
-      where: {
-        residentId: residentId || undefined,
-        receiptNo: record.noRujukan || record.noResit || undefined,
-        paymentDate,
-      },
-      select: { id: true },
-    });
+    const normalizedRecord = normalizeBayaranRecord(record);
+    if (!/^\d{12}$/.test(normalizedRecord.noGajiNoKp)) {
+      continue;
+    }
+
+    if (seen.has(normalizedRecord.noGajiNoKp)) {
+      continue;
+    }
+
+    seen.add(normalizedRecord.noGajiNoKp);
+
+    const residentId = await findResidentByNormalizedIc(
+      tx,
+      normalizedRecord.noGajiNoKp,
+    );
+    const isNewResident = !residentId;
     const draft = await tx.paymentDraft.create({
       data: {
-        residentName: record.nama,
-        residentIcNumber: record.noGajiNoKp.trim(),
-        department: record.ptjpkName || record.jabatanName || null,
+        residentName: normalizedRecord.nama,
+        residentIcNumber: normalizedRecord.noGajiNoKp,
+        department: normalizedRecord.jabatanName || null,
         paymentDate,
-        receiptNo: record.noResit || null,
-        referenceNo: record.noRujukan || null,
-        amount: record.amaunRm || "0",
-        description: record.catatan || "bayaran",
+        receiptNo: normalizedRecord.noRujukan || null,
+        referenceNo: normalizedRecord.noRujukan || null,
+        amount: normalizedRecord.amaunRm || "0",
+        description: normalizedRecord.catatan || "bayaran",
         uploadedDocumentId,
         originalResidentId: residentId || null,
-        originalPaymentId: existingPayment?.id ?? null,
-        isExisted: Boolean(existingPayment?.id),
-        rawData: rawData(record),
+        rawData: rawData(normalizedRecord),
       },
     });
 
     records.push({
-      ...record,
+      ...normalizedRecord,
       paymentId: draft.id,
       residentId: residentId || undefined,
-      isExisted: draft.isExisted,
+      isExisted: isNewResident,
     });
   }
 
-  return { ...extractResult, recordCount: records.length, records };
+  return {
+    ...extractResult,
+    recordCount: records.length,
+    totalAmount: records
+      .reduce((total, record) => total + Number(record.amaunRm || 0), 0)
+      .toFixed(2),
+    records,
+  };
+}
+
+function normalizeBayaranRecord(record: ExtractedBayaranRecord): ExtractedBayaranRecord {
+  return {
+    ...record,
+    nama: normalizeText(record.nama),
+    noGajiNoKp: normalizeIc(record.noGajiNoKp),
+    jabatanName: normalizeText(record.jabatanName || record.ptjpkName),
+    ptjpkName: "",
+    ptjpkCode: "",
+    jabatanCode: "",
+    noRujukan: normalizeText(record.noRujukan),
+    noResit: normalizeText(record.noRujukan),
+    amaunRm: normalizeAmount(record.amaunRm),
+    tarikh: normalizeText(record.tarikh),
+    catatan: normalizeText(record.catatan) || "bayaran",
+  };
+}
+
+function normalizeText(value: string) {
+  return String(value ?? "").replace(/\s+/g, " ").trim();
+}
+
+function normalizeIc(value: string) {
+  return String(value ?? "").replace(/\D/g, "");
+}
+
+function normalizeAmount(value: string) {
+  const amount = Number(
+    String(value ?? "")
+      .replace(/RM/gi, "")
+      .replace(/,/g, "")
+      .trim(),
+  );
+
+  return Number.isFinite(amount) ? amount.toFixed(2) : "0.00";
 }

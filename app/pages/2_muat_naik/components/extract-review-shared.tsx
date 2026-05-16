@@ -82,6 +82,7 @@ export type BayaranExtractResult = {
   recordCount: number;
   totalAmount: string;
   paymentMonth: string;
+  parsingMode?: "strict" | "assisted";
   records: ExtractedBayaranRecord[];
 };
 

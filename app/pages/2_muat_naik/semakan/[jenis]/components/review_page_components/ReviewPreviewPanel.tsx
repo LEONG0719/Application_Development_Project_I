@@ -5,6 +5,7 @@ import type {
   ExtractedQuarterRecord,
   ExtractedTunggakanRecord,
   KuartersExtractResult,
+  BayaranExtractResult,
   PenghuniExtractResult,
 } from "../../../../components/extract-review-shared";
 import ReviewTable from "./ReviewTable";
@@ -19,7 +20,8 @@ type ReviewPreviewPanelProps = {
   onBayaranRecordsChange?: (
     records: ExtractedBayaranRecord[],
     totalAmount: string,
-  ) => void;
+  ) => ExtractedBayaranRecord | void | Promise<ExtractedBayaranRecord | void>;
+  bayaranParsingMode?: BayaranExtractResult["parsingMode"];
   penghuniRecords: ExtractedPenghuniRecord[];
   penghuniParsingMode?: PenghuniExtractResult["parsingMode"];
   onPenghuniRecordsChange?: (
@@ -65,10 +67,12 @@ export default function ReviewPreviewPanel(props: ReviewPreviewPanelProps) {
             Sila semak maklumat sebelum pengesahan.
           </p>
         </div>
-        {props.kind === "kuarters" || props.kind === "penghuni" || props.kind === "tunggakan" ? (
+        {props.kind === "bayaran" || props.kind === "kuarters" || props.kind === "penghuni" || props.kind === "tunggakan" ? (
           <div className="flex flex-wrap items-center gap-2 text-[11px] font-extrabold">
             <span className="rounded border border-[#C9D6F2] bg-white px-3 py-1 text-dark-blue">
-              {(props.kind === "kuarters"
+              {(props.kind === "bayaran"
+                ? props.bayaranParsingMode
+                : props.kind === "kuarters"
                 ? props.kuartersParsingMode
                 : props.kind === "penghuni"
                   ? props.penghuniParsingMode

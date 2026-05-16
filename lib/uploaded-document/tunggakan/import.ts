@@ -43,7 +43,7 @@ export async function createPendingTunggakanRows(
     const existingSummary = await findExistingArrearsSummary(tx, residentId);
     const hasTransactions = await residentHasTransactions(tx, residentId);
     const isDuplicateInDocument = seen.has(identityKey);
-    const isExisted = Boolean(hasTransactions || isDuplicateInDocument);
+    const isBlocked = Boolean(hasTransactions || isDuplicateInDocument);
     const draft = await tx.arrearsSummaryDraft.create({
       data: {
         residentName: record.nama,
@@ -54,7 +54,6 @@ export async function createPendingTunggakanRows(
         uploadedDocumentId,
         originalResidentId: residentId || null,
         originalSummaryId: existingSummary?.id ?? null,
-        isExisted,
         rawData: rawData(normalizedRecord),
       },
     });
@@ -64,9 +63,9 @@ export async function createPendingTunggakanRows(
       ...normalizedRecord,
       arrearsSummaryId: draft.id,
       residentId: residentId || undefined,
-      isExisted,
-      importStatus: isExisted ? "IGNORED" : "PENDING",
-      importMessage: isExisted
+      isExisted: isBlocked,
+      importStatus: isBlocked ? "IGNORED" : "PENDING",
+      importMessage: isBlocked
         ? isDuplicateInDocument
           ? "Rekod tunggakan pendua dalam fail ini."
           : "Penghuni ini sudah mempunyai transaksi dalam sistem."

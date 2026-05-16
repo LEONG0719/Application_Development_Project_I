@@ -18,7 +18,7 @@ type ReviewTableProps = {
   onBayaranRecordsChange?: (
     records: ExtractedBayaranRecord[],
     totalAmount: string,
-  ) => void;
+  ) => ExtractedBayaranRecord | void | Promise<ExtractedBayaranRecord | void>;
   penghuniRecords: ExtractedPenghuniRecord[];
   onPenghuniRecordsChange?: (
     records: ExtractedPenghuniRecord[],

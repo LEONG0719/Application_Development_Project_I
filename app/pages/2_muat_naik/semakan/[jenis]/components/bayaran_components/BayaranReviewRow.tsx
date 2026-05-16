@@ -7,11 +7,45 @@ type BayaranReviewRowProps = {
   isEditing: boolean;
   isSelected: boolean;
   onSelectionChange: (checked: boolean) => void;
-  onDraftChange: (field: "amaunRm" | "catatan", value: string) => void;
+  onDraftChange: (
+    field:
+      | "nama"
+      | "noGajiNoKp"
+      | "jabatanName"
+      | "noRujukan"
+      | "tarikh"
+      | "amaunRm"
+      | "catatan",
+    value: string,
+  ) => void;
   onSave: () => void;
   onEdit: () => void;
   onDelete: () => void;
 };
+
+function ActionButton({
+  icon,
+  label,
+  textClass,
+  onClick,
+}: {
+  icon: string;
+  label: string;
+  textClass: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      title={label}
+      className={`inline-flex items-center justify-center rounded-lg p-2 transition-colors hover:bg-background ${textClass}`}
+      onClick={onClick}
+    >
+      <Icon icon={icon} size={18} />
+    </button>
+  );
+}
 
 export default function BayaranReviewRow({
   row,
@@ -25,8 +59,14 @@ export default function BayaranReviewRow({
   onDelete,
 }: BayaranReviewRowProps) {
   return (
-    <tr>
-      <td className="px-5 py-4">
+    <tr
+      data-bayaran-editor={isEditing ? "true" : undefined}
+      className={[
+        "border-t border-light-grey/20 transition-colors",
+        row.isExisted ? "bg-amber-50" : "hover:bg-background/60",
+      ].join(" ")}
+    >
+      <td className="w-10 whitespace-nowrap px-3 py-3.5 text-left">
         <input
           type="checkbox"
           checked={isSelected}
@@ -34,77 +74,140 @@ export default function BayaranReviewRow({
           className="h-4 w-4 accent-dark-blue"
         />
       </td>
-      <td className="px-4 py-4">
-        <p className="font-extrabold leading-5 text-[#172033]">{row.nama}</p>
-        <p className="text-[10px] font-semibold text-[#667085]">
-          {row.noGajiNoKp}
-        </p>
+      <td className="overflow-hidden px-3 py-3.5 text-xs font-medium text-dark-grey">
+        {isEditing ? (
+          <EditInput
+            value={draft.nama}
+            onChange={(value) => onDraftChange("nama", value)}
+          />
+        ) : (
+          <span className="block truncate font-medium text-dark-grey" title={displayValue(row.nama)}>
+            {displayValue(row.nama)}
+          </span>
+        )}
       </td>
-      <td className="px-4 py-4">
-        <p className="whitespace-nowrap font-extrabold text-[#172033]">
-          {row.ptjpkCode}
-        </p>
-        <p className="whitespace-nowrap text-[10px] font-medium text-[#667085]">
-          Jabatan {row.jabatanCode}
-        </p>
+      <td className="overflow-hidden px-3 py-3.5 text-xs font-medium text-dark-grey">
+        {isEditing ? (
+          <EditInput
+            value={draft.noGajiNoKp}
+            onChange={(value) => onDraftChange("noGajiNoKp", value)}
+          />
+        ) : (
+          <span
+            className="block truncate font-medium text-dark-grey"
+            title={displayValue(row.noGajiNoKp)}
+          >
+            {displayValue(row.noGajiNoKp)}
+          </span>
+        )}
       </td>
-      <td className="px-4 py-4 font-semibold leading-5 text-[#172033]">
-        {row.ptjpkName || "-"}
+      <td className="overflow-hidden px-3 py-3.5 text-xs font-medium text-dark-grey">
+        {isEditing ? (
+          <EditInput
+            value={draft.jabatanName}
+            onChange={(value) => onDraftChange("jabatanName", value)}
+          />
+        ) : (
+          <span
+            className="block truncate font-medium text-dark-grey"
+            title={displayValue(row.jabatanName)}
+          >
+            {displayValue(row.jabatanName)}
+          </span>
+        )}
       </td>
-      <td className="px-4 py-4 font-semibold leading-5 text-[#172033]">
-        {row.jabatanName || "-"}
+      <td className="overflow-hidden px-3 py-3.5 text-xs font-medium text-dark-grey">
+        {isEditing ? (
+          <EditInput
+            value={draft.noRujukan}
+            onChange={(value) => onDraftChange("noRujukan", value)}
+          />
+        ) : (
+          <span
+            className="block truncate font-medium text-dark-grey"
+            title={displayValue(row.noRujukan)}
+          >
+            {displayValue(row.noRujukan)}
+          </span>
+        )}
       </td>
-      <td className="px-4 py-4 wrap-break-word">{row.noRujukan || "-"}</td>
-      <td className="px-4 py-4">
+      <td className="overflow-hidden px-3 py-3.5 text-xs font-medium text-dark-grey">
         {isEditing ? (
           <input
-            className="h-10 w-full rounded-lg border border-[#E6EAF2] px-3 text-xs"
+            className="min-h-9 w-full min-w-32 rounded-xl border border-light-grey/35 bg-white px-4 py-2 text-xs font-medium text-dark-blue outline-none transition-colors placeholder:text-light-grey focus:border-dark-blue"
             placeholder="Tambah catatan..."
             value={draft.catatan}
             onChange={(event) => onDraftChange("catatan", event.target.value)}
           />
         ) : (
-          row.catatan || "bayaran"
+          <span
+            className="block truncate font-medium text-dark-grey"
+            title={displayValue(row.catatan)}
+          >
+            {displayValue(row.catatan)}
+          </span>
         )}
       </td>
-      <td className="px-4 py-4 text-right">
+      <td className="px-3 py-3.5 text-right text-xs font-medium text-dark-grey">
         {isEditing ? (
           <input
-            className="h-10 w-23 rounded-lg border border-[#E6EAF2] px-3 text-right font-extrabold"
+            className="min-h-9 w-full min-w-24 rounded-xl border border-light-grey/35 bg-white px-4 py-2 text-right text-xs font-medium text-dark-blue outline-none transition-colors placeholder:text-light-grey focus:border-dark-blue"
             value={draft.amaunRm}
             onChange={(event) => onDraftChange("amaunRm", event.target.value)}
           />
         ) : (
-          <span className="font-extrabold text-[#172033]">{row.amaunRm}</span>
+          <span className="font-medium text-dark-grey">{displayValue(row.amaunRm)}</span>
         )}
       </td>
-      <td className="px-4 py-4">
-        <div className="flex items-center justify-center gap-4">
+      <td className="px-3 py-3.5">
+        <div className="flex items-center justify-center gap-1">
           {isEditing ? (
             <>
-              <button
-                type="button"
-                aria-label="Simpan perubahan bayaran"
+              <ActionButton
+                icon="save"
+                label="Simpan perubahan bayaran"
+                textClass="text-green"
                 onClick={onSave}
-              >
-                <Icon icon="save" size={16} weight={700} className="text-green" />
-              </button>
-              <button type="button" aria-label="Padam bayaran" onClick={onDelete}>
-                <Icon icon="delete" size={16} weight={700} className="text-red" />
-              </button>
+              />
+              <ActionButton
+                icon="delete"
+                label="Padam bayaran"
+                textClass="text-red"
+                onClick={onDelete}
+              />
             </>
           ) : (
-            <button type="button" aria-label="Edit bayaran" onClick={onEdit}>
-              <Icon
-                icon="edit"
-                size={16}
-                weight={700}
-                className="text-dark-blue"
-              />
-            </button>
+            <ActionButton
+              icon="edit"
+              label="Edit bayaran"
+              textClass="text-dark-blue"
+              onClick={onEdit}
+            />
           )}
         </div>
       </td>
     </tr>
   );
+}
+
+function EditInput({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <input
+      className="min-h-9 w-full min-w-32 rounded-xl border border-light-grey/35 bg-white px-4 py-2 text-xs font-medium text-dark-blue outline-none transition-colors placeholder:text-light-grey focus:border-dark-blue"
+      value={value}
+      onChange={(event) => onChange(event.target.value)}
+    />
+  );
+}
+
+function displayValue(value: string | number | null | undefined) {
+  const normalizedValue = String(value ?? "").trim();
+
+  return normalizedValue || "N/A";
 }

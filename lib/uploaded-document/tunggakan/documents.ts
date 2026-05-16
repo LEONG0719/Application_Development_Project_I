@@ -30,14 +30,12 @@ export async function buildTunggakanExtractResultFromDraftRows(
           : undefined;
 
       if (
-        row.isExisted !== isBlocked ||
         row.originalResidentId !== residentId ||
         row.originalSummaryId !== (existingSummary?.id ?? null)
       ) {
         await prisma.arrearsSummaryDraft.update({
           where: { id: row.id },
           data: {
-            isExisted: isBlocked,
             originalResidentId: residentId,
             originalSummaryId: existingSummary?.id ?? null,
           },

@@ -39,9 +39,7 @@ export async function updateTunggakanDrafts(
     const residentId = normalizeOptionalUuid(
       await findResidentByNormalizedIc(tx, normalizedRecord.noKadPengenalan),
     );
-    const hasTransactions = await residentHasTransactions(tx, residentId);
     const existingSummary = await findExistingArrearsSummary(tx, residentId);
-    const isBlocked = Boolean(hasTransactions || existingSummary);
 
     await tx.arrearsSummaryDraft.updateMany({
       where: { id: record.arrearsSummaryId, uploadedDocumentId },
@@ -53,7 +51,6 @@ export async function updateTunggakanDrafts(
         description: "tunggakan",
         originalResidentId: residentId,
         originalSummaryId: existingSummary?.id ?? null,
-        isExisted: isBlocked,
         rawData: rawData(normalizedRecord),
       },
     });
@@ -108,7 +105,6 @@ export async function updateTunggakanDraft(
       description: "tunggakan",
       originalResidentId: residentId,
       originalSummaryId: existingSummary?.id ?? null,
-      isExisted: isBlocked,
       rawData: rawData(normalizedRecord),
     },
   });

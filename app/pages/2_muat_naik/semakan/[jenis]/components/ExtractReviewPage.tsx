@@ -145,8 +145,58 @@ export default function ExtractReviewPage({
     records: ExtractedBayaranRecord[],
     totalAmount: string,
   ) => {
-    if (!bayaranExtract) {
+    if (!bayaranExtract || !draftId) {
       return;
+    }
+
+    const changedRecord = findSingleChangedBayaranRecord(
+      bayaranExtract.records,
+      records,
+    );
+
+    if (changedRecord === "unchanged") {
+      return;
+    }
+
+    if (changedRecord) {
+      const response = await fetch(draftUpdateRouteByKind.bayaran(draftId), {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          action: "update-bayaran-record",
+          record: changedRecord,
+        }),
+      });
+      const result = await response.json().catch(() => null);
+
+      if (response.ok && result?.data?.record) {
+        const updatedRecord = result.data.record as ExtractedBayaranRecord;
+        const nextRecords = bayaranExtract.records.map((record) =>
+          getBayaranRecordKey(record) === getBayaranRecordKey(changedRecord)
+            ? updatedRecord
+            : record,
+        );
+        const nextTotalAmount = nextRecords
+          .reduce((total, record) => total + Number(record.amaunRm || 0), 0)
+          .toFixed(2);
+
+        setExtractResult({
+          ...bayaranExtract,
+          recordCount: nextRecords.length,
+          totalAmount: nextTotalAmount,
+          paymentMonth: updatedRecord.tarikh || bayaranExtract.paymentMonth,
+          records: nextRecords,
+        });
+        setBayaranEditedTotalAmount(nextTotalAmount);
+        showVerificationNotice("success", "Perubahan bayaran berjaya disimpan.");
+        return updatedRecord;
+      }
+
+      const message = result?.message ?? "Gagal menyimpan perubahan bayaran.";
+      showVerificationNotice("error", message);
+      throw new Error(message);
     }
 
     const nextExtract: BayaranExtractResult = {
@@ -155,10 +205,6 @@ export default function ExtractReviewPage({
       totalAmount,
       records,
     };
-    if (!draftId) {
-      throw new Error("Dokumen semakan tidak ditemui.");
-    }
-
     const response = await fetch(draftUpdateRouteByKind.bayaran(draftId), {
       method: "PATCH",
       headers: {
@@ -172,11 +218,13 @@ export default function ExtractReviewPage({
 
     if (response.ok && result?.data?.document?.extractResult) {
       setExtractResult(result.data.document.extractResult as ExtractResult);
+      showVerificationNotice("success", "Perubahan bayaran berjaya disimpan.");
     } else if (!response.ok) {
       showVerificationNotice(
         "error",
         result?.message ?? "Gagal menyimpan perubahan bayaran.",
       );
+      throw new Error(result?.message ?? "Gagal menyimpan perubahan bayaran.");
     }
   };
 
@@ -602,6 +650,7 @@ export default function ExtractReviewPage({
           kind={kind}
           isLoading={isLoadingDraft}
           bayaranRecords={bayaranExtract?.records ?? []}
+          bayaranParsingMode={bayaranExtract?.parsingMode}
           onBayaranTotalAmountChange={setBayaranEditedTotalAmount}
           onBayaranRecordsChange={updateCurrentBayaranDraft}
           penghuniRecords={penghuniExtract?.records ?? []}
@@ -643,6 +692,13 @@ function getTunggakanRecordKey(record: ExtractedTunggakanRecord) {
   return record.arrearsSummaryId ?? `${record.noKadPengenalan}-${record.nama}`;
 }
 
+function getBayaranRecordKey(record: ExtractedBayaranRecord) {
+  return (
+    record.paymentId ??
+    `${record.page}-${record.bil}-${record.noGajiNoKp}-${record.noRujukan}`
+  );
+}
+
 function findSingleChangedPenghuniRecord(
   currentRecords: ExtractedPenghuniRecord[],
   nextRecords: ExtractedPenghuniRecord[],
@@ -656,6 +712,33 @@ function findSingleChangedPenghuniRecord(
   );
   const changedRecords = nextRecords.filter((record) => {
     const currentRecord = currentByKey.get(getPenghuniRecordKey(record));
+
+    return (
+      currentRecord &&
+      JSON.stringify(currentRecord) !== JSON.stringify(record)
+    );
+  });
+
+  if (changedRecords.length === 0) {
+    return "unchanged";
+  }
+
+  return changedRecords.length === 1 ? changedRecords[0] : null;
+}
+
+function findSingleChangedBayaranRecord(
+  currentRecords: ExtractedBayaranRecord[],
+  nextRecords: ExtractedBayaranRecord[],
+) {
+  if (currentRecords.length !== nextRecords.length) {
+    return null;
+  }
+
+  const currentByKey = new Map(
+    currentRecords.map((record) => [getBayaranRecordKey(record), record]),
+  );
+  const changedRecords = nextRecords.filter((record) => {
+    const currentRecord = currentByKey.get(getBayaranRecordKey(record));
 
     return (
       currentRecord &&

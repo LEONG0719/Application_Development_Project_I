@@ -117,7 +117,7 @@ export function getReviewContent({
       fileName,
       stats: baseContent.stats.map((stat) => {
         if (stat.label === "Tarikh Bayaran") {
-          return { ...stat, value: bayaranExtract.paymentMonth || "-" };
+          return { ...stat, value: formatReviewDate(bayaranExtract.paymentMonth) };
         }
 
         if (stat.label === "Jumlah Rekod") {

@@ -2,6 +2,10 @@ import Icon from "../../../components/Icon";
 import type { Category } from "./types";
 
 const sampleDocumentsByCategory: Partial<Record<Category, string[]>> = {
+  Bayaran: [
+    "/sample-documents/Bayaran_Sample.pdf",
+    "/sample-documents/Bayaran_Sample.xlsx",
+  ],
   Penghuni: [
     "/sample-documents/Penghuni_Sample.pdf",
     "/sample-documents/Penghuni_Sample.xlsx",

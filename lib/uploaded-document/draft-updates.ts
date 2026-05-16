@@ -5,7 +5,10 @@ import type { ExtractResult } from "@/app/pages/2_muat_naik/components/extract-r
 import { createAuditLog } from "@/lib/audit-logs";
 import { getCurrentAdmin } from "@/lib/current-admin";
 import { prisma } from "@/lib/prisma";
-import { updateBayaranDrafts } from "@/lib/uploaded-document/bayaran/draft-updates";
+import {
+  updateBayaranDraft,
+  updateBayaranDrafts,
+} from "@/lib/uploaded-document/bayaran/draft-updates";
 import { mapUploadedDocumentForReview } from "@/lib/uploaded-document/documents";
 import {
   updateKuartersCategoryDraft,
@@ -46,6 +49,7 @@ export async function updateUploadedDocumentDraftForKind(
   };
   let updatedPenghuniRecord: unknown = null;
   let updatedTunggakanRecord: unknown = null;
+  let updatedBayaranRecord: unknown = null;
 
   const document = await prisma.$transaction(
     async (tx: Prisma.TransactionClient) => {
@@ -62,8 +66,25 @@ export async function updateUploadedDocumentDraftForKind(
         throw new Error("Jenis dokumen semakan tidak sepadan.");
       }
 
-      if (kind === "bayaran" && extractResult?.documentType === "bayaran") {
-        await updateBayaranDrafts(tx, uploadedDocumentId, extractResult);
+      if (kind === "bayaran") {
+        if (action === "update-bayaran-record") {
+          const record =
+            "record" in payload ? (payload as { record?: unknown }).record : null;
+
+          if (!record || typeof record !== "object" || Array.isArray(record)) {
+            throw new Error("Data bayaran tidak lengkap.");
+          }
+
+          updatedBayaranRecord = await updateBayaranDraft(
+            tx,
+            uploadedDocumentId,
+            record as Parameters<typeof updateBayaranDraft>[2],
+          );
+        } else if (extractResult?.documentType === "bayaran") {
+          await updateBayaranDrafts(tx, uploadedDocumentId, extractResult);
+        } else {
+          throw new Error("Data ekstrak bayaran tidak lengkap.");
+        }
       } else if (kind === "tunggakan") {
         if (action === "update-tunggakan-record") {
           const record =
@@ -137,6 +158,10 @@ export async function updateUploadedDocumentDraftForKind(
     return { record: updatedTunggakanRecord };
   }
 
+  if (updatedBayaranRecord) {
+    return { record: updatedBayaranRecord };
+  }
+
   return mapUploadedDocumentForReview(document);
 }
 
@@ -148,9 +173,10 @@ export function createUploadedDocumentDraftUpdateHandler(kind: DraftUpdateKind) 
       const payload = body && typeof body === "object" ? body : {};
 
       if (
-        (kind === "penghuni" || kind === "tunggakan") &&
+        (kind === "bayaran" || kind === "penghuni" || kind === "tunggakan") &&
         "action" in payload &&
-        ((payload as { action?: unknown }).action === "update-penghuni-record" ||
+        ((payload as { action?: unknown }).action === "update-bayaran-record" ||
+          (payload as { action?: unknown }).action === "update-penghuni-record" ||
           (payload as { action?: unknown }).action === "update-tunggakan-record" ||
           (payload as { action?: unknown }).action === "delete-penghuni-record")
       ) {
@@ -187,6 +213,26 @@ export function createUploadedDocumentDraftUpdateHandler(kind: DraftUpdateKind) 
             prisma,
             id,
             record as Parameters<typeof updateTunggakanDraft>[2],
+          );
+
+          return NextResponse.json({
+            success: true,
+            data: { record: updatedRecord },
+          });
+        }
+
+        if (action === "update-bayaran-record") {
+          const record =
+            "record" in payload ? (payload as { record?: unknown }).record : null;
+
+          if (!record || typeof record !== "object" || Array.isArray(record)) {
+            throw new Error("Data bayaran tidak lengkap.");
+          }
+
+          const updatedRecord = await updateBayaranDraft(
+            prisma,
+            id,
+            record as Parameters<typeof updateBayaranDraft>[2],
           );
 
           return NextResponse.json({

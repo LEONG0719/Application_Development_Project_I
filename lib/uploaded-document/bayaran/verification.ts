@@ -1,7 +1,7 @@
 import type { Prisma } from "@prisma/client";
 
 import type { VerifyResult } from "@/lib/uploaded-document/verification";
-import { ensureResidentFromDraft } from "@/lib/uploaded-document/shared";
+import { findResidentByNormalizedIc } from "@/lib/uploaded-document/shared";
 
 export async function verifyBayaranDrafts(
   tx: Prisma.TransactionClient,
@@ -15,36 +15,51 @@ export async function verifyBayaranDrafts(
   let verifiedRows = 0;
 
   for (const draft of drafts) {
-    const residentId = await ensureResidentFromDraft(tx, {
+    const receiptNo = draft.receiptNo ?? draft.referenceNo;
+    const residentId = await ensureBayaranResident(tx, {
       fullName: draft.residentName,
       icNumber: draft.residentIcNumber,
       department: draft.department,
     });
-    const existingPayment = await tx.payment.findFirst({
-      where: {
-        residentId,
-        paymentDate: draft.paymentDate,
-        receiptNo: draft.referenceNo ?? draft.receiptNo ?? undefined,
-      },
-      select: { id: true },
-    });
+    const existingPayment = receiptNo
+      ? await tx.payment.findFirst({
+          where: {
+            residentId,
+            paymentDate: draft.paymentDate,
+            receiptNo,
+          },
+          select: { id: true },
+        })
+      : null;
 
     if (existingPayment) {
-      failedMessages.push(`Bayaran ${draft.referenceNo ?? draft.residentName} telah wujud.`);
-      await tx.paymentDraft.update({
-        where: { id: draft.id },
-        data: { isExisted: true, originalPaymentId: existingPayment.id },
-      });
+      failedMessages.push(
+        `Bayaran ${draft.residentName} gagal disahkan kerana No Rujukan ${receiptNo} telah wujud dalam sistem.`,
+      );
       continue;
     }
 
-    await tx.payment.create({
+    const payment = await tx.payment.create({
       data: {
         residentId,
         paymentDate: draft.paymentDate,
-        receiptNo: draft.referenceNo ?? draft.receiptNo,
+        receiptNo,
         amount: draft.amount,
         description: draft.description,
+        uploadedDocumentId,
+      },
+      select: { id: true },
+    });
+    await tx.transaction.create({
+      data: {
+        residentId,
+        paymentId: payment.id,
+        transactionDate: draft.paymentDate,
+        category: "BAYARAN",
+        creditAmount: draft.amount,
+        debitAmount: 0,
+        receiptNo,
+        description: draft.description ?? "Bayaran daripada muat naik.",
       },
     });
     await tx.paymentDraft.delete({ where: { id: draft.id } });
@@ -52,4 +67,39 @@ export async function verifyBayaranDrafts(
   }
 
   return { verifiedRows, failedMessages };
+}
+
+async function ensureBayaranResident(
+  tx: Prisma.TransactionClient,
+  draft: {
+    fullName: string;
+    icNumber: string;
+    department?: string | null;
+  },
+) {
+  const existingResidentId = await findResidentByNormalizedIc(tx, draft.icNumber);
+
+  if (existingResidentId) {
+    await tx.resident.update({
+      where: { id: existingResidentId },
+      data: {
+        fullName: draft.fullName,
+        icNumber: draft.icNumber,
+        department: draft.department ?? null,
+      },
+    });
+
+    return existingResidentId;
+  }
+
+  const resident = await tx.resident.create({
+    data: {
+      fullName: draft.fullName,
+      icNumber: draft.icNumber,
+      department: draft.department ?? null,
+    },
+    select: { id: true },
+  });
+
+  return resident.id;
 }

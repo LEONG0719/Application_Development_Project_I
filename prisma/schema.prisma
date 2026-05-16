@@ -485,7 +485,6 @@ model ArrearsSummaryDraft {
   uploadedDocumentId String    @db.Uuid
   originalResidentId String?   @db.Uuid
   originalSummaryId  String?   @db.Uuid
-  isExisted          Boolean   @default(false)
   rawData            Json?
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
@@ -494,7 +493,6 @@ model ArrearsSummaryDraft {
 
   @@index([uploadedDocumentId])
   @@index([residentIcNumber])
-  @@index([isExisted])
 }
 
 model PaymentDraft {
@@ -509,8 +507,6 @@ model PaymentDraft {
   description        String?
   uploadedDocumentId String   @db.Uuid
   originalResidentId String?  @db.Uuid
-  originalPaymentId  String?  @db.Uuid
-  isExisted          Boolean  @default(false)
   rawData            Json?
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
@@ -519,7 +515,6 @@ model PaymentDraft {
 
   @@index([uploadedDocumentId])
   @@index([residentIcNumber])
-  @@index([isExisted])
 }
 
 model AuditLog {

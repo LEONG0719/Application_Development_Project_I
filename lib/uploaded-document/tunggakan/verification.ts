@@ -27,7 +27,7 @@ export async function verifyTunggakanDrafts(
       );
       await tx.arrearsSummaryDraft.update({
         where: { id: draft.id },
-        data: { isExisted: true, originalResidentId: residentId },
+        data: { originalResidentId: residentId },
       });
       continue;
     }
@@ -41,7 +41,7 @@ export async function verifyTunggakanDrafts(
       failedMessages.push(`Tunggakan ${draft.residentName} telah wujud.`);
       await tx.arrearsSummaryDraft.update({
         where: { id: draft.id },
-        data: { isExisted: true, originalSummaryId: existingSummary.id },
+        data: { originalSummaryId: existingSummary.id },
       });
       continue;
     }

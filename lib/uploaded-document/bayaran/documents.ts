@@ -1,8 +1,14 @@
 import type { ExtractedBayaranRecord } from "@/app/pages/2_muat_naik/components/extract-review-shared";
 import { prisma } from "@/lib/prisma";
-import { jsonRecord } from "@/lib/uploaded-document/shared";
+import { findResidentByNormalizedIc, jsonRecord } from "@/lib/uploaded-document/shared";
 
 export function getBayaranPaymentDate(paymentMonth: string) {
+  if (/^\d{4}-\d{2}-\d{2}/.test(paymentMonth)) {
+    const date = new Date(`${paymentMonth.slice(0, 10)}T00:00:00.000Z`);
+
+    return Number.isNaN(date.getTime()) ? new Date() : date;
+  }
+
   const [monthName, yearText] = paymentMonth.split(/\s+/);
   const monthIndexByName: Record<string, number> = {
     januari: 0,
@@ -45,24 +51,30 @@ export async function buildBayaranExtractResultFromDraftRows(
     return null;
   }
 
-  const records = rows.map((row) =>
-    jsonRecord<ExtractedBayaranRecord>(row.rawData, {
-      paymentId: row.id,
-      residentId: row.originalResidentId ?? undefined,
-      isExisted: row.isExisted,
-      page: 0,
-      jabatanCode: "",
-      jabatanName: "",
-      ptjpkCode: "",
-      ptjpkName: row.department ?? "",
-      bil: "",
-      noRujukan: row.referenceNo ?? row.receiptNo ?? "",
-      noGajiNoKp: row.residentIcNumber,
-      nama: row.residentName,
-      amaunRm: row.amount.toFixed(2),
-      tarikh: row.paymentDate.toISOString(),
-      noResit: row.receiptNo ?? "",
-      catatan: row.description ?? "",
+  const records = await Promise.all(
+    rows.map(async (row) => {
+      const residentId = normalizeOptionalUuid(
+        await findResidentByNormalizedIc(prisma, row.residentIcNumber),
+      );
+      const isNewResident = !residentId;
+
+      if (row.originalResidentId !== residentId) {
+        await prisma.paymentDraft.update({
+          where: { id: row.id },
+          data: {
+            originalResidentId: residentId,
+          },
+        });
+      }
+
+      const fallback = buildBayaranRecord(row, residentId, isNewResident);
+      const storedRecord = jsonRecord<ExtractedBayaranRecord>(row.rawData, fallback);
+
+      return {
+        ...fallback,
+        page: storedRecord.page,
+        bil: storedRecord.bil,
+      } satisfies ExtractedBayaranRecord;
     }),
   );
 
@@ -74,12 +86,40 @@ export async function buildBayaranExtractResultFromDraftRows(
     documentType: "bayaran" as const,
     recordCount: records.length,
     totalAmount,
-    paymentMonth:
-      rows[0]?.paymentDate.toLocaleDateString("ms-MY", {
-        month: "long",
-        year: "numeric",
-        timeZone: "UTC",
-      }) ?? "",
+    paymentMonth: rows[0]?.paymentDate.toISOString() ?? "",
     records,
   };
+}
+
+type BayaranDraftRow = Awaited<
+  ReturnType<typeof prisma.paymentDraft.findMany>
+>[number];
+
+function buildBayaranRecord(
+  row: BayaranDraftRow,
+  residentId: string | null,
+  isNewResident: boolean,
+) {
+  return {
+    paymentId: row.id,
+    residentId: residentId ?? undefined,
+    isExisted: isNewResident,
+    page: 0,
+    jabatanCode: "",
+    jabatanName: row.department ?? "",
+    ptjpkCode: "",
+    ptjpkName: "",
+    bil: "",
+    noRujukan: row.receiptNo ?? row.referenceNo ?? "",
+    noGajiNoKp: row.residentIcNumber,
+    nama: row.residentName,
+    amaunRm: row.amount.toFixed(2),
+    tarikh: row.paymentDate.toISOString(),
+    noResit: row.receiptNo ?? row.referenceNo ?? "",
+    catatan: row.description ?? "",
+  } satisfies ExtractedBayaranRecord;
+}
+
+function normalizeOptionalUuid(value: string | null | undefined) {
+  return value?.trim() ? value : null;
 }
