@@ -45,7 +45,7 @@ export default async function JejakAuditPage({
   const { records: auditRows, pagination } = auditPage;
 
   return (
-    <main className="relative flex h-full min-h-0 flex-col text-[#0B1C30]">
+    <main className="relative flex flex-col gap-4 text-[#0B1C30]">
       <AuditLogHeader />
       <AuditLogSummaryCard totalRecords={pagination.totalRecords} />
       <AuditLogTablePanel

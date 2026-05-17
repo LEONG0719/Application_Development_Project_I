@@ -4,11 +4,11 @@ export default function AuditLogSummaryCard({
   totalRecords: number;
 }) {
   return (
-    <section className="mb-8 rounded-xl border border-light-grey/20 border-l-4 border-l-dark-blue bg-white px-5 py-5 shadow-sm">
-      <div className="text-xs font-bold uppercase tracking-[3px] text-[#555967]">
+    <section className="rounded-lg border-l-4 border-l-dark-blue bg-white p-4 shadow">
+      <div className="text-xs font-semibold text-grey/70">
         Jumlah Aktiviti
       </div>
-      <div className="mt-2 text-[40px] font-extrabold leading-none tracking-wide">
+      <div className="mt-1 text-3xl font-bold text-dark-grey">
         {totalRecords.toLocaleString("ms-MY")}
       </div>
     </section>
