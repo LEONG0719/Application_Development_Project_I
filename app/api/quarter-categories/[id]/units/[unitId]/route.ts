@@ -310,36 +310,6 @@ export async function PATCH(request: Request, context: RouteContext) {
     const shouldEndOccupancy = Boolean(nextOccupancyMoveOutDate);
     const todayStart = getTodayStartInMalaysia();
 
-    if (
-      nextOccupancyMoveInDate &&
-      nextOccupancyMoveInDate.getTime() > todayStart.getTime()
-    ) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Tarikh masuk tidak boleh selepas hari ini.",
-        },
-        {
-          status: 400,
-        },
-      );
-    }
-
-    if (
-      nextOccupancyMoveOutDate &&
-      nextOccupancyMoveOutDate.getTime() > todayStart.getTime()
-    ) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Tarikh keluar tidak boleh selepas hari ini.",
-        },
-        {
-          status: 400,
-        },
-      );
-    }
-
     if (nextOccupancyMoveInDate && nextOccupancyMoveOutDate) {
       if (nextOccupancyMoveOutDate.getTime() < nextOccupancyMoveInDate.getTime()) {
         return NextResponse.json(
