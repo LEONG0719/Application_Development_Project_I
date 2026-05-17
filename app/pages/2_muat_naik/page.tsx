@@ -2,7 +2,7 @@
 
 import { ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import Icon from "../../components/Icon";
+import Icon from "@/app/components/Icon/Icon";
 import { ROUTES } from "../../constants/routes";
 import CategoryTabs from "./components/CategoryTabs";
 import DemoDocumentButton from "./components/DemoDocumentButton";
