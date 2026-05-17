@@ -3,8 +3,8 @@ import { NextResponse } from "next/server";
 const MAX_UPLOAD_SIZE = 25 * 1024 * 1024;
 
 const supportedTypesByKind = {
-  bayaran: [".pdf"],
-  tunggakan: [".xlsx"],
+  bayaran: [".pdf", ".xlsx"],
+  tunggakan: [".pdf", ".xlsx"],
   penghuni: [".pdf", ".xlsx"],
   kuarters: [".pdf", ".xlsx"],
 } as const;
@@ -61,7 +61,12 @@ export async function handleExtractRequest(request: Request, kind: ExtractKind) 
       "http://127.0.0.1:8000";
     const extractionUrl = new URL(`${aiServiceBaseUrl}/extract/${kind}`);
 
-    if (kind === "kuarters" || kind === "penghuni") {
+    if (
+      kind === "bayaran" ||
+      kind === "kuarters" ||
+      kind === "penghuni" ||
+      kind === "tunggakan"
+    ) {
       const parsingMode = formData.get("parsingMode");
       extractionUrl.searchParams.set(
         "parsing_mode",

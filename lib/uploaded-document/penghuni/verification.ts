@@ -20,8 +20,21 @@ export async function verifyPenghuniDrafts(
   const selectedKeySet = new Set(
     selectedKeys.flatMap((key) => [normalizeSelectedKey(key), normalizeIc(key)]),
   );
+  const selectedDraftIds = selectedKeys.filter(isUuid);
+  const selectedIcNumbers = selectedKeys
+    .map(normalizeIc)
+    .filter((key) => key.length === 12);
+  const draftSelectionFilters = [
+    ...(selectedDraftIds.length > 0 ? [{ id: { in: selectedDraftIds } }] : []),
+    ...(selectedIcNumbers.length > 0
+      ? [{ icNumber: { in: selectedIcNumbers } }]
+      : []),
+  ];
   const drafts = await tx.residentDraft.findMany({
-    where: { uploadedDocumentId },
+    where: {
+      uploadedDocumentId,
+      ...(draftSelectionFilters.length > 0 ? { OR: draftSelectionFilters } : {}),
+    },
   });
   const selectedDrafts = drafts.filter((draft) => {
     const draftKeys = [
@@ -34,6 +47,7 @@ export async function verifyPenghuniDrafts(
   });
   const failedMessages: string[] = [];
   const successMessages: string[] = [];
+  const touchedUnitIds = new Set<string>();
   let createdResidents = 0;
   let updatedResidents = 0;
   let verifiedRows = 0;
@@ -49,7 +63,16 @@ export async function verifyPenghuniDrafts(
 
   for (const draft of selectedDrafts) {
     const record = buildRecordFromDraft(draft);
-    let residentId = await findResidentByNormalizedIc(tx, draft.icNumber);
+    const normalizedDraftIc = normalizeIc(draft.icNumber);
+
+    if (normalizedDraftIc.length !== 12) {
+      failedMessages.push(
+        `Penghuni ${draft.fullName} gagal disahkan kerana No. K/P tidak sah.`,
+      );
+      continue;
+    }
+
+    let residentId = await findResidentByNormalizedIc(tx, normalizedDraftIc);
     const unitResult = await resolvePenghuniUnit(
       tx,
       uploadedDocumentId,
@@ -75,6 +98,20 @@ export async function verifyPenghuniDrafts(
     const moveInDate = parsePenghuniMoveInDate(record.tarikhMasuk ?? "");
     const moveOutDate = parseNullablePenghuniDate(record.tarikhKeluar ?? "");
 
+    if (!moveInDate) {
+      failedMessages.push(
+        `Penghunian ${draft.fullName} gagal disahkan kerana tarikh masuk tidak sah.`,
+      );
+      continue;
+    }
+
+    if (moveOutDate && moveOutDate < moveInDate) {
+      failedMessages.push(
+        `Penghunian ${draft.fullName} gagal disahkan kerana tarikh keluar lebih awal daripada tarikh masuk.`,
+      );
+      continue;
+    }
+
     if (unitId) {
       const conflict = await hasOccupancyConflict(
         tx,
@@ -97,7 +134,7 @@ export async function verifyPenghuniDrafts(
         where: { id: residentId },
         data: {
           fullName: draft.fullName,
-          icNumber: draft.icNumber,
+          icNumber: normalizedDraftIc,
           phone: draft.phone,
           email: draft.email,
           position: draft.position,
@@ -110,10 +147,22 @@ export async function verifyPenghuniDrafts(
       });
       updatedResidents += 1;
     } else {
-      const resident = await tx.resident.create({
-        data: {
+      const resident = await tx.resident.upsert({
+        where: { icNumber: normalizedDraftIc },
+        update: {
           fullName: draft.fullName,
-          icNumber: draft.icNumber,
+          phone: draft.phone,
+          email: draft.email,
+          position: draft.position,
+          department: draft.department,
+          serviceLevel: draft.serviceLevel,
+          status: draft.status,
+          description: draft.description,
+          uploadedDocumentId,
+        },
+        create: {
+          fullName: draft.fullName,
+          icNumber: normalizedDraftIc,
           phone: draft.phone,
           email: draft.email,
           position: draft.position,
@@ -137,10 +186,15 @@ export async function verifyPenghuniDrafts(
         moveInDate,
         moveOutDate,
       );
+      touchedUnitIds.add(unitId);
     }
 
     await tx.residentDraft.delete({ where: { id: draft.id } });
     verifiedRows += 1;
+  }
+
+  for (const unitId of touchedUnitIds) {
+    await syncUnitOccupancyStatus(tx, unitId);
   }
 
   const summaryMessages = [
@@ -160,28 +214,23 @@ export async function verifyPenghuniDrafts(
 function buildRecordFromDraft(
   draft: Prisma.ResidentDraftGetPayload<Record<string, never>>,
 ): ExtractedPenghuniRecord {
-  const rawRecord =
-    draft.rawData && typeof draft.rawData === "object" && !Array.isArray(draft.rawData)
-      ? draft.rawData
-      : {};
-
   return {
-    ...rawRecord,
     residentId: draft.id,
     originalResidentId: draft.originalResidentId ?? undefined,
     isExisted: false,
     nama: draft.fullName,
     noKadPengenalan: draft.icNumber,
-    kuarters: "kuarters" in rawRecord ? String(rawRecord.kuarters) : "",
-    unit: "unit" in rawRecord ? String(rawRecord.unit) : "",
-    alamatKuarters: draft.description ?? "",
+    kuarters: draft.quarterCategoryName ?? "",
+    unit: draft.unitCode ?? "",
+    alamatKuarters: draft.quarterAddress ?? "",
     perhubungan: draft.phone ?? "",
     gmail: draft.email ?? "",
     pekerjaan: draft.position ?? "",
     jabatan: draft.department ?? "",
     tarafPerkhidmatan: draft.serviceLevel ?? "",
-    tarikhMasuk: "tarikhMasuk" in rawRecord ? String(rawRecord.tarikhMasuk) : "",
-    tarikhKeluar: "tarikhKeluar" in rawRecord ? String(rawRecord.tarikhKeluar) : "",
+    tarikhMasuk: draft.moveInDate?.toISOString() ?? "",
+    tarikhKeluar: draft.moveOutDate?.toISOString() ?? "",
+    catatan: draft.description ?? "",
   };
 }
 
@@ -270,6 +319,12 @@ function normalizeIc(value: string) {
   return value.replace(/\D/g, "");
 }
 
+function isUuid(value: string) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+    value,
+  );
+}
+
 async function upsertPenghuniOccupancy(
   tx: Prisma.TransactionClient,
   residentId: string,
@@ -285,40 +340,78 @@ async function upsertPenghuniOccupancy(
       AND "unitId" <> ${unitId}::uuid
   `;
 
-  await tx.$executeRaw`
-    INSERT INTO "UnitOccupancy"
-      ("id", "residentId", "unitId", "moveInDate", "moveOutDate", "status", "description", "createdAt", "updatedAt")
-    SELECT
-      gen_random_uuid(),
-      ${residentId}::uuid,
-      ${unitId}::uuid,
-      ${moveInDate},
-      ${moveOutDate},
-      ${moveOutDate ? "PAST" : "CURRENT"}::"OccupancyStatus",
-      ${"Dicipta selepas pengesahan dokumen penghuni."},
-      NOW(),
-      NOW()
-    WHERE NOT EXISTS (
-      SELECT 1
-      FROM "UnitOccupancy"
-      WHERE "residentId" = ${residentId}::uuid
-        AND "unitId" = ${unitId}::uuid
-        AND "moveInDate" = ${moveInDate}
-        AND COALESCE("moveOutDate", 'infinity'::timestamp) = COALESCE(${moveOutDate}, 'infinity'::timestamp)
-    )
-  `;
+  const existingOccupancy = await findPenghuniOccupancyToUpdate(
+    tx,
+    residentId,
+    unitId,
+  );
+
+  if (existingOccupancy) {
+    await tx.unitOccupancy.update({
+      where: { id: existingOccupancy.id },
+      data: {
+        moveInDate,
+        moveOutDate,
+        status: moveOutDate ? "PAST" : "CURRENT",
+        description: "Dikemas kini selepas pengesahan dokumen penghuni.",
+      },
+    });
+  } else {
+    await tx.unitOccupancy.create({
+      data: {
+        residentId,
+        unitId,
+        moveInDate,
+        moveOutDate,
+        status: moveOutDate ? "PAST" : "CURRENT",
+        description: "Dicipta selepas pengesahan dokumen penghuni.",
+      },
+    });
+  }
+
+}
+
+async function findPenghuniOccupancyToUpdate(
+  tx: Prisma.TransactionClient,
+  residentId: string,
+  unitId: string,
+) {
+  const currentOccupancy = await tx.unitOccupancy.findFirst({
+    where: { residentId, unitId, status: "CURRENT" },
+    select: { id: true },
+  });
+
+  if (currentOccupancy) {
+    return currentOccupancy;
+  }
+
+  return tx.unitOccupancy.findFirst({
+    where: { residentId, unitId },
+    orderBy: [{ moveInDate: "desc" }, { createdAt: "desc" }],
+    select: { id: true },
+  });
+}
+
+async function syncUnitOccupancyStatus(
+  tx: Prisma.TransactionClient,
+  unitId: string,
+) {
+  const currentOccupancy = await tx.unitOccupancy.findFirst({
+    where: { unitId, status: "CURRENT" },
+    select: { id: true },
+  });
 
   await tx.unit.update({
     where: { id: unitId },
-    data: { status: moveOutDate ? "VACANT" : "OCCUPIED" },
+    data: { status: currentOccupancy ? "OCCUPIED" : "VACANT" },
   });
 }
 
 function parsePenghuniMoveInDate(value: string) {
-  const date = new Date(value);
+  const date = parsePenghuniDateValue(value);
 
   if (Number.isNaN(date.getTime())) {
-    return new Date();
+    return null;
   }
 
   return date;
@@ -329,7 +422,18 @@ function parseNullablePenghuniDate(value: string) {
     return null;
   }
 
-  const date = new Date(value);
+  const date = parsePenghuniDateValue(value);
 
   return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function parsePenghuniDateValue(value: string) {
+  const normalizedValue = value.trim();
+  const dayFirstMatch = normalizedValue.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+
+  return dayFirstMatch
+    ? new Date(
+        `${dayFirstMatch[3]}-${dayFirstMatch[2]}-${dayFirstMatch[1]}T00:00:00.000Z`,
+      )
+    : new Date(value);
 }

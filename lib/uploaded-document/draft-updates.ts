@@ -5,9 +5,14 @@ import type { ExtractResult } from "@/app/pages/2_muat_naik/components/extract-r
 import { createAuditLog } from "@/lib/audit-logs";
 import { getCurrentAdmin } from "@/lib/current-admin";
 import { prisma } from "@/lib/prisma";
-import { updateBayaranDrafts } from "@/lib/uploaded-document/bayaran/draft-updates";
+import {
+  updateBayaranDraft,
+  updateBayaranDrafts,
+} from "@/lib/uploaded-document/bayaran/draft-updates";
 import { mapUploadedDocumentForReview } from "@/lib/uploaded-document/documents";
 import {
+  deleteKuartersCategoryDraft,
+  deleteKuartersUnitDraft,
   updateKuartersCategoryDraft,
   updateKuartersDrafts,
   updateKuartersUnitDraft,
@@ -17,7 +22,10 @@ import {
   updatePenghuniDraft,
   updatePenghuniDrafts,
 } from "@/lib/uploaded-document/penghuni/draft-updates";
-import { updateTunggakanDrafts } from "@/lib/uploaded-document/tunggakan/draft-updates";
+import {
+  updateTunggakanDraft,
+  updateTunggakanDrafts,
+} from "@/lib/uploaded-document/tunggakan/draft-updates";
 
 const uploadedDocumentTransactionOptions = {
   maxWait: 30000,
@@ -42,6 +50,8 @@ export async function updateUploadedDocumentDraftForKind(
     extractResult?: ExtractResult;
   };
   let updatedPenghuniRecord: unknown = null;
+  let updatedTunggakanRecord: unknown = null;
+  let updatedBayaranRecord: unknown = null;
 
   const document = await prisma.$transaction(
     async (tx: Prisma.TransactionClient) => {
@@ -58,10 +68,44 @@ export async function updateUploadedDocumentDraftForKind(
         throw new Error("Jenis dokumen semakan tidak sepadan.");
       }
 
-      if (kind === "bayaran" && extractResult?.documentType === "bayaran") {
-        await updateBayaranDrafts(tx, uploadedDocumentId, extractResult);
-      } else if (kind === "tunggakan" && extractResult?.documentType === "tunggakan") {
-        await updateTunggakanDrafts(tx, uploadedDocumentId, extractResult);
+      if (kind === "bayaran") {
+        if (action === "update-bayaran-record") {
+          const record =
+            "record" in payload ? (payload as { record?: unknown }).record : null;
+
+          if (!record || typeof record !== "object" || Array.isArray(record)) {
+            throw new Error("Data bayaran tidak lengkap.");
+          }
+
+          updatedBayaranRecord = await updateBayaranDraft(
+            tx,
+            uploadedDocumentId,
+            record as Parameters<typeof updateBayaranDraft>[2],
+          );
+        } else if (extractResult?.documentType === "bayaran") {
+          await updateBayaranDrafts(tx, uploadedDocumentId, extractResult);
+        } else {
+          throw new Error("Data ekstrak bayaran tidak lengkap.");
+        }
+      } else if (kind === "tunggakan") {
+        if (action === "update-tunggakan-record") {
+          const record =
+            "record" in payload ? (payload as { record?: unknown }).record : null;
+
+          if (!record || typeof record !== "object" || Array.isArray(record)) {
+            throw new Error("Data tunggakan tidak lengkap.");
+          }
+
+          updatedTunggakanRecord = await updateTunggakanDraft(
+            tx,
+            uploadedDocumentId,
+            record as Parameters<typeof updateTunggakanDraft>[2],
+          );
+        } else if (extractResult?.documentType === "tunggakan") {
+          await updateTunggakanDrafts(tx, uploadedDocumentId, extractResult);
+        } else {
+          throw new Error("Data ekstrak tunggakan tidak lengkap.");
+        }
       } else if (kind === "penghuni") {
         if (action === "update-penghuni-record") {
           const record =
@@ -112,6 +156,14 @@ export async function updateUploadedDocumentDraftForKind(
     return { record: updatedPenghuniRecord };
   }
 
+  if (updatedTunggakanRecord) {
+    return { record: updatedTunggakanRecord };
+  }
+
+  if (updatedBayaranRecord) {
+    return { record: updatedBayaranRecord };
+  }
+
   return mapUploadedDocumentForReview(document);
 }
 
@@ -122,14 +174,49 @@ export function createUploadedDocumentDraftUpdateHandler(kind: DraftUpdateKind) 
       const body = await request.json();
       const payload = body && typeof body === "object" ? body : {};
 
+      const action =
+        "action" in payload ? (payload as { action?: unknown }).action : undefined;
+
       if (
-        kind === "penghuni" &&
-        "action" in payload &&
-        ((payload as { action?: unknown }).action === "update-penghuni-record" ||
-          (payload as { action?: unknown }).action === "delete-penghuni-record")
+        kind === "kuarters" &&
+        (action === "delete-kuarters-unit" ||
+          action === "delete-kuarters-category")
       ) {
         await getCurrentAdmin();
-        const action = (payload as { action?: unknown }).action;
+
+        if (action === "delete-kuarters-unit") {
+          await deleteKuartersUnitDraft(prisma, id, payload);
+
+          return NextResponse.json({
+            success: true,
+            data: {
+              deletedUnitId:
+                "unitId" in payload ? (payload as { unitId?: unknown }).unitId : null,
+            },
+          });
+        }
+
+        await deleteKuartersCategoryDraft(prisma, id, payload);
+
+        return NextResponse.json({
+          success: true,
+          data: {
+            deletedCategoryId:
+              "categoryId" in payload
+                ? (payload as { categoryId?: unknown }).categoryId
+                : null,
+          },
+        });
+      }
+
+      if (
+        (kind === "bayaran" || kind === "penghuni" || kind === "tunggakan") &&
+        (action === "update-bayaran-record" ||
+          action === "update-penghuni-record" ||
+          action === "update-tunggakan-record" ||
+          action === "delete-penghuni-record")
+      ) {
+        await getCurrentAdmin();
 
         if (action === "delete-penghuni-record") {
           const residentId =
@@ -146,6 +233,46 @@ export function createUploadedDocumentDraftUpdateHandler(kind: DraftUpdateKind) 
           return NextResponse.json({
             success: true,
             data: { deletedResidentId: residentId },
+          });
+        }
+
+        if (action === "update-tunggakan-record") {
+          const record =
+            "record" in payload ? (payload as { record?: unknown }).record : null;
+
+          if (!record || typeof record !== "object" || Array.isArray(record)) {
+            throw new Error("Data tunggakan tidak lengkap.");
+          }
+
+          const updatedRecord = await updateTunggakanDraft(
+            prisma,
+            id,
+            record as Parameters<typeof updateTunggakanDraft>[2],
+          );
+
+          return NextResponse.json({
+            success: true,
+            data: { record: updatedRecord },
+          });
+        }
+
+        if (action === "update-bayaran-record") {
+          const record =
+            "record" in payload ? (payload as { record?: unknown }).record : null;
+
+          if (!record || typeof record !== "object" || Array.isArray(record)) {
+            throw new Error("Data bayaran tidak lengkap.");
+          }
+
+          const updatedRecord = await updateBayaranDraft(
+            prisma,
+            id,
+            record as Parameters<typeof updateBayaranDraft>[2],
+          );
+
+          return NextResponse.json({
+            success: true,
+            data: { record: updatedRecord },
           });
         }
 

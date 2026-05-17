@@ -82,6 +82,7 @@ export type BayaranExtractResult = {
   recordCount: number;
   totalAmount: string;
   paymentMonth: string;
+  parsingMode?: "strict" | "assisted";
   records: ExtractedBayaranRecord[];
 };
 
@@ -94,14 +95,14 @@ export type ExtractedTunggakanRecord = {
   nama: string;
   noKadPengenalan: string;
   jumlahTunggakan: string;
-  sourceSheet: string;
-  sourceRow: number;
 };
 
 export type TunggakanExtractResult = {
   documentType: "tunggakan";
   recordCount: number;
   totalAmount: string;
+  lastUpdatedMonth?: string;
+  parsingMode?: "strict" | "assisted";
   records: ExtractedTunggakanRecord[];
 };
 

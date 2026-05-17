@@ -145,8 +145,58 @@ export default function ExtractReviewPage({
     records: ExtractedBayaranRecord[],
     totalAmount: string,
   ) => {
-    if (!bayaranExtract) {
+    if (!bayaranExtract || !draftId) {
       return;
+    }
+
+    const changedRecord = findSingleChangedBayaranRecord(
+      bayaranExtract.records,
+      records,
+    );
+
+    if (changedRecord === "unchanged") {
+      return;
+    }
+
+    if (changedRecord) {
+      const response = await fetch(draftUpdateRouteByKind.bayaran(draftId), {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          action: "update-bayaran-record",
+          record: changedRecord,
+        }),
+      });
+      const result = await response.json().catch(() => null);
+
+      if (response.ok && result?.data?.record) {
+        const updatedRecord = result.data.record as ExtractedBayaranRecord;
+        const nextRecords = bayaranExtract.records.map((record) =>
+          getBayaranRecordKey(record) === getBayaranRecordKey(changedRecord)
+            ? updatedRecord
+            : record,
+        );
+        const nextTotalAmount = nextRecords
+          .reduce((total, record) => total + Number(record.amaunRm || 0), 0)
+          .toFixed(2);
+
+        setExtractResult({
+          ...bayaranExtract,
+          recordCount: nextRecords.length,
+          totalAmount: nextTotalAmount,
+          paymentMonth: updatedRecord.tarikh || bayaranExtract.paymentMonth,
+          records: nextRecords,
+        });
+        setBayaranEditedTotalAmount(nextTotalAmount);
+        showVerificationNotice("success", "Perubahan bayaran berjaya disimpan.");
+        return updatedRecord;
+      }
+
+      const message = result?.message ?? "Gagal menyimpan perubahan bayaran.";
+      showVerificationNotice("error", message);
+      throw new Error(message);
     }
 
     const nextExtract: BayaranExtractResult = {
@@ -155,10 +205,6 @@ export default function ExtractReviewPage({
       totalAmount,
       records,
     };
-    if (!draftId) {
-      throw new Error("Dokumen semakan tidak ditemui.");
-    }
-
     const response = await fetch(draftUpdateRouteByKind.bayaran(draftId), {
       method: "PATCH",
       headers: {
@@ -172,11 +218,13 @@ export default function ExtractReviewPage({
 
     if (response.ok && result?.data?.document?.extractResult) {
       setExtractResult(result.data.document.extractResult as ExtractResult);
+      showVerificationNotice("success", "Perubahan bayaran berjaya disimpan.");
     } else if (!response.ok) {
       showVerificationNotice(
         "error",
         result?.message ?? "Gagal menyimpan perubahan bayaran.",
       );
+      throw new Error(result?.message ?? "Gagal menyimpan perubahan bayaran.");
     }
   };
 
@@ -184,8 +232,60 @@ export default function ExtractReviewPage({
     records: ExtractedTunggakanRecord[],
     totalAmount: string,
   ) => {
-    if (!tunggakanExtract) {
+    if (!tunggakanExtract || !draftId) {
       return;
+    }
+
+    const changedRecord = findSingleChangedTunggakanRecord(
+      tunggakanExtract.records,
+      records,
+    );
+
+    if (changedRecord === "unchanged") {
+      return;
+    }
+
+    if (changedRecord) {
+      const response = await fetch(draftUpdateRouteByKind.tunggakan(draftId), {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          action: "update-tunggakan-record",
+          record: changedRecord,
+        }),
+      });
+      const result = await response.json().catch(() => null);
+
+      if (response.ok && result?.data?.record) {
+        const updatedRecord = result.data.record as ExtractedTunggakanRecord;
+        const nextRecords = tunggakanExtract.records.map((record) =>
+          getTunggakanRecordKey(record) === getTunggakanRecordKey(changedRecord)
+            ? updatedRecord
+            : record,
+        );
+        const acceptedRecords = nextRecords.filter(
+          (record) => record.importStatus !== "IGNORED",
+        );
+        setExtractResult({
+          ...tunggakanExtract,
+          recordCount: acceptedRecords.length,
+          totalAmount: acceptedRecords
+            .reduce(
+              (total, record) => total + parseSignedAmount(record.jumlahTunggakan),
+              0,
+            )
+            .toFixed(2),
+          records: nextRecords,
+        });
+        showVerificationNotice("success", "Perubahan tunggakan berjaya disimpan.");
+        return updatedRecord;
+      }
+
+      const message = result?.message ?? "Gagal menyimpan perubahan tunggakan.";
+      showVerificationNotice("error", message);
+      throw new Error(message);
     }
 
     const nextExtract: TunggakanExtractResult = {
@@ -194,9 +294,6 @@ export default function ExtractReviewPage({
       totalAmount,
       records,
     };
-    if (!draftId) {
-      return;
-    }
 
     setExtractResult(nextExtract);
     const response = await fetch(draftUpdateRouteByKind.tunggakan(draftId), {
@@ -213,10 +310,9 @@ export default function ExtractReviewPage({
     if (response.ok && result?.data?.document?.extractResult) {
       setExtractResult(result.data.document.extractResult as ExtractResult);
     } else if (!response.ok) {
-      showVerificationNotice(
-        "error",
-        result?.message ?? "Gagal menyimpan perubahan tunggakan.",
-      );
+      const message = result?.message ?? "Gagal menyimpan perubahan tunggakan.";
+      showVerificationNotice("error", message);
+      throw new Error(message);
     }
   };
 
@@ -456,6 +552,113 @@ export default function ExtractReviewPage({
     throw new Error(message);
   };
 
+  const deleteKuartersCategoryDraft = async ({
+    categoryId,
+  }: {
+    categoryId: string;
+  }) => {
+    if (!draftId || !kuartersExtract) {
+      throw new Error("Dokumen semakan tidak ditemui.");
+    }
+
+    const response = await fetch(draftUpdateRouteByKind.kuarters(draftId), {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        action: "delete-kuarters-category",
+        categoryId,
+      }),
+    });
+    const result = await response.json().catch(() => null);
+
+    if (!response.ok) {
+      const message = result?.message ?? "Gagal memadam kategori kuarters.";
+      showVerificationNotice("error", message);
+      throw new Error(message);
+    }
+
+    const deletedCategory = kuartersExtract.records.find(
+      (record) => record.categoryId === categoryId || record.id === categoryId,
+    );
+    const removedKeys = new Set<string>([
+      categoryId,
+      ...(deletedCategory?.units.map((unit) => unit.unitId ?? unit.unitCode) ?? []),
+    ]);
+    const nextRecords = kuartersExtract.records.filter(
+      (record) => record.categoryId !== categoryId && record.id !== categoryId,
+    );
+
+    setExtractResult({
+      ...kuartersExtract,
+      recordCount: nextRecords.length,
+      totalUnits: nextRecords.reduce(
+        (total, record) => total + record.units.length,
+        0,
+      ),
+      records: nextRecords,
+    });
+    setSelectedRecordKeys((currentKeys) =>
+      currentKeys.filter((key) => !removedKeys.has(key)),
+    );
+    clearVerificationNotice();
+  };
+
+  const deleteKuartersUnitDraft = async ({
+    categoryId,
+    unitId,
+  }: {
+    categoryId: string;
+    unitId: string;
+  }) => {
+    if (!draftId || !kuartersExtract) {
+      throw new Error("Dokumen semakan tidak ditemui.");
+    }
+
+    const response = await fetch(draftUpdateRouteByKind.kuarters(draftId), {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        action: "delete-kuarters-unit",
+        categoryId,
+        unitId,
+      }),
+    });
+    const result = await response.json().catch(() => null);
+
+    if (!response.ok) {
+      const message = result?.message ?? "Gagal memadam unit kuarters.";
+      showVerificationNotice("error", message);
+      throw new Error(message);
+    }
+
+    const nextRecords = kuartersExtract.records.map((record) => {
+      if (record.categoryId !== categoryId && record.id !== categoryId) {
+        return record;
+      }
+
+      const nextUnits = record.units.filter((unit) => unit.unitId !== unitId);
+
+      return { ...record, units: nextUnits, unitCount: nextUnits.length };
+    });
+
+    setExtractResult({
+      ...kuartersExtract,
+      totalUnits: nextRecords.reduce(
+        (total, record) => total + record.units.length,
+        0,
+      ),
+      records: nextRecords,
+    });
+    setSelectedRecordKeys((currentKeys) =>
+      currentKeys.filter((key) => key !== unitId),
+    );
+    clearVerificationNotice();
+  };
+
   const handleReviewLater = () => {
     router.push(`${ROUTES.muatNaik}?kategori=${encodeURIComponent(kind)}`);
   };
@@ -554,6 +757,7 @@ export default function ExtractReviewPage({
           kind={kind}
           isLoading={isLoadingDraft}
           bayaranRecords={bayaranExtract?.records ?? []}
+          bayaranParsingMode={bayaranExtract?.parsingMode}
           onBayaranTotalAmountChange={setBayaranEditedTotalAmount}
           onBayaranRecordsChange={updateCurrentBayaranDraft}
           penghuniRecords={penghuniExtract?.records ?? []}
@@ -565,7 +769,10 @@ export default function ExtractReviewPage({
           onKuartersRecordsChange={updateCurrentKuartersDraft}
           onKuartersCategoryChange={updateKuartersCategoryDraft}
           onKuartersUnitChange={updateKuartersUnitDraft}
+          onKuartersCategoryDelete={deleteKuartersCategoryDraft}
+          onKuartersUnitDelete={deleteKuartersUnitDraft}
           tunggakanRecords={tunggakanExtract?.records ?? []}
+          tunggakanParsingMode={tunggakanExtract?.parsingMode}
           onTunggakanRecordsChange={updateCurrentTunggakanDraft}
           selectedKeys={selectedRecordKeys}
           onSelectedKeysChange={setSelectedRecordKeys}
@@ -588,6 +795,17 @@ export default function ExtractReviewPage({
 
 function getPenghuniRecordKey(record: ExtractedPenghuniRecord) {
   return record.residentId ?? record.noKadPengenalan;
+}
+
+function getTunggakanRecordKey(record: ExtractedTunggakanRecord) {
+  return record.arrearsSummaryId ?? `${record.noKadPengenalan}-${record.nama}`;
+}
+
+function getBayaranRecordKey(record: ExtractedBayaranRecord) {
+  return (
+    record.paymentId ??
+    `${record.page}-${record.bil}-${record.noGajiNoKp}-${record.noRujukan}`
+  );
 }
 
 function findSingleChangedPenghuniRecord(
@@ -615,4 +833,86 @@ function findSingleChangedPenghuniRecord(
   }
 
   return changedRecords.length === 1 ? changedRecords[0] : null;
+}
+
+function findSingleChangedBayaranRecord(
+  currentRecords: ExtractedBayaranRecord[],
+  nextRecords: ExtractedBayaranRecord[],
+) {
+  if (currentRecords.length !== nextRecords.length) {
+    return null;
+  }
+
+  const currentByKey = new Map(
+    currentRecords.map((record) => [getBayaranRecordKey(record), record]),
+  );
+  const changedRecords = nextRecords.filter((record) => {
+    const currentRecord = currentByKey.get(getBayaranRecordKey(record));
+
+    return (
+      currentRecord &&
+      JSON.stringify(currentRecord) !== JSON.stringify(record)
+    );
+  });
+
+  if (changedRecords.length === 0) {
+    return "unchanged";
+  }
+
+  return changedRecords.length === 1 ? changedRecords[0] : null;
+}
+
+function findSingleChangedTunggakanRecord(
+  currentRecords: ExtractedTunggakanRecord[],
+  nextRecords: ExtractedTunggakanRecord[],
+) {
+  if (currentRecords.length !== nextRecords.length) {
+    return null;
+  }
+
+  const currentByKey = new Map(
+    currentRecords.map((record) => [getTunggakanRecordKey(record), record]),
+  );
+  const changedRecords = nextRecords.filter((record) => {
+    const currentRecord = currentByKey.get(getTunggakanRecordKey(record));
+
+    return (
+      currentRecord &&
+      JSON.stringify(currentRecord) !== JSON.stringify(record)
+    );
+  });
+
+  if (changedRecords.length === 0) {
+    return "unchanged";
+  }
+
+  return changedRecords.length === 1 ? changedRecords[0] : null;
+}
+
+function parseSignedAmount(value: string) {
+  const normalizedValue = String(value ?? "").trim();
+
+  if (!normalizedValue) {
+    return 0;
+  }
+
+  const normalizedSign = normalizedValue.replace(/[−–—]/g, "-");
+  const isParenthesizedNegative = /^\(.*\)$/.test(normalizedSign);
+  const hasNegativeSign = normalizedSign.includes("-");
+  const numericValue = Number(
+    normalizedSign
+      .replace(/RM/gi, "")
+      .replace(/,/g, "")
+      .replace(/\s+/g, "")
+      .replace(/[()]/g, "")
+      .replace(/-/g, ""),
+  );
+
+  if (!Number.isFinite(numericValue)) {
+    return 0;
+  }
+
+  return (isParenthesizedNegative || hasNegativeSign) && numericValue > 0
+    ? numericValue * -1
+    : numericValue;
 }

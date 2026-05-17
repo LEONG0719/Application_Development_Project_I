@@ -18,7 +18,7 @@ type ReviewTableProps = {
   onBayaranRecordsChange?: (
     records: ExtractedBayaranRecord[],
     totalAmount: string,
-  ) => void;
+  ) => ExtractedBayaranRecord | void | Promise<ExtractedBayaranRecord | void>;
   penghuniRecords: ExtractedPenghuniRecord[];
   onPenghuniRecordsChange?: (
     records: ExtractedPenghuniRecord[],
@@ -39,11 +39,16 @@ type ReviewTableProps = {
     unitId: string;
     unitCode: string;
   }) => Promise<void>;
+  onKuartersCategoryDelete?: (params: { categoryId: string }) => Promise<void>;
+  onKuartersUnitDelete?: (params: {
+    categoryId: string;
+    unitId: string;
+  }) => Promise<void>;
   tunggakanRecords: ExtractedTunggakanRecord[];
   onTunggakanRecordsChange?: (
     records: ExtractedTunggakanRecord[],
     totalAmount: string,
-  ) => void;
+  ) => ExtractedTunggakanRecord | void | Promise<ExtractedTunggakanRecord | void>;
   selectedKeys: string[];
   onSelectedKeysChange: (keys: string[]) => void;
   onNotice?: (tone: KuartersNotice["tone"], message: string) => void;
@@ -61,6 +66,8 @@ export default function ReviewTable({
   onKuartersRecordsChange,
   onKuartersCategoryChange,
   onKuartersUnitChange,
+  onKuartersCategoryDelete,
+  onKuartersUnitDelete,
   tunggakanRecords,
   onTunggakanRecordsChange,
   selectedKeys,
@@ -90,7 +97,7 @@ export default function ReviewTable({
     return (
       <TunggakanReviewTable
         key={tunggakanRecords
-          .map((record) => record.arrearsSummaryId ?? record.sourceRow)
+          .map((record) => record.arrearsSummaryId ?? `${record.noKadPengenalan}-${record.nama}`)
           .join("|")}
         records={tunggakanRecords}
         onRecordsChange={onTunggakanRecordsChange}
@@ -120,6 +127,8 @@ export default function ReviewTable({
       onRecordsChange={onKuartersRecordsChange}
       onCategoryChange={onKuartersCategoryChange}
       onUnitChange={onKuartersUnitChange}
+      onCategoryDelete={onKuartersCategoryDelete}
+      onUnitDelete={onKuartersUnitDelete}
       selectedKeys={selectedKeys}
       onSelectedKeysChange={onSelectedKeysChange}
     />

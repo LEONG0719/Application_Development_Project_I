@@ -5,10 +5,10 @@ from fastapi import FastAPI, File, HTTPException, Query, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 
 from extractor import (
-    extract_bayaran_from_pdf,
+    extract_bayaran_document,
     extract_kuarters_document,
     extract_penghuni_document,
-    extract_tunggakan_from_xlsx,
+    extract_tunggakan_document,
 )
 
 # This is the main entry point for the Kuarters AI Extraction Service API. It defines the FastAPI app, configures CORS, and sets up endpoints for health checks and data extraction from uploaded files. Each extraction endpoint validates the uploaded file, reads its contents, and calls the appropriate extractor function. Errors during extraction are handled gracefully with HTTP exceptions.
@@ -106,17 +106,26 @@ async def extract_penghuni(
 @app.post("/extract/bayaran")
 async def extract_bayaran(
     file: UploadFile = File(...),
+    parsing_mode: str = Query(default="strict", pattern="^(strict|assisted)$"),
     limit: int | None = Query(default=None, ge=1, le=1000),
 ) -> dict:
-    if not file.filename or not file.filename.lower().endswith(".pdf"):
-        raise HTTPException(status_code=400, detail="Sila muat naik fail .pdf sahaja.")
+    if not file.filename or not file.filename.lower().endswith((".xlsx", ".pdf")):
+        raise HTTPException(
+            status_code=400,
+            detail="Sila muat naik fail .xlsx atau .pdf sahaja.",
+        )
 
     file_bytes = await file.read()
     if not file_bytes:
         raise HTTPException(status_code=400, detail="Fail kosong.")
 
     try:
-        return extract_bayaran_from_pdf(file_bytes, limit=limit)
+        return extract_bayaran_document(
+            file_bytes,
+            file.filename,
+            parsing_mode=parsing_mode,
+            limit=limit,
+        )
     except Exception as error:
         raise HTTPException(
             status_code=422,
@@ -157,17 +166,26 @@ async def extract_kuarters(
 @app.post("/extract/tunggakan")
 async def extract_tunggakan(
     file: UploadFile = File(...),
+    parsing_mode: str = Query(default="strict", pattern="^(strict|assisted)$"),
     limit: int | None = Query(default=None, ge=1, le=1000),
 ) -> dict:
-    if not file.filename or not file.filename.lower().endswith(".xlsx"):
-        raise HTTPException(status_code=400, detail="Sila muat naik fail .xlsx sahaja.")
+    if not file.filename or not file.filename.lower().endswith((".xlsx", ".pdf")):
+        raise HTTPException(
+            status_code=400,
+            detail="Sila muat naik fail .xlsx atau .pdf sahaja.",
+        )
 
     file_bytes = await file.read()
     if not file_bytes:
         raise HTTPException(status_code=400, detail="Fail kosong.")
 
     try:
-        return extract_tunggakan_from_xlsx(file_bytes, limit=limit)
+        return extract_tunggakan_document(
+            file_bytes,
+            file.filename,
+            parsing_mode=parsing_mode,
+            limit=limit,
+        )
     except Exception as error:
         raise HTTPException(
             status_code=422,

@@ -2,20 +2,25 @@ import type { Prisma } from "@prisma/client";
 
 export type QueryClient = Pick<Prisma.TransactionClient, "$queryRaw">;
 
-export function jsonRecord<T>(value: Prisma.JsonValue | null, fallback: T): T {
-  return value && typeof value === "object" && !Array.isArray(value)
-    ? ({ ...fallback, ...value } as T)
-    : fallback;
-}
-
-export function rawData(value: unknown): Prisma.InputJsonValue {
-  return JSON.parse(JSON.stringify(value ?? {}));
-}
-
 export async function findResidentByNormalizedIc(
   tx: QueryClient,
   icNumber: string,
 ) {
+  const normalizedIc = icNumber.replace(/\D/g, "");
+
+  if (normalizedIc) {
+    const exactResidents = await tx.$queryRaw<{ id: string }[]>`
+      SELECT "id"
+      FROM "Resident"
+      WHERE "icNumber" = ${normalizedIc}
+      LIMIT 1
+    `;
+
+    if (exactResidents[0]?.id) {
+      return exactResidents[0].id;
+    }
+  }
+
   const residents = await tx.$queryRaw<{ id: string }[]>`
     SELECT "id"
     FROM "Resident"

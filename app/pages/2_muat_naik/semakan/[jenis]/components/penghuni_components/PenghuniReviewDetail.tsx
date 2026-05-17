@@ -314,11 +314,20 @@ export default function PenghuniReviewDetail({
                     <Icon icon="edit" size={13} />
                     <div className="text-xs">Sedang menyunting rekod ini...</div>
                   </div>
-                  <div className="flex gap-3 w-xs">
+                  <div className="flex gap-3 w-[28rem]">
+                    <button
+                      className="flex flex-1 items-center justify-center gap-1 whitespace-nowrap font-bold text-xs text-white bg-red px-5 py-3 rounded-md hover:bg-red/90 disabled:cursor-not-allowed disabled:opacity-60"
+                      type="button"
+                      disabled={isSaving || isDeleting}
+                      onClick={handleDelete}
+                    >
+                      <Icon icon="delete" size={16} />
+                      {isDeleting ? "Sedang Padam..." : "Padam Rekod"}
+                    </button>
                     <button
                       className="flex flex-1 items-center justify-center gap-1 whitespace-nowrap font-bold text-xs text-white bg-red px-5 py-3 rounded-md hover:bg-red/90"
                       type="button"
-                      disabled={isSaving}
+                      disabled={isSaving || isDeleting}
                       onClick={() => {
                         setFormData(originalData);
                         setKemasKini(false);
@@ -330,7 +339,7 @@ export default function PenghuniReviewDetail({
                     <button
                       className="flex flex-1 items-center justify-center gap-1 whitespace-nowrap font-bold text-xs text-white bg-green px-5 py-3 rounded-md hover:bg-dark-blue/90 disabled:cursor-not-allowed disabled:opacity-60"
                       type="button"
-                      disabled={isSaving}
+                      disabled={isSaving || isDeleting}
                       onClick={handleSave}
                     >
                       <Icon icon={isSaving ? "progress_activity" : "save"} size={16} />
@@ -364,6 +373,7 @@ function DatePickerField({
     initialDate ?? startOfDay(new Date()),
   );
   const days = buildCalendarDays(visibleMonth);
+  const selectedDateValue = initialDate ? formatDateInput(initialDate) : "";
 
   return (
     <label className={`block tracking-widest ${className}`}>
@@ -431,7 +441,7 @@ function DatePickerField({
             <div className="mt-1 grid grid-cols-7 gap-1">
               {days.map((day) => {
                 const dateValue = formatDateInput(day.date);
-                const isSelected = dateValue === value;
+                const isSelected = dateValue === selectedDateValue;
                 const isVisibleMonth =
                   day.date.getMonth() === visibleMonth.getMonth();
 
@@ -477,13 +487,29 @@ function DatePickerField({
 }
 
 function parseDateInput(value: string | undefined) {
-  if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+  if (!value) {
     return null;
   }
 
-  const date = new Date(`${value}T00:00:00`);
+  const normalizedValue = value.trim();
+  const dayFirstMatch = normalizedValue.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  const isoDateMatch = normalizedValue.match(/^(\d{4})-(\d{2})-(\d{2})/);
 
-  return Number.isNaN(date.getTime()) ? null : date;
+  const date = dayFirstMatch
+    ? new Date(
+        Number(dayFirstMatch[3]),
+        Number(dayFirstMatch[2]) - 1,
+        Number(dayFirstMatch[1]),
+      )
+    : isoDateMatch
+      ? new Date(
+          Number(isoDateMatch[1]),
+          Number(isoDateMatch[2]) - 1,
+          Number(isoDateMatch[3]),
+        )
+      : null;
+
+  return date && !Number.isNaN(date.getTime()) ? date : null;
 }
 
 function startOfDay(date: Date) {
