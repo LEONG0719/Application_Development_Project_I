@@ -60,6 +60,7 @@ export default function ExtractReviewPage({
   const [extractResult, setExtractResult] = useState<ExtractResult | null>(null);
   const [uploadedFileName, setUploadedFileName] = useState("");
   const [isLoadingDraft, setIsLoadingDraft] = useState(true);
+  const uploadPageForKind = `${ROUTES.muatNaik}?kategori=${encodeURIComponent(kind)}`;
 
   const showVerificationNotice = (
     tone: KuartersNotice["tone"],
@@ -88,6 +89,11 @@ export default function ExtractReviewPage({
       try {
         const response = await fetch(`/api/uploaded-documents/${draftId}`);
         const result = await response.json().catch(() => null);
+
+        if (response.status === 404) {
+          router.replace(uploadPageForKind);
+          return;
+        }
 
         if (!response.ok || !result?.data?.document) {
           throw new Error(result?.message ?? "Gagal mendapatkan draf dokumen.");
@@ -130,7 +136,7 @@ export default function ExtractReviewPage({
     return () => {
       isActive = false;
     };
-  }, [draftId, kind]);
+  }, [draftId, kind, router, uploadPageForKind]);
 
   const bayaranExtract =
     extractResult?.documentType === "bayaran" ? extractResult : null;
@@ -660,7 +666,7 @@ export default function ExtractReviewPage({
   };
 
   const handleReviewLater = () => {
-    router.push(`${ROUTES.muatNaik}?kategori=${encodeURIComponent(kind)}`);
+    router.push(uploadPageForKind);
   };
 
   const handleVerifyData = async (mode: VerifyingMode) => {
@@ -685,12 +691,19 @@ export default function ExtractReviewPage({
     clearVerificationNotice();
 
     try {
+      const shouldSkipRemainingExtractResult =
+        selectedRecordKeys.length === 1 &&
+        (kind !== "kuarters" ||
+          isSingleKuartersUnitSelection(kuartersExtract, selectedRecordKeys[0]));
       const response = await fetch(verifyRouteByKind[kind](draftId), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ selectedKeys: selectedRecordKeys }),
+        body: JSON.stringify({
+          selectedKeys: selectedRecordKeys,
+          skipRemainingExtractResult: shouldSkipRemainingExtractResult,
+        }),
       });
       const result = await response.json().catch(() => null);
 
@@ -698,29 +711,47 @@ export default function ExtractReviewPage({
         throw new Error(result?.message ?? "Gagal mengesahkan data.");
       }
 
+      const failedMessages = Array.isArray(result?.data?.failedMessages)
+        ? result.data.failedMessages
+        : [];
+      const verifiedRows =
+        typeof result?.data?.verifiedRows === "number"
+          ? result.data.verifiedRows
+          : 0;
+      const noticeTone =
+        verifiedRows === 0
+          ? "error"
+          : failedMessages.length > 0
+            ? "info"
+            : "success";
+      const noticeMessage =
+        result?.message ?? "Rekod dipilih berjaya disahkan.";
+
       if (result?.data?.remainingExtractResult) {
         setExtractResult(result.data.remainingExtractResult as ExtractResult);
         setSelectedRecordKeys([]);
-        const failedMessages = Array.isArray(result?.data?.failedMessages)
-          ? result.data.failedMessages
-          : [];
-        const verifiedRows =
-          typeof result?.data?.verifiedRows === "number"
-            ? result.data.verifiedRows
-            : 0;
-        const noticeTone =
-          verifiedRows === 0
-            ? "error"
-            : failedMessages.length > 0
-              ? "info"
-              : "success";
+        showVerificationNotice(noticeTone, noticeMessage);
+      } else if (result?.data?.documentCompleted) {
+        setExtractResult(null);
+        setSelectedRecordKeys([]);
+        router.replace(uploadPageForKind);
+      } else if (result?.data?.remainingExtractResultSkipped) {
+        if (verifiedRows > 0) {
+          setExtractResult((currentExtractResult) =>
+            currentExtractResult
+              ? removeVerifiedRecordsFromExtractResult(
+                  currentExtractResult,
+                  selectedRecordKeys,
+                )
+              : currentExtractResult,
+          );
+        }
 
-        showVerificationNotice(
-          noticeTone,
-          result?.message ?? "Rekod dipilih berjaya disahkan.",
-        );
+        setSelectedRecordKeys([]);
+        showVerificationNotice(noticeTone, noticeMessage);
       } else {
-        router.push(ROUTES.muatNaik);
+        setSelectedRecordKeys([]);
+        showVerificationNotice(noticeTone, noticeMessage);
       }
     } catch (error) {
       showVerificationNotice(
@@ -915,4 +946,108 @@ function parseSignedAmount(value: string) {
   return (isParenthesizedNegative || hasNegativeSign) && numericValue > 0
     ? numericValue * -1
     : numericValue;
+}
+
+function removeVerifiedRecordsFromExtractResult(
+  extractResult: ExtractResult,
+  selectedKeys: string[],
+): ExtractResult {
+  const selectedKeySet = new Set(selectedKeys);
+
+  if (extractResult.documentType === "bayaran") {
+    const records = extractResult.records.filter(
+      (record) => !selectedKeySet.has(getBayaranRecordKey(record)),
+    );
+
+    return {
+      ...extractResult,
+      recordCount: records.length,
+      totalAmount: records
+        .reduce((total, record) => total + Number(record.amaunRm || 0), 0)
+        .toFixed(2),
+      records,
+    };
+  }
+
+  if (extractResult.documentType === "tunggakan") {
+    const records = extractResult.records.filter(
+      (record) => !selectedKeySet.has(getTunggakanRecordKey(record)),
+    );
+    const acceptedRecords = records.filter(
+      (record) => record.importStatus !== "IGNORED",
+    );
+
+    return {
+      ...extractResult,
+      recordCount: acceptedRecords.length,
+      totalAmount: acceptedRecords
+        .reduce(
+          (total, record) => total + parseSignedAmount(record.jumlahTunggakan),
+          0,
+        )
+        .toFixed(2),
+      records,
+    };
+  }
+
+  if (extractResult.documentType === "penghuni") {
+    const records = extractResult.records.filter(
+      (record) => !selectedKeySet.has(getPenghuniRecordKey(record)),
+    );
+
+    return {
+      ...extractResult,
+      recordCount: records.length,
+      records,
+    };
+  }
+
+  if (extractResult.documentType === "kuarters") {
+    const records = extractResult.records
+      .map((record) => {
+        if (selectedKeySet.has(getQuarterRecordKey(record))) {
+          return null;
+        }
+
+        const units = record.units.filter(
+          (unit) => !selectedKeySet.has(getQuarterUnitKey(unit)),
+        );
+
+        return { ...record, units, unitCount: units.length };
+      })
+      .filter(
+        (record): record is ExtractedQuarterRecord =>
+          Boolean(record && record.units.length > 0),
+      );
+
+    return {
+      ...extractResult,
+      recordCount: records.length,
+      totalUnits: records.reduce((total, record) => total + record.units.length, 0),
+      records,
+    };
+  }
+
+  return extractResult;
+}
+
+function isSingleKuartersUnitSelection(
+  extractResult: KuartersExtractResult | null,
+  selectedKey: string | undefined,
+) {
+  if (!extractResult || !selectedKey) {
+    return false;
+  }
+
+  return extractResult.records.some((record) =>
+    record.units.some((unit) => getQuarterUnitKey(unit) === selectedKey),
+  );
+}
+
+function getQuarterRecordKey(record: ExtractedQuarterRecord) {
+  return record.categoryId ?? record.id;
+}
+
+function getQuarterUnitKey(unit: { unitId?: string; unitCode: string }) {
+  return unit.unitId ?? unit.unitCode;
 }

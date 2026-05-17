@@ -1,6 +1,7 @@
 import type { ExtractedBayaranRecord } from "@/app/pages/2_muat_naik/components/extract-review-shared";
 import { prisma } from "@/lib/prisma";
 import { findResidentByNormalizedIc } from "@/lib/uploaded-document/shared";
+import { findExistingBayaranPayment } from "@/lib/uploaded-document/bayaran/queries";
 
 export function getBayaranPaymentDate(paymentMonth: string) {
   if (/^\d{4}-\d{2}-\d{2}/.test(paymentMonth)) {
@@ -56,7 +57,12 @@ export async function buildBayaranExtractResultFromDraftRows(
       const residentId = normalizeOptionalUuid(
         await findResidentByNormalizedIc(prisma, row.residentIcNumber),
       );
-      const isNewResident = !residentId;
+      const existingPayment = await findExistingBayaranPayment(prisma, {
+        residentId,
+        paymentDate: row.paymentDate,
+        receiptNo: row.receiptNo ?? row.referenceNo,
+        amount: row.amount,
+      });
 
       if (row.originalResidentId !== residentId) {
         await prisma.paymentDraft.update({
@@ -67,7 +73,7 @@ export async function buildBayaranExtractResultFromDraftRows(
         });
       }
 
-      return buildBayaranRecord(row, residentId, isNewResident);
+      return buildBayaranRecord(row, residentId, Boolean(existingPayment));
     }),
   );
 
@@ -91,12 +97,12 @@ type BayaranDraftRow = Awaited<
 function buildBayaranRecord(
   row: BayaranDraftRow,
   residentId: string | null,
-  isNewResident: boolean,
+  paymentExists: boolean,
 ) {
   return {
     paymentId: row.id,
     residentId: residentId ?? undefined,
-    isExisted: isNewResident,
+    isExisted: paymentExists,
     page: 0,
     jabatanCode: "",
     jabatanName: row.department ?? "",

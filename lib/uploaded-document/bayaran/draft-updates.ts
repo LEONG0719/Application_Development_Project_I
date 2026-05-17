@@ -5,11 +5,12 @@ import type {
   ExtractResult,
 } from "@/app/pages/2_muat_naik/components/extract-review-shared";
 import { getBayaranPaymentDate } from "@/lib/uploaded-document/bayaran/documents";
+import { findExistingBayaranPayment } from "@/lib/uploaded-document/bayaran/queries";
 import { findResidentByNormalizedIc } from "@/lib/uploaded-document/shared";
 
 type BayaranDraftUpdateClient = Pick<
   Prisma.TransactionClient,
-  "$queryRaw" | "paymentDraft"
+  "$queryRaw" | "payment" | "paymentDraft"
 >;
 
 export async function updateBayaranDrafts(
@@ -86,8 +87,13 @@ export async function updateBayaranDraft(
   const residentId = normalizeOptionalUuid(
     await findResidentByNormalizedIc(tx, normalizedRecord.noGajiNoKp),
   );
-  const isNewResident = !residentId;
   const paymentDate = parsePaymentDate(normalizedRecord.tarikh);
+  const existingPayment = await findExistingBayaranPayment(tx, {
+    residentId,
+    paymentDate,
+    receiptNo: normalizedRecord.noRujukan,
+    amount: normalizedRecord.amaunRm,
+  });
   const updateResult = await tx.paymentDraft.updateMany({
     where: { id: record.paymentId, uploadedDocumentId },
     data: {
@@ -110,7 +116,7 @@ export async function updateBayaranDraft(
   return {
     ...normalizedRecord,
     residentId: residentId ?? undefined,
-    isExisted: isNewResident,
+    isExisted: Boolean(existingPayment),
     tarikh: paymentDate.toISOString(),
   } satisfies ExtractedBayaranRecord;
 }

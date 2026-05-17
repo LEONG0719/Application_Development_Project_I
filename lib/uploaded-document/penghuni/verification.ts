@@ -1,12 +1,10 @@
-import type { Prisma } from "@prisma/client";
+import { randomUUID } from "crypto";
+
+import { Prisma } from "@prisma/client";
 
 import type { ExtractedPenghuniRecord } from "@/app/pages/2_muat_naik/components/extract-review-shared";
 import type { VerifyResult } from "@/lib/uploaded-document/verification";
-import { findResidentByNormalizedIc } from "@/lib/uploaded-document/shared";
-import {
-  findUnitIdForPenghuniRecord,
-  hasOccupancyConflict,
-} from "@/lib/uploaded-document/penghuni/queries";
+import { findUnitIdForPenghuniRecord } from "@/lib/uploaded-document/penghuni/queries";
 import {
   findQuarterCategoryByNameAddress,
   findUnitByCategoryIdAndCode,
@@ -47,10 +45,10 @@ export async function verifyPenghuniDrafts(
   });
   const failedMessages: string[] = [];
   const successMessages: string[] = [];
-  const touchedUnitIds = new Set<string>();
-  let createdResidents = 0;
-  let updatedResidents = 0;
-  let verifiedRows = 0;
+  const residentIdByIc = await findResidentIdsByNormalizedIc(tx, selectedDrafts);
+  const existingResidentIds = new Set(residentIdByIc.values());
+  const unitResolutionCache = createPenghuniUnitResolutionCache();
+  const candidates: PreparedPenghuniDraft[] = [];
 
   if (selectedDrafts.length === 0) {
     return {
@@ -72,12 +70,17 @@ export async function verifyPenghuniDrafts(
       continue;
     }
 
-    let residentId = await findResidentByNormalizedIc(tx, normalizedDraftIc);
+    let residentId = residentIdByIc.get(normalizedDraftIc) ?? "";
+    if (!residentId) {
+      residentId = randomUUID();
+      residentIdByIc.set(normalizedDraftIc, residentId);
+    }
+
     const unitResult = await resolvePenghuniUnit(
       tx,
-      uploadedDocumentId,
       record,
       draft.fullName,
+      unitResolutionCache,
     );
 
     if (unitResult.failedMessage) {
@@ -88,127 +91,394 @@ export async function verifyPenghuniDrafts(
     successMessages.push(...unitResult.successMessages);
 
     const unitId = unitResult.unitId;
-    if (unitId && !normalizePenghuniText(record.tarikhMasuk)) {
+    const hasMoveInDate = Boolean(normalizePenghuniText(record.tarikhMasuk));
+
+    if (unitId && !hasMoveInDate) {
       failedMessages.push(
         `Penghunian ${draft.fullName} gagal disahkan kerana tarikh masuk belum diisi.`,
       );
       continue;
     }
 
-    const moveInDate = parsePenghuniMoveInDate(record.tarikhMasuk ?? "");
+    const moveInDate = hasMoveInDate
+      ? parsePenghuniMoveInDate(record.tarikhMasuk ?? "")
+      : null;
     const moveOutDate = parseNullablePenghuniDate(record.tarikhKeluar ?? "");
 
-    if (!moveInDate) {
+    if (hasMoveInDate && !moveInDate) {
       failedMessages.push(
         `Penghunian ${draft.fullName} gagal disahkan kerana tarikh masuk tidak sah.`,
       );
       continue;
     }
 
-    if (moveOutDate && moveOutDate < moveInDate) {
+    if (moveInDate && moveOutDate && moveOutDate < moveInDate) {
       failedMessages.push(
         `Penghunian ${draft.fullName} gagal disahkan kerana tarikh keluar lebih awal daripada tarikh masuk.`,
       );
       continue;
     }
 
-    if (unitId) {
-      const conflict = await hasOccupancyConflict(
-        tx,
-        unitId,
-        residentId,
-        moveInDate,
-        moveOutDate,
-      );
-
-      if (conflict) {
-        failedMessages.push(
-          `Penghunian ${draft.fullName} gagal disahkan kerana unit ${record.unit} telah diduduki dalam tempoh tersebut.`,
-        );
-        continue;
-      }
-    }
-
-    if (residentId) {
-      await tx.resident.update({
-        where: { id: residentId },
-        data: {
-          fullName: draft.fullName,
-          icNumber: normalizedDraftIc,
-          phone: draft.phone,
-          email: draft.email,
-          position: draft.position,
-          department: draft.department,
-          serviceLevel: draft.serviceLevel,
-          status: draft.status,
-          description: draft.description,
-          uploadedDocumentId,
-        },
-      });
-      updatedResidents += 1;
-    } else {
-      const resident = await tx.resident.upsert({
-        where: { icNumber: normalizedDraftIc },
-        update: {
-          fullName: draft.fullName,
-          phone: draft.phone,
-          email: draft.email,
-          position: draft.position,
-          department: draft.department,
-          serviceLevel: draft.serviceLevel,
-          status: draft.status,
-          description: draft.description,
-          uploadedDocumentId,
-        },
-        create: {
-          fullName: draft.fullName,
-          icNumber: normalizedDraftIc,
-          phone: draft.phone,
-          email: draft.email,
-          position: draft.position,
-          department: draft.department,
-          serviceLevel: draft.serviceLevel,
-          status: draft.status,
-          description: draft.description,
-          uploadedDocumentId,
-        },
-        select: { id: true },
-      });
-      residentId = resident.id;
-      createdResidents += 1;
-    }
-
-    if (unitId) {
-      await upsertPenghuniOccupancy(
-        tx,
-        residentId,
-        unitId,
-        moveInDate,
-        moveOutDate,
-      );
-      touchedUnitIds.add(unitId);
-    }
-
-    await tx.residentDraft.delete({ where: { id: draft.id } });
-    verifiedRows += 1;
+    candidates.push({
+      draft,
+      normalizedIc: normalizedDraftIc,
+      residentId,
+      unitId,
+      moveInDate,
+      moveOutDate,
+    });
   }
 
-  for (const unitId of touchedUnitIds) {
-    await syncUnitOccupancyStatus(tx, unitId);
+  const rowsAfterInternalConflictCheck = filterPenghuniInternalConflicts(
+    candidates,
+    failedMessages,
+  );
+  const conflictingDraftIds = await findConflictingPenghuniDraftIds(
+    tx,
+    rowsAfterInternalConflictCheck,
+  );
+  const rowsToVerify = rowsAfterInternalConflictCheck.filter((row) => {
+    if (conflictingDraftIds.has(row.draft.id)) {
+      failedMessages.push(
+        `Penghunian ${row.draft.fullName} gagal disahkan kerana unit ${row.draft.unitCode ?? ""} telah diduduki dalam tempoh tersebut.`,
+      );
+      return false;
+    }
+
+    return true;
+  });
+
+  if (rowsToVerify.length === 0) {
+    return { verifiedRows: 0, failedMessages, successMessages };
   }
+
+  const residentWriteCounts = await writePenghuniResidents(
+    tx,
+    rowsToVerify,
+    existingResidentIds,
+  );
+  await writePenghuniOccupancies(tx, rowsToVerify);
+
+  await tx.residentDraft.deleteMany({
+    where: { id: { in: rowsToVerify.map((row) => row.draft.id) } },
+  });
+
+  await syncUnitOccupancyStatuses(
+    tx,
+    rowsToVerify.map((row) => row.unitId).filter(Boolean),
+  );
 
   const summaryMessages = [
-    createdResidents > 0 ? `${createdResidents} penghuni baharu ditambah.` : "",
-    updatedResidents > 0
-      ? `${updatedResidents} rekod penghuni sedia ada dikemas kini.`
+    residentWriteCounts.created > 0
+      ? `${residentWriteCounts.created} penghuni baharu ditambah.`
+      : "",
+    residentWriteCounts.updated > 0
+      ? `${residentWriteCounts.updated} rekod penghuni sedia ada dikemas kini.`
       : "",
   ].filter(Boolean);
 
   return {
-    verifiedRows,
+    verifiedRows: rowsToVerify.length,
     failedMessages,
     successMessages: [...summaryMessages, ...successMessages],
   };
+}
+
+type ResidentDraftRow = Prisma.ResidentDraftGetPayload<Record<string, never>>;
+
+type PreparedPenghuniDraft = {
+  draft: ResidentDraftRow;
+  normalizedIc: string;
+  residentId: string;
+  unitId: string;
+  moveInDate: Date | null;
+  moveOutDate: Date | null;
+};
+
+function filterPenghuniInternalConflicts(
+  candidates: PreparedPenghuniDraft[],
+  failedMessages: string[],
+) {
+  const acceptedRows: PreparedPenghuniDraft[] = [];
+
+  for (const candidate of candidates) {
+    const candidateMoveInDate = candidate.moveInDate;
+
+    if (
+      candidate.unitId &&
+      candidateMoveInDate &&
+      acceptedRows.some(
+        (accepted) =>
+          accepted.unitId === candidate.unitId &&
+          accepted.residentId !== candidate.residentId &&
+          accepted.moveInDate &&
+          dateRangesOverlap(
+            accepted.moveInDate,
+            accepted.moveOutDate,
+            candidateMoveInDate,
+            candidate.moveOutDate,
+          ),
+      )
+    ) {
+      failedMessages.push(
+        `Penghunian ${candidate.draft.fullName} gagal disahkan kerana unit ${candidate.draft.unitCode ?? ""} telah diduduki dalam tempoh tersebut.`,
+      );
+      continue;
+    }
+
+    acceptedRows.push(candidate);
+  }
+
+  return acceptedRows;
+}
+
+async function findConflictingPenghuniDraftIds(
+  tx: Prisma.TransactionClient,
+  candidates: PreparedPenghuniDraft[],
+) {
+  const occupancyCandidates = candidates.filter(
+    (candidate) => candidate.unitId && candidate.moveInDate,
+  );
+
+  if (occupancyCandidates.length === 0) {
+    return new Set<string>();
+  }
+
+  const payload = occupancyCandidates.map((candidate) => ({
+    draftId: candidate.draft.id,
+    residentId: candidate.residentId,
+    unitId: candidate.unitId,
+    moveInDate: candidate.moveInDate?.toISOString(),
+    moveOutDate: candidate.moveOutDate?.toISOString() ?? null,
+  }));
+
+  const conflicts = await tx.$queryRaw<{ draftId: string }[]>`
+    WITH input AS (
+      SELECT *
+      FROM jsonb_to_recordset(${JSON.stringify(payload)}::jsonb) AS x(
+        "draftId" text,
+        "residentId" uuid,
+        "unitId" uuid,
+        "moveInDate" timestamp,
+        "moveOutDate" timestamp
+      )
+    )
+    SELECT DISTINCT input."draftId"
+    FROM input
+    INNER JOIN "UnitOccupancy" occupancy
+      ON occupancy."unitId" = input."unitId"
+      AND occupancy."residentId" <> input."residentId"
+      AND occupancy."moveInDate" <= COALESCE(input."moveOutDate", 'infinity'::timestamp)
+      AND COALESCE(occupancy."moveOutDate", 'infinity'::timestamp) >= input."moveInDate"
+  `;
+
+  return new Set(conflicts.map((conflict) => conflict.draftId));
+}
+
+async function writePenghuniResidents(
+  tx: Prisma.TransactionClient,
+  rowsToVerify: PreparedPenghuniDraft[],
+  existingResidentIds: Set<string>,
+) {
+  const rowsByResidentId = new Map<string, PreparedPenghuniDraft>();
+
+  for (const row of rowsToVerify) {
+    rowsByResidentId.set(row.residentId, row);
+  }
+
+  const rows = [...rowsByResidentId.values()];
+  const existingRows = rows.filter((row) => existingResidentIds.has(row.residentId));
+  const newRows = rows.filter((row) => !existingResidentIds.has(row.residentId));
+
+  if (newRows.length > 0) {
+    await tx.resident.createMany({
+      data: newRows.map((row) => ({
+        id: row.residentId,
+        fullName: row.draft.fullName,
+        icNumber: row.normalizedIc,
+        phone: row.draft.phone,
+        email: row.draft.email,
+        position: row.draft.position,
+        department: row.draft.department,
+        serviceLevel: row.draft.serviceLevel,
+        status: row.draft.status,
+        description: row.draft.description,
+      })),
+      skipDuplicates: true,
+    });
+  }
+
+  if (existingRows.length > 0) {
+    await tx.$executeRaw`
+      UPDATE "Resident" AS resident
+      SET
+        "fullName" = updates."fullName",
+        "icNumber" = updates."icNumber",
+        "phone" = updates."phone",
+        "email" = updates."email",
+        "position" = updates."position",
+        "department" = updates."department",
+        "serviceLevel" = updates."serviceLevel",
+        "status" = updates."status",
+        "description" = updates."description",
+        "updatedAt" = NOW()
+      FROM (
+        VALUES ${Prisma.join(
+          existingRows.map(
+            (row) =>
+              Prisma.sql`(
+                ${row.residentId}::uuid,
+                ${row.draft.fullName}::text,
+                ${row.normalizedIc}::text,
+                ${row.draft.phone ?? null}::text,
+                ${row.draft.email ?? null}::text,
+                ${row.draft.position ?? null}::text,
+                ${row.draft.department ?? null}::text,
+                ${row.draft.serviceLevel ?? null}::text,
+                ${row.draft.status}::"ResidentStatus",
+                ${row.draft.description ?? null}::text
+              )`,
+          ),
+        )}
+      ) AS updates(
+        "id",
+        "fullName",
+        "icNumber",
+        "phone",
+        "email",
+        "position",
+        "department",
+        "serviceLevel",
+        "status",
+        "description"
+      )
+      WHERE resident."id" = updates."id"
+    `;
+  }
+
+  return { created: newRows.length, updated: existingRows.length };
+}
+
+async function writePenghuniOccupancies(
+  tx: Prisma.TransactionClient,
+  rowsToVerify: PreparedPenghuniDraft[],
+) {
+  const occupancyRows = rowsToVerify.filter(
+    (row): row is PreparedPenghuniDraft & { unitId: string; moveInDate: Date } =>
+      Boolean(row.unitId && row.moveInDate),
+  );
+
+  if (occupancyRows.length === 0) {
+    return;
+  }
+
+  await markOtherCurrentPenghuniOccupanciesPast(tx, occupancyRows);
+  const occupancyIdByDraftId = await findPenghuniOccupancyIdsToUpdate(
+    tx,
+    occupancyRows,
+  );
+  const rowsToUpdate = occupancyRows.filter((row) =>
+    occupancyIdByDraftId.has(row.draft.id),
+  );
+  const rowsToCreate = occupancyRows.filter(
+    (row) => !occupancyIdByDraftId.has(row.draft.id),
+  );
+
+  if (rowsToUpdate.length > 0) {
+    await tx.$executeRaw`
+      UPDATE "UnitOccupancy" AS occupancy
+      SET
+        "moveInDate" = updates."moveInDate",
+        "moveOutDate" = updates."moveOutDate",
+        "status" = updates."status",
+        "description" = 'Dikemas kini selepas pengesahan dokumen penghuni.',
+        "updatedAt" = NOW()
+      FROM (
+        VALUES ${Prisma.join(
+          rowsToUpdate.map((row) => {
+            const occupancyId = occupancyIdByDraftId.get(row.draft.id);
+
+            return Prisma.sql`(
+              ${occupancyId}::uuid,
+              ${row.moveInDate}::timestamp,
+              ${row.moveOutDate}::timestamp,
+              ${row.moveOutDate ? "PAST" : "CURRENT"}::"OccupancyStatus"
+            )`;
+          }),
+        )}
+      ) AS updates("id", "moveInDate", "moveOutDate", "status")
+      WHERE occupancy."id" = updates."id"
+    `;
+  }
+
+  if (rowsToCreate.length > 0) {
+    await tx.unitOccupancy.createMany({
+      data: rowsToCreate.map((row) => ({
+        residentId: row.residentId,
+        unitId: row.unitId,
+        moveInDate: row.moveInDate,
+        moveOutDate: row.moveOutDate,
+        status: row.moveOutDate ? "PAST" : "CURRENT",
+        description: "Dicipta selepas pengesahan dokumen penghuni.",
+      })),
+    });
+  }
+}
+
+async function markOtherCurrentPenghuniOccupanciesPast(
+  tx: Prisma.TransactionClient,
+  occupancyRows: (PreparedPenghuniDraft & { unitId: string; moveInDate: Date })[],
+) {
+  await tx.$executeRaw`
+    UPDATE "UnitOccupancy" AS occupancy
+    SET
+      "status" = 'PAST'::"OccupancyStatus",
+      "moveOutDate" = COALESCE(occupancy."moveOutDate", updates."moveInDate"),
+      "updatedAt" = NOW()
+    FROM (
+      VALUES ${Prisma.join(
+        occupancyRows.map(
+          (row) =>
+            Prisma.sql`(${row.residentId}::uuid, ${row.unitId}::uuid, ${row.moveInDate}::timestamp)`,
+        ),
+      )}
+    ) AS updates("residentId", "unitId", "moveInDate")
+    WHERE occupancy."residentId" = updates."residentId"
+      AND occupancy."status" = 'CURRENT'::"OccupancyStatus"
+      AND occupancy."unitId" <> updates."unitId"
+  `;
+}
+
+async function findPenghuniOccupancyIdsToUpdate(
+  tx: Prisma.TransactionClient,
+  occupancyRows: (PreparedPenghuniDraft & { unitId: string; moveInDate: Date })[],
+) {
+  const rows = await tx.$queryRaw<{ draftId: string; occupancyId: string }[]>`
+    WITH input AS (
+      SELECT *
+      FROM jsonb_to_recordset(${JSON.stringify(
+        occupancyRows.map((row) => ({
+          draftId: row.draft.id,
+          residentId: row.residentId,
+          unitId: row.unitId,
+        })),
+      )}::jsonb) AS x("draftId" text, "residentId" uuid, "unitId" uuid)
+    )
+    SELECT DISTINCT ON (input."draftId")
+      input."draftId",
+      occupancy."id" AS "occupancyId"
+    FROM input
+    INNER JOIN "UnitOccupancy" occupancy
+      ON occupancy."residentId" = input."residentId"
+      AND occupancy."unitId" = input."unitId"
+    ORDER BY
+      input."draftId",
+      CASE WHEN occupancy."status" = 'CURRENT'::"OccupancyStatus" THEN 0 ELSE 1 END,
+      occupancy."moveInDate" DESC,
+      occupancy."createdAt" DESC
+  `;
+
+  return new Map(rows.map((row) => [row.draftId, row.occupancyId]));
 }
 
 function buildRecordFromDraft(
@@ -240,13 +510,37 @@ type UnitResolutionResult = {
   successMessages: string[];
 };
 
+type PenghuniUnitResolutionCache = {
+  existingUnitIdByRecordKey: Map<string, string>;
+  categoryIdByNameAddress: Map<string, string>;
+  unitIdByCategoryUnit: Map<string, string>;
+};
+
+function createPenghuniUnitResolutionCache(): PenghuniUnitResolutionCache {
+  return {
+    existingUnitIdByRecordKey: new Map(),
+    categoryIdByNameAddress: new Map(),
+    unitIdByCategoryUnit: new Map(),
+  };
+}
+
 async function resolvePenghuniUnit(
   tx: Prisma.TransactionClient,
-  uploadedDocumentId: string,
   record: ExtractedPenghuniRecord,
   residentName: string,
+  cache: PenghuniUnitResolutionCache,
 ): Promise<UnitResolutionResult> {
-  const existingUnitId = await findUnitIdForPenghuniRecord(tx, record);
+  const recordUnitKey = [
+    normalizePenghuniText(record.kuarters).toUpperCase(),
+    normalizePenghuniText(record.alamatKuarters).toUpperCase(),
+    normalizePenghuniText(record.unit).toUpperCase(),
+  ].join("|");
+  let existingUnitId = cache.existingUnitIdByRecordKey.get(recordUnitKey);
+
+  if (existingUnitId === undefined) {
+    existingUnitId = await findUnitIdForPenghuniRecord(tx, record);
+    cache.existingUnitIdByRecordKey.set(recordUnitKey, existingUnitId);
+  }
 
   if (existingUnitId) {
     return { unitId: existingUnitId, successMessages: [] };
@@ -270,7 +564,13 @@ async function resolvePenghuniUnit(
   }
 
   const successMessages: string[] = [];
-  let categoryId = await findQuarterCategoryByNameAddress(tx, categoryName, address);
+  const categoryKey = [categoryName.toUpperCase(), address.toUpperCase()].join("|");
+  let categoryId = cache.categoryIdByNameAddress.get(categoryKey);
+
+  if (categoryId === undefined) {
+    categoryId = await findQuarterCategoryByNameAddress(tx, categoryName, address);
+    cache.categoryIdByNameAddress.set(categoryKey, categoryId);
+  }
 
   if (!categoryId) {
     const category = await tx.quarterCategory.create({
@@ -280,15 +580,21 @@ async function resolvePenghuniUnit(
         rentalPrice: 0,
         maintenancePrice: 0,
         penaltyPrice: 0,
-        uploadedDocumentId,
       },
       select: { id: true },
     });
     categoryId = category.id;
+    cache.categoryIdByNameAddress.set(categoryKey, categoryId);
     successMessages.push(`Kategori kuarters ${categoryName} ditambah secara automatik.`);
   }
 
-  let unitId = await findUnitByCategoryIdAndCode(tx, categoryId, unitCode);
+  const unitKey = [categoryId, unitCode.toUpperCase()].join("|");
+  let unitId = cache.unitIdByCategoryUnit.get(unitKey);
+
+  if (unitId === undefined) {
+    unitId = await findUnitByCategoryIdAndCode(tx, categoryId, unitCode);
+    cache.unitIdByCategoryUnit.set(unitKey, unitId);
+  }
 
   if (!unitId) {
     const unit = await tx.unit.create({
@@ -296,11 +602,12 @@ async function resolvePenghuniUnit(
         unitCode,
         status: "VACANT",
         categoryId,
-        uploadedDocumentId,
       },
       select: { id: true },
     });
     unitId = unit.id;
+    cache.unitIdByCategoryUnit.set(unitKey, unitId);
+    cache.existingUnitIdByRecordKey.set(recordUnitKey, unitId);
     successMessages.push(`Unit ${unitCode} ditambah secara automatik.`);
   }
 
@@ -315,8 +622,21 @@ function normalizeSelectedKey(value: string) {
   return value.trim();
 }
 
-function normalizeIc(value: string) {
-  return value.replace(/\D/g, "");
+function normalizeIc(value: string | null | undefined) {
+  return String(value ?? "").replace(/\D/g, "");
+}
+
+function dateRangesOverlap(
+  firstMoveInDate: Date,
+  firstMoveOutDate: Date | null,
+  secondMoveInDate: Date,
+  secondMoveOutDate: Date | null,
+) {
+  const firstEndTime = firstMoveOutDate?.getTime() ?? Number.POSITIVE_INFINITY;
+  const secondEndTime = secondMoveOutDate?.getTime() ?? Number.POSITIVE_INFINITY;
+
+  return firstMoveInDate.getTime() <= secondEndTime &&
+    firstEndTime >= secondMoveInDate.getTime();
 }
 
 function isUuid(value: string) {
@@ -325,86 +645,81 @@ function isUuid(value: string) {
   );
 }
 
-async function upsertPenghuniOccupancy(
+async function syncUnitOccupancyStatuses(
   tx: Prisma.TransactionClient,
-  residentId: string,
-  unitId: string,
-  moveInDate: Date,
-  moveOutDate: Date | null,
+  unitIds: string[],
 ) {
-  await tx.$executeRaw`
-    UPDATE "UnitOccupancy"
-    SET "status" = 'PAST'::"OccupancyStatus", "moveOutDate" = COALESCE("moveOutDate", ${moveInDate}), "updatedAt" = NOW()
-    WHERE "residentId" = ${residentId}::uuid
-      AND "status" = 'CURRENT'::"OccupancyStatus"
-      AND "unitId" <> ${unitId}::uuid
-  `;
+  if (unitIds.length === 0) {
+    return;
+  }
 
-  const existingOccupancy = await findPenghuniOccupancyToUpdate(
-    tx,
-    residentId,
-    unitId,
+  await tx.$executeRaw`
+    UPDATE "Unit" AS unit
+    SET
+      "status" = CASE
+        WHEN EXISTS (
+          SELECT 1
+          FROM "UnitOccupancy" occupancy
+          WHERE occupancy."unitId" = unit."id"
+            AND occupancy."status" = 'CURRENT'::"OccupancyStatus"
+        )
+        THEN 'OCCUPIED'::"UnitStatus"
+        ELSE 'VACANT'::"UnitStatus"
+      END,
+      "updatedAt" = NOW()
+    WHERE unit."id" IN (${Prisma.join(unitIds)})
+  `;
+}
+
+async function findResidentIdsByNormalizedIc(
+  tx: Prisma.TransactionClient,
+  drafts: Prisma.ResidentDraftGetPayload<Record<string, never>>[],
+) {
+  const normalizedIcs = [...new Set(
+    drafts
+      .map((draft) => normalizeIc(draft.icNumber))
+      .filter((icNumber) => icNumber.length === 12),
+  )];
+  const residentIdByIc = new Map<string, string>();
+
+  if (normalizedIcs.length === 0) {
+    return residentIdByIc;
+  }
+
+  const exactResidents = await tx.resident.findMany({
+    where: { icNumber: { in: normalizedIcs } },
+    select: { id: true, icNumber: true },
+  });
+
+  for (const resident of exactResidents) {
+    residentIdByIc.set(normalizeIc(resident.icNumber), resident.id);
+  }
+
+  const missingIcs = normalizedIcs.filter(
+    (icNumber) => !residentIdByIc.has(icNumber),
   );
 
-  if (existingOccupancy) {
-    await tx.unitOccupancy.update({
-      where: { id: existingOccupancy.id },
-      data: {
-        moveInDate,
-        moveOutDate,
-        status: moveOutDate ? "PAST" : "CURRENT",
-        description: "Dikemas kini selepas pengesahan dokumen penghuni.",
-      },
-    });
-  } else {
-    await tx.unitOccupancy.create({
-      data: {
-        residentId,
-        unitId,
-        moveInDate,
-        moveOutDate,
-        status: moveOutDate ? "PAST" : "CURRENT",
-        description: "Dicipta selepas pengesahan dokumen penghuni.",
-      },
-    });
+  if (missingIcs.length === 0) {
+    return residentIdByIc;
   }
 
-}
+  const formattedResidents = await tx.$queryRaw<
+    { id: string; normalizedIc: string }[]
+  >`
+    SELECT
+      "id",
+      regexp_replace("icNumber", '\\D', '', 'g') AS "normalizedIc"
+    FROM "Resident"
+    WHERE regexp_replace("icNumber", '\\D', '', 'g') IN (${Prisma.join(missingIcs)})
+  `;
 
-async function findPenghuniOccupancyToUpdate(
-  tx: Prisma.TransactionClient,
-  residentId: string,
-  unitId: string,
-) {
-  const currentOccupancy = await tx.unitOccupancy.findFirst({
-    where: { residentId, unitId, status: "CURRENT" },
-    select: { id: true },
-  });
-
-  if (currentOccupancy) {
-    return currentOccupancy;
+  for (const resident of formattedResidents) {
+    if (resident.normalizedIc && !residentIdByIc.has(resident.normalizedIc)) {
+      residentIdByIc.set(resident.normalizedIc, resident.id);
+    }
   }
 
-  return tx.unitOccupancy.findFirst({
-    where: { residentId, unitId },
-    orderBy: [{ moveInDate: "desc" }, { createdAt: "desc" }],
-    select: { id: true },
-  });
-}
-
-async function syncUnitOccupancyStatus(
-  tx: Prisma.TransactionClient,
-  unitId: string,
-) {
-  const currentOccupancy = await tx.unitOccupancy.findFirst({
-    where: { unitId, status: "CURRENT" },
-    select: { id: true },
-  });
-
-  await tx.unit.update({
-    where: { id: unitId },
-    data: { status: currentOccupancy ? "OCCUPIED" : "VACANT" },
-  });
+  return residentIdByIc;
 }
 
 function parsePenghuniMoveInDate(value: string) {

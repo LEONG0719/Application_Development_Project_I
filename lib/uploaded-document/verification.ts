@@ -16,9 +16,9 @@ const uploadedDocumentTransactionOptions = {
 };
 
 const verifyChunkSizeByKind: Record<VerifyKind, number> = {
-  bayaran: 50,
-  tunggakan: 50,
-  penghuni: 20,
+  bayaran: 200,
+  tunggakan: 200,
+  penghuni: 200,
   kuarters: Number.MAX_SAFE_INTEGER,
 };
 
@@ -33,6 +33,8 @@ export type VerifyResult = {
 export type UploadedDocumentVerificationResult = VerifyResult & {
   message: string;
   remainingExtractResult: ExtractResult | null;
+  documentCompleted: boolean;
+  remainingExtractResultSkipped?: boolean;
 };
 
 type VerificationAccumulator = VerifyResult & {
@@ -54,6 +56,7 @@ export async function verifyUploadedDocumentForKind(
   kind: VerifyKind,
   uploadedDocumentId: string,
   selectedKeys: string[],
+  options: { skipRemainingExtractResult?: boolean } = {},
 ): Promise<UploadedDocumentVerificationResult> {
   if (selectedKeys.length === 0) {
     throw new Error("Sila pilih sekurang-kurangnya satu rekod untuk disahkan.");
@@ -91,15 +94,46 @@ export async function verifyUploadedDocumentForKind(
   const hasRemainingDrafts = await hasRemainingDraftRows(kind, uploadedDocumentId);
 
   if (!hasRemainingDrafts) {
-    await prisma.uploadedDocument.delete({ where: { id: uploadedDocumentId } });
-    result.document = null;
-  } else {
-    result.document = await findUploadedDocumentForVerification(uploadedDocumentId);
+    await prisma.uploadedDocument.deleteMany({ where: { id: uploadedDocumentId } });
+
+    return {
+      verifiedRows: result.verifiedRows,
+      failedMessages: result.failedMessages,
+      successMessages: result.successMessages,
+      message: buildVerificationMessage(result),
+      remainingExtractResult: null,
+      documentCompleted: true,
+    };
   }
 
+  if (options.skipRemainingExtractResult) {
+    return {
+      verifiedRows: result.verifiedRows,
+      failedMessages: result.failedMessages,
+      successMessages: result.successMessages,
+      message: buildVerificationMessage(result),
+      remainingExtractResult: null,
+      documentCompleted: false,
+      remainingExtractResultSkipped: true,
+    };
+  }
+
+  result.document = await findUploadedDocumentForVerification(uploadedDocumentId);
   const remainingDraft = result.document
     ? await mapUploadedDocumentForReview(result.document)
     : null;
+
+  return {
+    verifiedRows: result.verifiedRows,
+    failedMessages: result.failedMessages,
+    successMessages: result.successMessages,
+    message: buildVerificationMessage(result),
+    remainingExtractResult: remainingDraft?.extractResult ?? null,
+    documentCompleted: false,
+  };
+}
+
+function buildVerificationMessage(result: VerifyResult) {
   const successSuffix =
     result.successMessages && result.successMessages.length > 0
       ? ` ${result.successMessages.join(" ")}`
@@ -107,16 +141,9 @@ export async function verifyUploadedDocumentForKind(
   const failedSuffix =
     result.failedMessages.length > 0 ? ` ${result.failedMessages.join(" ")}` : "";
 
-  return {
-    verifiedRows: result.verifiedRows,
-    failedMessages: result.failedMessages,
-    successMessages: result.successMessages,
-    message:
-      result.verifiedRows > 0
-        ? `Data berjaya disahkan.${successSuffix}${failedSuffix}`
-        : `Tiada rekod baharu disahkan.${failedSuffix}`,
-    remainingExtractResult: remainingDraft?.extractResult ?? null,
-  };
+  return result.verifiedRows > 0
+    ? `Data berjaya disahkan.${successSuffix}${failedSuffix}`
+    : `Tiada rekod baharu disahkan.${failedSuffix}`;
 }
 
 async function findUploadedDocumentForVerification(uploadedDocumentId: string) {
@@ -189,7 +216,13 @@ export function createUploadedDocumentVerifyHandler(kind: VerifyKind) {
     try {
       await getCurrentAdmin();
       const { id } = await context.params;
-      const selectedKeys = parseSelectedKeys(await request.json().catch(() => null));
+      const body = await request.json().catch(() => null);
+      const selectedKeys = parseSelectedKeys(body);
+      const skipRemainingExtractResult =
+        body &&
+        typeof body === "object" &&
+        "skipRemainingExtractResult" in body &&
+        Boolean((body as { skipRemainingExtractResult?: unknown }).skipRemainingExtractResult);
 
       if (selectedKeys.length === 0) {
         return NextResponse.json(
@@ -201,13 +234,18 @@ export function createUploadedDocumentVerifyHandler(kind: VerifyKind) {
         );
       }
 
-      const result = await verifyUploadedDocumentForKind(kind, id, selectedKeys);
+      const result = await verifyUploadedDocumentForKind(kind, id, selectedKeys, {
+        skipRemainingExtractResult,
+      });
 
       return NextResponse.json({
         success: true,
         message: result.message,
         data: {
           remainingExtractResult: result.remainingExtractResult,
+          documentCompleted: result.documentCompleted,
+          remainingExtractResultSkipped:
+            result.remainingExtractResultSkipped ?? false,
           failedMessages: result.failedMessages,
           successMessages: result.successMessages ?? [],
           verifiedRows: result.verifiedRows,

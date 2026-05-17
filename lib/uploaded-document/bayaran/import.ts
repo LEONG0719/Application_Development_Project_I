@@ -5,6 +5,7 @@ import type {
   ExtractResult,
 } from "@/app/pages/2_muat_naik/components/extract-review-shared";
 import { getBayaranPaymentDate } from "@/lib/uploaded-document/bayaran/documents";
+import { findExistingBayaranPayment } from "@/lib/uploaded-document/bayaran/queries";
 import { findResidentByNormalizedIc } from "@/lib/uploaded-document/shared";
 
 export async function createPendingBayaranRows(
@@ -36,7 +37,12 @@ export async function createPendingBayaranRows(
       tx,
       normalizedRecord.noGajiNoKp,
     );
-    const isNewResident = !residentId;
+    const existingPayment = await findExistingBayaranPayment(tx, {
+      residentId,
+      paymentDate,
+      receiptNo: normalizedRecord.noRujukan,
+      amount: normalizedRecord.amaunRm,
+    });
     const draft = await tx.paymentDraft.create({
       data: {
         residentName: normalizedRecord.nama,
@@ -56,7 +62,7 @@ export async function createPendingBayaranRows(
       ...normalizedRecord,
       paymentId: draft.id,
       residentId: residentId || undefined,
-      isExisted: isNewResident,
+      isExisted: Boolean(existingPayment),
     });
   }
 

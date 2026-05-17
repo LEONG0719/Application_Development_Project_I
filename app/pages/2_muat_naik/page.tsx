@@ -57,6 +57,7 @@ export default function MuatNaikPage() {
   const [isLoadingQueue, setIsLoadingQueue] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const today = startOfDay(new Date());
   const activeDraftKind = draftKindByCategory[activeCategory];
   const activeRows = useMemo(
     () =>
@@ -141,6 +142,11 @@ export default function MuatNaikPage() {
 
     if (extractKind === "tunggakan" && !tunggakanDate) {
       setProcessingError("Sila pilih tarikh tunggakan sebelum muat naik fail.");
+      return;
+    }
+
+    if (extractKind === "tunggakan" && isDateAfter(tunggakanDate, today)) {
+      setProcessingError("Tarikh tunggakan tidak boleh melebihi tarikh hari ini.");
       return;
     }
 
@@ -316,6 +322,7 @@ export default function MuatNaikPage() {
             <DatePickerField
               label="Tarikh Tunggakan"
               value={tunggakanDate}
+              maxDate={today}
               disabled={isProcessing}
               onChange={(value) => {
                 setTunggakanDate(value);
@@ -354,20 +361,32 @@ export default function MuatNaikPage() {
 function DatePickerField({
   label,
   value,
+  maxDate,
   disabled = false,
   onChange,
 }: {
   label: string;
   value: string;
+  maxDate?: Date;
   disabled?: boolean;
   onChange: (value: string) => void;
 }) {
   const initialDate = parseDateInput(value);
+  const normalizedMaxDate = maxDate ? startOfDay(maxDate) : null;
   const [isOpen, setIsOpen] = useState(false);
   const [visibleMonth, setVisibleMonth] = useState(
     initialDate ?? startOfDay(new Date()),
   );
   const days = buildCalendarDays(visibleMonth);
+  const nextMonth = addMonths(visibleMonth, 1);
+  const isNextMonthDisabled =
+    normalizedMaxDate &&
+    new Date(nextMonth.getFullYear(), nextMonth.getMonth(), 1) >
+      new Date(
+        normalizedMaxDate.getFullYear(),
+        normalizedMaxDate.getMonth(),
+        1,
+      );
 
   return (
     <label className="block w-full sm:w-72">
@@ -417,7 +436,8 @@ function DatePickerField({
               </div>
               <button
                 type="button"
-                className="grid h-9 w-9 place-items-center rounded-xl text-grey transition-colors hover:bg-light-blue hover:text-dark-blue"
+                disabled={Boolean(isNextMonthDisabled)}
+                className="grid h-9 w-9 place-items-center rounded-xl text-grey transition-colors hover:bg-light-blue hover:text-dark-blue disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-grey"
                 aria-label="Bulan seterusnya"
                 onClick={() =>
                   setVisibleMonth((currentDate) => addMonths(currentDate, 1))
@@ -441,19 +461,29 @@ function DatePickerField({
                 const isSelected = dayValue === value;
                 const isVisibleMonth =
                   day.date.getMonth() === visibleMonth.getMonth();
+                const isDisabled = normalizedMaxDate
+                  ? startOfDay(day.date) > normalizedMaxDate
+                  : false;
 
                 return (
                   <button
                     key={dayValue}
                     type="button"
+                    disabled={isDisabled}
                     className={`grid h-9 place-items-center rounded-xl text-sm font-bold transition-colors ${
-                      isSelected
+                      isDisabled
+                        ? "cursor-not-allowed text-light-grey/60"
+                        : isSelected
                         ? "bg-dark-blue text-white"
                         : isVisibleMonth
                           ? "text-dark-grey hover:bg-light-blue hover:text-dark-blue"
                           : "text-light-grey hover:bg-light-blue"
                     }`}
                     onClick={() => {
+                      if (isDisabled) {
+                        return;
+                      }
+
                       onChange(dayValue);
                       setIsOpen(false);
                     }}
@@ -526,6 +556,12 @@ function formatDateInput(date: Date) {
   const day = String(date.getDate()).padStart(2, "0");
 
   return `${year}-${month}-${day}`;
+}
+
+function isDateAfter(value: string, maxDate: Date) {
+  const date = parseDateInput(value);
+
+  return Boolean(date && startOfDay(date) > startOfDay(maxDate));
 }
 
 function formatDateLabel(value: string) {

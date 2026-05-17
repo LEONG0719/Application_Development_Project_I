@@ -123,7 +123,15 @@ function parseTunggakanDate(value: string | undefined) {
     throw new Error("Tarikh tunggakan tidak sah.");
   }
 
+  if (startOfDay(date) > startOfDay(new Date())) {
+    throw new Error("Tarikh tunggakan tidak boleh melebihi tarikh hari ini.");
+  }
+
   return date;
+}
+
+function startOfDay(date: Date) {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
 }
 
 function normalizeIc(value: string) {

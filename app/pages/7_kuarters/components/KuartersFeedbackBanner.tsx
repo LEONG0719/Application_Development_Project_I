@@ -67,9 +67,13 @@ export default function KuartersFeedbackBanner({
       className={`fixed bottom-24 left-1/2 z-50 flex w-[calc(100%-2rem)] max-w-xl -translate-x-1/2 items-start justify-between gap-3 rounded-2xl border px-4 py-3 shadow-[0_18px_45px_rgba(13,47,86,0.18)] backdrop-blur sm:bottom-8 ${tone.containerClass}`}
       role={notice.tone === "error" ? "alert" : "status"}
     >
-      <div className="flex items-start gap-3">
-        <Icon icon={tone.icon} size={20} className={tone.iconClass} />
-        <p className="text-sm font-medium text-dark-grey">{notice.message}</p>
+      <div className="flex min-w-0 items-start gap-3">
+        <Icon icon={tone.icon} size={20} className={`shrink-0 ${tone.iconClass}`} />
+        <div className="max-h-36 min-w-0 overflow-y-auto pr-1">
+          <p className="whitespace-pre-wrap break-words text-sm font-medium text-dark-grey">
+            {notice.message}
+          </p>
+        </div>
       </div>
 
       <button
