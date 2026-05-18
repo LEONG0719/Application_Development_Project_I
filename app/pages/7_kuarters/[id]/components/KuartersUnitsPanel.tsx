@@ -519,35 +519,37 @@ export default function KuartersUnitsPanel({
                   className="border-t border-light-grey/20 bg-dark-blue/3"
                 >
                   <td
-                    className={`px-6 py-4 align-middle w-min whitespace-nowrap ${getRowAccentClass(
+                    className={`px-3 py-4 align-start w-min whitespace-nowrap ${getRowAccentClass(
                       editor.draft.occupantIcNumber.trim().length > 0
                         ? "OCCUPIED"
                         : "VACANT",
                     )}`}
                   >
                     <TableInputField
+                      align="start"
                       value={editor.draft.unitCode}
                       placeholder="Contoh: A-01-05"
                       disabled={pendingUnitId === EMPTY_QUARTER_UNIT_ID}
                       onChange={(value) => onDraftChange("unitCode", value)}
                     />
                   </td>
-                  <td className="px-6 py-4 align-middle w-min whitespace-nowrap">
+                  <td className="px-3 py-4 align-start w-min whitespace-nowrap">
                     <TablePickerField
+                      align="start"
                       value={formatIcNumber(editor.draft.occupantIcNumber)}
                       placeholder="Pilih penghuni"
                       disabled={pendingUnitId === EMPTY_QUARTER_UNIT_ID}
                       onClick={onOpenResidentPicker}
                     />
                   </td>
-                  <td className="px-6 py-4 align-middle w-min whitespace-nowrap">
-                    <p className="text-sm font-medium italic text-grey">
+                  <td className="px-3 py-4 align-start w-min whitespace-nowrap">
+                    <p className="text-sm font-semibold text-grey">
                       {editor.draft.occupantIcNumber.trim().length > 0
                         ? editor.draft.occupantName.trim() || "Penghuni dipilih."
                         : "N/A"}
                     </p>
                   </td>
-                  <td className="px-6 py-4 text-center align-middle text-sm font-semibold text-grey w-min whitespace-nowrap">
+                  <td className="px-3 py-4 text-center align-start text-sm font-semibold text-grey w-min whitespace-nowrap">
                     {editor.draft.occupantIcNumber.trim().length > 0 ? (
                       <KuartersUnitDatePicker
                         fieldType="moveInDate"
@@ -561,7 +563,7 @@ export default function KuartersUnitsPanel({
                       "N/A"
                     )}
                   </td>
-                  <td className="px-6 py-4 text-center align-middle text-sm font-semibold text-grey w-min whitespace-nowrap">
+                  <td className="px-3 py-4 text-center align-start text-sm font-semibold text-grey w-min whitespace-nowrap">
                     {editor.draft.occupantIcNumber.trim().length > 0 ? (
                       <KuartersUnitDatePicker
                         fieldType="moveOutDate"
@@ -575,7 +577,7 @@ export default function KuartersUnitsPanel({
                       "N/A"
                     )}
                   </td>
-                  <td className="px-6 py-4 align-middle w-min whitespace-nowrap">
+                  <td className="px-3 py-4 align-start w-min whitespace-nowrap">
                     <div className="flex justify-center">
                       {renderCreateActionCell()}
                     </div>
@@ -619,7 +621,7 @@ export default function KuartersUnitsPanel({
                   <tr
                     key={unit.id}
                     ref={isEditing ? editingRowRef : null}
-                    className="border-t border-light-grey/20"
+                    className={`border-t border-light-grey/20 ${isEditing ? "bg-dark-blue/3" : ""}`}
                   >
                     <td
                       className={`overflow-hidden text-sm font-semibold text-dark-grey align-middle w-min whitespace-nowrap
@@ -659,7 +661,7 @@ export default function KuartersUnitsPanel({
                         <p
                           className={`${
                             hasOccupantChanged
-                              ? "font-medium italic text-grey"
+                              ? "font-semibold text-grey"
                               : isVacant
                                 ? "text-grey"
                                 : "text-dark-grey"

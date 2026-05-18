@@ -1,6 +1,7 @@
 "use client";
 
 import Icon from "@/app/components/Icon/Icon";
+import GlobalFixedMessage from "@/app/components/Message/GlobalFixedMessage";
 import { useState, useEffect } from "react";
 import { calculateAgeByIc } from "@/app/utils/resident";
 import type { ResidentRecord } from "../../page";
@@ -195,14 +196,10 @@ export default function PenghuniDetail(props?: PenghuniDetailWithCloseProps) {
     return (
         <div>
              {/* Notification Toast */}
-            {notification.type && (
-                <div className={`fixed bottom-8 z-55 px-6 py-3 rounded-lg shadow-lg text-white flex items-center gap-3 animate-in fade-in duration-300 ${
-                    notification.type === "success" ? "bg-green" : "bg-red"
-                }`}>
-                    <Icon icon={notification.type === "success" ? "check" : "close"} size={18} />
-                    <span className="text-sm font-medium">{notification.message}</span>
-                </div>
-            )}
+            <GlobalFixedMessage
+                notice={notification.type ? { tone: notification.type, message: notification.message } : null}
+                onDismiss={() => setNotification({ type: null, message: "" })}
+            />
 
             {/* Overlay Window */}
             <div className="fixed top-0 left-55 right-0 bottom-0 z-50 bg-black/40 backdrop-blur-sm p-12 flex items-start justify-center">

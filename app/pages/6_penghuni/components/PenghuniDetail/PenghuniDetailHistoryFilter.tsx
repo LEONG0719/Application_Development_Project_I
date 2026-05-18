@@ -58,7 +58,7 @@ export function usePenghuniDetailHistoryFilter(
 
     const filteredHistory = isActive
         ? records.filter((record) => {
-              // Use string comparison for dates in YYYY-MM-DD format to avoid timezone issues
+              // Use string comparison for dates in YYYY-MM-DD format to avoid timezone issues.
               if (dateFilter.startDate && record.tarikh < dateFilter.startDate) return false;
               if (dateFilter.endDate && record.tarikh > dateFilter.endDate) return false;
               return true;

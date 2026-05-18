@@ -325,7 +325,7 @@ export default function KuartersCategoryRatesPanel({
                   ref={editor?.mode === "create" ? editingRowRef : null}
                   className="border-t border-light-grey/20 bg-dark-blue/3"
                 >
-                  <td className="px-6 py-4 w-min whitespace-nowrap">
+                  <td className="px-3 py-4 w-min whitespace-nowrap">
                     <TableInputField
                       value={editor.draft.categoryName}
                       placeholder="Masukkan Nama Kategori"
@@ -334,7 +334,7 @@ export default function KuartersCategoryRatesPanel({
                       onChange={(value) => onDraftChange("categoryName", value)}
                     />
                   </td>
-                  <td className="px-6 py-4 w-min whitespace-nowrap">
+                  <td className="px-3 py-4 w-min whitespace-nowrap">
                     <TableInputField
                       value={editor.draft.address}
                       placeholder="Masukkan Alamat"
@@ -343,7 +343,7 @@ export default function KuartersCategoryRatesPanel({
                       onChange={(value) => onDraftChange("address", value)}
                     />
                   </td>
-                  <td className="px-6 py-4 w-min whitespace-nowrap">
+                  <td className="px-3 py-4 w-min whitespace-nowrap">
                     <TableInputField
                       value={editor.draft.rentalPrice}
                       placeholder="0.00"
@@ -353,7 +353,7 @@ export default function KuartersCategoryRatesPanel({
                       onChange={(value) => onDraftChange("rentalPrice", value)}
                     />
                   </td>
-                  <td className="px-6 py-4 w-min whitespace-nowrap">
+                  <td className="px-3 py-4 w-min whitespace-nowrap">
                     <TableInputField
                       value={editor.draft.maintenancePrice}
                       placeholder="0.00"
@@ -365,7 +365,7 @@ export default function KuartersCategoryRatesPanel({
                       }
                     />
                   </td>
-                  <td className="px-6 py-4 w-min whitespace-nowrap">
+                  <td className="px-3 py-4 w-min whitespace-nowrap">
                     <TableInputField
                       value={editor.draft.penaltyPrice}
                       placeholder="0.00"
@@ -375,7 +375,7 @@ export default function KuartersCategoryRatesPanel({
                       onChange={(value) => onDraftChange("penaltyPrice", value)}
                     />
                   </td>
-                  <td className="px-6 py-4 w-min whitespace-nowrap">
+                  <td className="px-3 py-4 w-min whitespace-nowrap">
                     <div className="flex justify-center">
                       {renderActionCell(EMPTY_QUARTER_CATEGORY_ID, true)}
                     </div>
@@ -408,7 +408,7 @@ export default function KuartersCategoryRatesPanel({
                   <tr
                     key={rate.id}
                     ref={isEditing ? editingRowRef : null}
-                    className="border-t border-light-grey/20"
+                    className={`border-t border-light-grey/20 ${isEditing ? "bg-dark-blue/3" : ""}`}
                   >
                     <td className={`overflow-hidden text-sm font-semibold text-dark-grey w-min whitespace-nowrap ${isEditing ? "px-3 py-4" : "px-3 py-2"}`}>
                       {isEditing ? (
