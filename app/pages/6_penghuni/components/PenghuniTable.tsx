@@ -11,69 +11,17 @@ import { usePaginationLogic, PaginationControls } from "@/app/components/Paginat
 import PenghuniDetail from "./PenghuniDetail/PenghuniDetail";
 import PenghuniFilter, {
     DEFAULT_PENGHUNI_STATUS_FILTERS,
+        filterResidentsByStatus,
     type PenghuniStatusFilter,
 } from "./PenghuniFilter";
-import PenghuniSearchButton, { usePenghuniSearchLogic } from "./PenghuniSearch";
+import PenghuniSearchButton, {
+        searchResidents,
+        usePenghuniSearchLogic,
+} from "./PenghuniSearch";
 import PenghuniDownload from "./PenghuniDownload";
 import { PatternFormat } from "react-number-format";
 import type { ResidentRecord, PenghuniTableProps } from "../page";
 import { handleResidentDelete, handleResidentUpdate } from "../controller/DatabaseControl";
-
-// Types
-type PenghuniFilters = {
-  query: string;
-  status: PenghuniStatusFilter[];
-};
-
-// Helper functions
-function normalizeSearchValue(value: string): string {
-  return value
-    .trim()
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "");
-}
-
-function createEmptyPenghuniFilters(): PenghuniFilters {
-  return {
-    query: "",
-        status: [...DEFAULT_PENGHUNI_STATUS_FILTERS],
-  };
-}
-
-function filterPenghuni(
-  residents: ResidentRecord[],
-  filters: PenghuniFilters,
-): ResidentRecord[] {
-  const normalizedQuery = normalizeSearchValue(filters.query);
-
-  return residents.filter((resident) => {
-    const residentsStatus = resident.status as PenghuniStatusFilter;
-    if (!filters.status.includes(residentsStatus)) {
-      return false;
-    }
-
-    if (normalizedQuery.length === 0) {
-      return true;
-    }
-
-    const searchableFields = [
-      resident.fullName,
-      resident.icNumber,
-      resident.phone,
-      resident.email,
-      resident.position,
-      resident.department,
-      resident.quarters?.unitCode,
-      resident.quarters?.quarterName,
-      resident.quarters?.address,
-    ].filter(Boolean) as string[];
-
-    return searchableFields.some((field) =>
-      normalizeSearchValue(field).includes(normalizedQuery)
-    );
-  });
-}
 
 // Text size constants for table display
 const mainTextSize = "text-[12px]";
@@ -115,13 +63,18 @@ function getStatusBadgeColor(status: string) {
 }
 
 export default function PenghuniTable({ residents, isLoading, errorMessage, setResidents }: PenghuniTableProps) {
-    // Filter State
-    const [filters, setFilters] = useState<PenghuniFilters>(createEmptyPenghuniFilters());
+    const [searchQuery, setSearchQuery] = useState("");
+    const [selectedStatuses, setSelectedStatuses] = useState<PenghuniStatusFilter[]>([
+        ...DEFAULT_PENGHUNI_STATUS_FILTERS,
+    ]);
 
-    // Apply filters
+    const searchedResidents = useMemo(() => {
+        return searchResidents(residents, searchQuery);
+    }, [residents, searchQuery]);
+
     const filteredResidents = useMemo(() => {
-        return filterPenghuni(residents, filters);
-    }, [residents, filters]);
+        return filterResidentsByStatus(searchedResidents, selectedStatuses);
+    }, [searchedResidents, selectedStatuses]);
     
     // Pagination Logic
     const itemsPerPage = 10;
@@ -155,22 +108,16 @@ export default function PenghuniTable({ residents, isLoading, errorMessage, setR
         handleToggleSearch,
         handleClearSearch,
     } = usePenghuniSearchLogic({
-        value: filters.query,
+        value: searchQuery,
         onChange: handleSearchQueryChange,
     });
 
     function handleSearchQueryChange(value: string) {
-        setFilters((currentFilters) => ({
-            ...currentFilters,
-            query: value,
-        }));
+        setSearchQuery(value);
     }
 
     function handleStatusFilterChange(values: PenghuniStatusFilter[]) {
-        setFilters((currentFilters) => ({
-            ...currentFilters,
-            status: values,
-        }));
+        setSelectedStatuses(values);
     }
 
     return (
@@ -187,7 +134,7 @@ export default function PenghuniTable({ residents, isLoading, errorMessage, setR
                         onToggle={handleToggleSearch}
                     />
                     <PenghuniFilter
-                        selectedValues={filters.status}
+                        selectedValues={selectedStatuses}
                         onSelect={handleStatusFilterChange}
                         isSearchFilterActive={isSearchFilterActive}
                     />
@@ -203,7 +150,7 @@ export default function PenghuniTable({ residents, isLoading, errorMessage, setR
                             <div ref={searchInputRef} className="flex-1">
                                 <SharedInputField
                                     label="CARIAN MENGIKUT NAMA, IC, EMAIL, TELEFON, KUARTERS"
-                                    value={filters.query}
+                                    value={searchQuery}
                                     state="active"
                                     onChange={handleSearchQueryChange}
                                     placeholder="Cth: Ahmad, 123456-78-9012, atau unit A-01-05"

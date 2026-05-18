@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import FilterOption, { type FilterOption as FilterItemOption } from "@/app/components/FIlter/FilterOption";
 import { commonIcons } from "@/app/components/Icon/Icon";
 import ToolbarIconButton from "@/app/components/ToolbarIconButton";
+import type { ResidentRecord } from "../page";
 
 export type PenghuniStatusFilter =
   | "AKTIF"
@@ -45,6 +46,15 @@ const STATUS_FILTER_OPTIONS: FilterItemOption<PenghuniStatusFilter>[] = [
   { value: "PENCEN_MENDATANG", label: "Pencen Mendatang", dotColor: "bg-pencen-datang" },
   { value: "DATA_TIDAK_LENGKAP", label: "Tidak Lengkap", dotColor: "bg-x-lengkap" },
 ];
+
+export function filterResidentsByStatus(
+  residents: ResidentRecord[],
+  selectedValues: PenghuniStatusFilter[],
+): ResidentRecord[] {
+  return residents.filter((resident) =>
+    selectedValues.includes(resident.status as PenghuniStatusFilter)
+  );
+}
 
 function getStatusFilterLabel(statuses: PenghuniStatusFilter[]) {
   if (statuses.length === 0 || statuses.length === DEFAULT_PENGHUNI_STATUS_FILTERS.length) {
