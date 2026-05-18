@@ -4,6 +4,44 @@ import { useEffect, useRef, useState } from "react";
 
 import { commonIcons } from "@/app/components/Icon/Icon";
 import ToolbarIconButton from "@/app/components/ToolbarIconButton";
+import type { ResidentRecord } from "../page";
+
+export function normalizeSearchValue(value: string): string {
+  return value
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+}
+
+export function searchResidents(
+  residents: ResidentRecord[],
+  query: string,
+): ResidentRecord[] {
+  const normalizedQuery = normalizeSearchValue(query);
+
+  if (normalizedQuery.length === 0) {
+    return residents;
+  }
+
+  return residents.filter((resident) => {
+    const searchableFields = [
+      resident.fullName,
+      resident.icNumber,
+      resident.phone,
+      resident.email,
+      resident.position,
+      resident.department,
+      resident.quarters?.unitCode,
+      resident.quarters?.quarterName,
+      resident.quarters?.address,
+    ].filter(Boolean) as string[];
+
+    return searchableFields.some((field) =>
+      normalizeSearchValue(field).includes(normalizedQuery)
+    );
+  });
+}
 
 type UsePenghuniSearchLogicProps = {
   value: string;
