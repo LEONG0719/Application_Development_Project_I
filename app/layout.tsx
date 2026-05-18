@@ -3,6 +3,7 @@
 import "./globals.css";
 import { usePathname } from "next/navigation";
 import Header from "./components/Layout/Header";
+import GlobalFixedMessage from "./components/Message/GlobalFixedMessage";
 import Sidebar from "./components/Layout/Sidebar";
 import { ROUTES, SHELL_ROUTES, SHELL_ROUTE_PREFIXES } from "./constants/routes";
 
@@ -49,6 +50,7 @@ export default function RootLayout({
           : ( // Otherwise just show the page content (e.g. for auth route when user not logged in yet).
             children
           )}
+        <GlobalFixedMessage notice={null} />
       </body>
     </html>
   );

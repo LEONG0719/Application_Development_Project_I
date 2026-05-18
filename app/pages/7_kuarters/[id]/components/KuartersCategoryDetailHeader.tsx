@@ -21,7 +21,7 @@ function RatePill({
 }) {
   return (
     <div className="rounded-lg border border-light-grey/20 bg-white px-4 py-3 shadow-sm">
-      <p className="text-[11px] font-extrabold uppercase text-grey/70">
+      <p className="text-xs font-bold uppercase text-grey/70">
         {label}
       </p>
       <p className="mt-2 text-lg font-extrabold text-dark-grey">

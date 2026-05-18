@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 
 import Icon from "@/app/components/Icon/Icon";
 import { InputField as SharedInputField } from "@/app/components/InputField";
+import SearchingDataOverlay from "@/app/components/Loading/SearchingDataOverlay";
 import { usePaginationLogic, PaginationControls } from "@/app/components/Pagination/Pagination";
 import PenghuniDetail from "./PenghuniDetail/PenghuniDetail";
 import PenghuniFilter, {
@@ -325,11 +326,13 @@ export default function PenghuniTable({ residents, isLoading, errorMessage, setR
                                     <td className="px-3 py-2 text-center align-middle w-min whitespace-nowrap">
                                         <div className="flex items-center justify-center">
                                             <button
+                                                type="button"
                                                 aria-label={`Lihat butiran ${resident.fullName}`}
+                                                title={`Lihat butiran ${resident.fullName}`}
                                                 onClick={() => setSelectedResident(resident)}
-                                                className="flex items-center justify-center"
+                                                className="inline-flex items-center justify-center rounded-lg p-2 text-dark-blue transition-colors hover:bg-background"
                                             >
-                                                <Icon icon="eye" className="text-dark-blue" size={15} />
+                                                <Icon icon="eye" size={18} />
                                             </button>
                                         </div>
                                     </td>
@@ -359,12 +362,7 @@ export default function PenghuniTable({ residents, isLoading, errorMessage, setR
 
             {/* Loading Overlay When Navigated via "?targetId=" & Data is Still Fetching */}
             {isLoading && searchParams.get("targetId") && (
-                <div className="absolute inset-0 z-30 flex items-center justify-center backdrop-blur-sm bg-black/80">
-                    <div className="flex flex-col items-center gap-3">
-                        <div className="h-8 w-8 animate-spin rounded-full border-4 border-white/20 border-t-white" aria-hidden="true" />
-                        <p className="text-xs font-bold tracking-widest text-white uppercase">Sedang Mencari Data...</p>
-                    </div>
-                </div>
+                <SearchingDataOverlay />
             )}
 
             {/* Overlay Window (Resident Detail) */}

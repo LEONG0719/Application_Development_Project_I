@@ -185,7 +185,7 @@ export default function KuartersUnitDetailsOverlay({
                   aria-hidden="true"
                 />
                 <p className="mt-4 text-sm font-semibold text-grey">
-                  Mendapatkan maklumat unit kuarters...
+                  Mendapatkan Maklumat Unit Kuarters...
                 </p>
               </div>
             </div>
