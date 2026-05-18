@@ -81,8 +81,9 @@ export default function KuartersPageClient({
   const [pendingAction, setPendingAction] = useState<PendingAction>(null);
   const [isTableLoading, setIsTableLoading] = useState(!hasValidInitialData);
   
+  const sortedQuarterCategories = sortQuarterCategories(quarterCategories);
   const hasActiveFilters = hasActiveQuarterCategoryFilters(filters);
-  const filteredQuarterCategories = filterQuarterCategories(quarterCategories, filters);
+  const filteredQuarterCategories = filterQuarterCategories(sortedQuarterCategories, filters);
   const pagination = buildQuarterCategoryPagination(
     filteredQuarterCategories,
     currentPage,
@@ -246,9 +247,9 @@ export default function KuartersPageClient({
       const nextQuarterCategories =
         editor.mode === "create"
           ? sortQuarterCategories([updatedQuarterCategory, ...quarterCategories])
-          : quarterCategories.map((quarterCategory) =>
+          : sortQuarterCategories(quarterCategories.map((quarterCategory) =>
               quarterCategory.id === updatedQuarterCategory.id ? updatedQuarterCategory : quarterCategory,
-            );
+            ));
 
       setQuarterCategories(nextQuarterCategories);
       if (editor.mode === "create") setCurrentPage(1);

@@ -30,6 +30,7 @@ export type QuarterUnitListItem = {
 
 export type QuarterUnitOccupancyDetails = {
   id: string;
+  occupantId: string;
   occupantName: string;
   occupantIcNumber: string;
   occupantAge: number | null;
@@ -108,8 +109,7 @@ export const quarterUnitDetailsInclude = {
     ],
     include: {
       resident: {
-        select: {
-          fullName: true,
+        select: {          id: true,          fullName: true,
           icNumber: true,
           status: true,
         },
@@ -214,6 +214,7 @@ export function mapQuarterUnitDetailsForApi(
 ): QuarterUnitDetails {
   const occupancyHistory = unit.occupancies.map((occupancy) => ({
     id: occupancy.id,
+    occupantId: occupancy.resident.id,
     occupantName: occupancy.resident.fullName,
     occupantIcNumber: occupancy.resident.icNumber,
     occupantAge: calculateAgeFromIcNumber(occupancy.resident.icNumber),

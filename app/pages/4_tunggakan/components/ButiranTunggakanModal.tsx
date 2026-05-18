@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Icon from "../../../components/Icon/Icon";
-import ToolbarButton from "@/app/components/Icon/ToolbarIconButton";
+import ToolbarButton from "@/app/components/ToolbarIconButton";
 
 type ButiranTunggakanModalProps = {
   isOpen: boolean;

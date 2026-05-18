@@ -2,9 +2,13 @@
 
 import { useEffect, useEffectEvent, useRef, useState } from "react";
 
+import {
+  InputField as SharedInputField,
+  TableInputField,
+} from "@/app/components/InputField";
 import Icon, { commonIcons } from "@/app/components/Icon/Icon";
 import { PaginationControls } from "@/app/components/Pagination/Pagination";
-import ToolbarButton from "@/app/components/Icon/ToolbarIconButton";
+import ToolbarButton from "@/app/components/ToolbarIconButton";
 import { downloadQuarterCategoryRates } from "@/app/pages/7_kuarters/hooks/kuartersDownloads";
 
 import {
@@ -69,40 +73,6 @@ function ActionButton({
   );
 }
 
-function InputField({
-  value,
-  placeholder,
-  align = "center",
-  inputMode = "text",
-  disabled = false,
-  onChange,
-}: {
-  value: string;
-  placeholder: string;
-  align?: "start" | "center" | "end";
-  inputMode?: "decimal" | "text";
-  disabled?: boolean;
-  onChange: (value: string) => void;
-}) {
-  return (
-    <input
-      type="text"
-      inputMode={inputMode}
-      value={value}
-      disabled={disabled}
-      onChange={(event) => onChange(event.target.value)}
-      placeholder={placeholder}
-      className={`min-h-9 rounded-xl border border-light-grey/35 bg-white px-4 py-2 text-sm font-semibold text-dark-blue outline-none transition-colors placeholder:text-light-grey focus:border-dark-blue ${
-        align === "start"
-          ? "w-full min-w-35 text-left"
-          : align === "end"
-            ? "w-full min-w-32 text-right"
-            : "w-full min-w-32 text-center"
-      } disabled:cursor-not-allowed disabled:bg-background`}
-    />
-  );
-}
-
 export default function KuartersCategoryRatesPanel({
   isLoading,
   currentPage,
@@ -131,7 +101,7 @@ export default function KuartersCategoryRatesPanel({
 }: KuartersCategoryRatesPanelProps) {
   const isCreateRowVisible = editor?.mode === "create";
   const editingRowRef = useRef<HTMLTableRowElement | null>(null);
-  const searchInputRef = useRef<HTMLInputElement | null>(null);
+  const searchInputRef = useRef<HTMLDivElement | null>(null);
   const [isSearchOpen, setIsSearchOpen] = useState(hasActiveFilters);
 
   const handlePointerDownOutsideEditor = useEffectEvent((event: PointerEvent) => {
@@ -169,7 +139,7 @@ export default function KuartersCategoryRatesPanel({
 
   useEffect(() => {
     if (isSearchOpen) {
-      searchInputRef.current?.focus();
+      searchInputRef.current?.querySelector("input")?.focus();
     }
   }, [isSearchOpen]);
 
@@ -297,26 +267,27 @@ export default function KuartersCategoryRatesPanel({
       <div className="rounded-lg bg-white p-4 shadow">
         <div className="flex flex-col gap-2">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-            <label className="block flex-1">
-              <span className="mb-2 block text-xs font-extrabold uppercase tracking-[0.18em] text-grey">
-                Carian Mengikut Kategori Atau Alamat
-              </span>
-              <div className="flex items-center gap-3 rounded-xl border border-light-grey/30 bg-background px-3 py-2 transition-colors focus-within:border-dark-blue">
-                <Icon
-                  icon={commonIcons.search}
-                  size={18}
-                  className="text-light-grey"
-                />
-                <input
-                  ref={searchInputRef}
-                  type="text"
-                  value={filterQuery}
-                  onChange={(event) => onFilterQueryChange(event.target.value)}
-                  placeholder="Contoh: Kategori A"
-                  className="w-full border-none bg-transparent text-sm font-medium text-dark-grey outline-none placeholder:text-light-grey"
-                />
-              </div>
-            </label>
+            <div ref={searchInputRef} className="flex-1">
+              <SharedInputField
+                label="CARIAN MENGIKUT KATEGORI ATAU ALAMAT"
+                value={filterQuery}
+                state="active"
+                onChange={onFilterQueryChange}
+                placeholder="Contoh: Kategori A"
+                showLabel
+                leadingIcon={(
+                  <Icon
+                    icon={commonIcons.search}
+                    size={18}
+                    className="text-light-grey"
+                  />
+                )}
+                className="w-full"
+                activeBackgroundClass="bg-light-blue"
+                inputFontSize={12}
+                inputMinHeight={40}
+              />
+            </div>
 
             <div className="flex items-center gap-3 self-start lg:self-end">
               <button
@@ -355,7 +326,7 @@ export default function KuartersCategoryRatesPanel({
                   className="border-t border-light-grey/20 bg-dark-blue/3"
                 >
                   <td className="px-6 py-4 w-min whitespace-nowrap">
-                    <InputField
+                    <TableInputField
                       value={editor.draft.categoryName}
                       placeholder="Masukkan Nama Kategori"
                       align="start"
@@ -364,7 +335,7 @@ export default function KuartersCategoryRatesPanel({
                     />
                   </td>
                   <td className="px-6 py-4 w-min whitespace-nowrap">
-                    <InputField
+                    <TableInputField
                       value={editor.draft.address}
                       placeholder="Masukkan Alamat"
                       align="start"
@@ -373,7 +344,7 @@ export default function KuartersCategoryRatesPanel({
                     />
                   </td>
                   <td className="px-6 py-4 w-min whitespace-nowrap">
-                    <InputField
+                    <TableInputField
                       value={editor.draft.rentalPrice}
                       placeholder="0.00"
                       align="end"
@@ -383,7 +354,7 @@ export default function KuartersCategoryRatesPanel({
                     />
                   </td>
                   <td className="px-6 py-4 w-min whitespace-nowrap">
-                    <InputField
+                    <TableInputField
                       value={editor.draft.maintenancePrice}
                       placeholder="0.00"
                       align="end"
@@ -395,7 +366,7 @@ export default function KuartersCategoryRatesPanel({
                     />
                   </td>
                   <td className="px-6 py-4 w-min whitespace-nowrap">
-                    <InputField
+                    <TableInputField
                       value={editor.draft.penaltyPrice}
                       placeholder="0.00"
                       align="end"
@@ -441,7 +412,7 @@ export default function KuartersCategoryRatesPanel({
                   >
                     <td className={`overflow-hidden text-sm font-semibold text-dark-grey w-min whitespace-nowrap ${isEditing ? "px-3 py-4" : "px-3 py-2"}`}>
                       {isEditing ? (
-                        <InputField
+                        <TableInputField
                           value={editor.draft.categoryName}
                           placeholder="Masukkan Nama Kategori"
                           align="start"
@@ -466,7 +437,7 @@ export default function KuartersCategoryRatesPanel({
                     </td>
                     <td className={`overflow-hidden text-sm font-semibold text-dark-grey w-min whitespace-nowrap ${isEditing ? "px-3 py-4" : "px-3 py-2"}`}>
                       {isEditing ? (
-                        <InputField
+                        <TableInputField
                           value={editor.draft.address}
                           placeholder="Masukkan Alamat"
                           align="start"
@@ -484,7 +455,7 @@ export default function KuartersCategoryRatesPanel({
                     </td>
                     <td className={`overflow-hidden text-sm font-semibold text-dark-grey w-min whitespace-nowrap ${isEditing ? "px-3 py-4" : "px-3 py-2"}`}>
                       {isEditing ? (
-                        <InputField
+                        <TableInputField
                           value={editor.draft.rentalPrice}
                           placeholder="0.00"
                           align="end"
@@ -502,7 +473,7 @@ export default function KuartersCategoryRatesPanel({
                     </td>
                     <td className={`overflow-hidden text-sm font-semibold text-dark-grey w-min whitespace-nowrap ${isEditing ? "px-3 py-4" : "px-3 py-2"}`}>
                       {isEditing ? (
-                        <InputField
+                        <TableInputField
                           value={editor.draft.maintenancePrice}
                           placeholder="0.00"
                           align="end"
@@ -520,7 +491,7 @@ export default function KuartersCategoryRatesPanel({
                     </td>
                     <td className={`overflow-hidden text-sm font-semibold text-dark-grey w-min whitespace-nowrap ${isEditing ? "px-3 py-4" : "px-3 py-2"}`}>
                       {isEditing ? (
-                        <InputField
+                        <TableInputField
                           value={editor.draft.penaltyPrice}
                           placeholder="0.00"
                           align="end"

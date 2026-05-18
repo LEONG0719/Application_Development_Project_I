@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { usePaginationLogic, PaginationControls } from "@/app/components/Pagination/Pagination";
-import { Topic } from "../../../components/InputField";
-import Icon from "@/app/components/Icon/Icon";
+import { Topic } from "../../../../components/InputField";
+import PenghuniDetailHistoryDownload from "./PenghuniDetailHistoryDownload";
+import { usePenghuniDetailHistoryFilter } from "./PenghuniDetailHistoryFilter";
 
 export type TransactionRecord = {
     id: string;
@@ -92,20 +93,27 @@ export default function PenghuniDetailHistory({ residentId }: { residentId?: str
 
     // Calculate running balances for the transaction history before applying pagination.
     const historyWithBaki = calculateRunningBalances(history);
-    const { currentPage, totalPages, startIndex, endIndex, handlePageChange, paginationItems } = usePaginationLogic(historyWithBaki.length, itemsPerPage);
-    const currentHistory = historyWithBaki.slice(startIndex, endIndex);
+
+    // Apply date range filter via extracted hook.
+    const { filteredHistory, FilterButton } = usePenghuniDetailHistoryFilter(historyWithBaki);
+
+    const { currentPage, totalPages, startIndex, endIndex, handlePageChange, paginationItems } = usePaginationLogic(filteredHistory.length, itemsPerPage);
+    const currentHistory = filteredHistory.slice(startIndex, endIndex);
 
     return (
         <div className="flex flex-col gap-4">
             {/* Section Title */}
-            <div className="flex flex-row justify-between">
+            <div className="flex flex-row items-center justify-between">
                 {/* Title */}
                 <Topic content="SEJARAH TRANSAKSI" />
 
-                {/* Icon */}
+                {/* Toolbar Icons */}
                 <div className="flex flex-row gap-4 items-center">
-                    <Icon icon="download" className="text-grey"></Icon>
-                    <Icon icon="filter" className="text-grey"></Icon>
+                    {FilterButton}
+                    <PenghuniDetailHistoryDownload
+                        records={filteredHistory}
+                        residentId={residentId}
+                    />
                 </div>
             </div>
 
@@ -138,7 +146,7 @@ export default function PenghuniDetailHistory({ residentId }: { residentId?: str
                             </tr>
                         ) : (
                             currentHistory.map((row) => (
-                                <tr key={row.id} className="text-sm border-b border-b-light-grey/20 hover:bg-light-blue/50 transition-colors">
+                                <tr key={row.id} className="text-sm border-b border-b-light-grey/20 transition-colors">
                                     <td className="px-4 py-3 text-left font-medium">{row.tarikh}</td>
                                     <td className="px-4 py-3 text-left">{row.id}</td>
                                     <td className="px-4 py-3 text-left">{row.kategori}</td>
@@ -160,7 +168,7 @@ export default function PenghuniDetailHistory({ residentId }: { residentId?: str
                                     totalPages={totalPages}
                                     startIndex={startIndex}
                                     endIndex={endIndex}
-                                    totalRecords={historyWithBaki.length}
+                                    totalRecords={filteredHistory.length}
                                     paginationItems={paginationItems}
                                     onPageChange={handlePageChange}
                                 />
@@ -172,3 +180,4 @@ export default function PenghuniDetailHistory({ residentId }: { residentId?: str
         </div>
     );
 }
+

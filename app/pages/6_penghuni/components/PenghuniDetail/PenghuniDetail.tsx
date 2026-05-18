@@ -3,11 +3,11 @@
 import Icon from "@/app/components/Icon/Icon";
 import { useState, useEffect } from "react";
 import { calculateAgeByIc } from "@/app/utils/resident";
-import type { ResidentRecord } from "../page";
-import { InputField, InputFieldFormat, InputBox, DropdownField, Topic, type DropdownOption } from "../../../components/InputField";
-import { handleDelete, handleFieldChange, handleResidentStatusFieldChange, handleSave, stripResidentFormatting } from "../controller/DatabaseControl";
+import type { ResidentRecord } from "../../page";
+import { InputField, InputFieldFormat, InputBox, DropdownField, Topic, type DropdownOption } from "../../../../components/InputField";
+import { handleDelete, handleFieldChange, handleResidentStatusFieldChange, handleSave, stripResidentFormatting } from "../../controller/DatabaseControl";
 import PenghuniDetailHistory from "./PenghuniDetailHistory";
-import { resolveResidentStatusRules } from "../controller/StatusControl";
+import { resolveResidentStatusRules } from "../../controller/StatusControl";
 
 
 type PenghuniDetailWithCloseProps = ResidentRecord & {
@@ -329,8 +329,8 @@ export default function PenghuniDetail(props?: PenghuniDetailWithCloseProps) {
                                         <InputField label="UNIT KUARTERS" value={formData.quarters?.unitCode ?? (isInactive ? "N/A" : "")} state="inactive" className="col-span-1"/>
                                         <InputField label="ALAMAT KUARTERS" value={formData.quarters?.address ?? (isInactive ? "N/A" : "")} state="inactive" className="col-span-2"/>
                                         <div className="col-span-1 grid grid-cols-2 gap-4">
-                                            <InputField label="TARIKH MASUK" value={formatDateForDisplay(formData.quarters?.moveInDate)} state="inactive" className="col-span-1"/>
-                                            <InputField label="TARIKH KELUAR" value={formatDateForDisplay(formData.quarters?.moveOutDate)} state="inactive" className="col-span-1"/>
+                                            <InputField label="TARIKH MASUK" value={formatDateForDisplay(formData.quarters?.moveInDate) || "N/A"} state="inactive" className="col-span-1"/>
+                                            <InputField label="TARIKH KELUAR" value={formatDateForDisplay(formData.quarters?.moveOutDate) || "N/A"} state="inactive" className="col-span-1"/>
                                         </div>
                                         <InputField label="TUNGGAKAN (RM)" value={formData.totalArrearsAmount?.totalArrearsAmount != null ? `${Number(formData.totalArrearsAmount.totalArrearsAmount).toFixed(2).toString()}` : (isInactive ? "N/A" : "")} state="inactive" className={`col-span-1 ${formData.totalArrearsAmount?.totalArrearsAmount != null ? getArrearsTextClass(Number(formData.totalArrearsAmount.totalArrearsAmount)) : ""}`}/>
                                     </div>

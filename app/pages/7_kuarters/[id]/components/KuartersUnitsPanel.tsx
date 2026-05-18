@@ -2,9 +2,15 @@
 
 import { useEffect, useEffectEvent, useRef, useState } from "react";
 
+import {
+  InputField as SharedInputField,
+  TableInputField,
+  TablePickerField,
+} from "@/app/components/InputField";
+import FilterOption from "@/app/components/FIlter/FilterOption";
 import Icon, { commonIcons } from "@/app/components/Icon/Icon";
 import { PaginationControls } from "@/app/components/Pagination/Pagination";
-import ToolbarButton from "@/app/components/Icon/ToolbarIconButton";
+import ToolbarButton from "@/app/components/ToolbarIconButton";
 import { downloadQuarterUnits } from "@/app/pages/7_kuarters/hooks/kuartersDownloads";
 import KuartersUnitDatePicker from "./KuartersUnitDatePicker";
 import type { QuarterUnitOccupancyDetails } from "@/lib/quarter-units";
@@ -31,7 +37,7 @@ type KuartersUnitsPanelProps = {
   currentPage: number;
   editor: KuartersUnitEditorState | null;
   filterQuery: string;
-  statusFilter: QuarterUnitStatusFilter;
+  statusFilter: QuarterUnitStatusFilter[];
   hasActiveFilters: boolean;
   isResidentPickerOpen: boolean;
   paginationItems: (number | "ellipsis")[];
@@ -48,7 +54,7 @@ type KuartersUnitsPanelProps = {
   onEditUnit: (unit: QuarterUnitRecord) => void;
   onFilterQueryChange: (value: string) => void;
   onRequestAssignResident: (unit: QuarterUnitRecord) => void;
-  onStatusFilterChange: (value: QuarterUnitStatusFilter) => void;
+  onStatusFilterChange: (values: QuarterUnitStatusFilter[]) => void;
   onOpenResidentPicker: () => void;
   onPageChange: (page: number) => void;
   onSaveUnit: () => void;
@@ -82,75 +88,30 @@ function ActionButton({
   );
 }
 
-function InputField({
-  value,
-  placeholder,
-  disabled = false,
-  onChange,
-}: {
-  value: string;
-  placeholder: string;
-  disabled?: boolean;
-  onChange: (value: string) => void;
-}) {
-  return (
-    <input
-      type="text"
-      value={value}
-      disabled={disabled}
-      onChange={(event) => onChange(event.target.value)}
-      placeholder={placeholder}
-      className="w-full rounded-xl border border-light-grey/35 bg-white px-4 py-2 text-sm font-semibold text-dark-blue outline-none transition-colors placeholder:text-light-grey focus:border-dark-blue disabled:cursor-not-allowed disabled:bg-background"
-    />
-  );
-}
-
-
-
-function PickerField({
-  value,
-  placeholder,
-  disabled = false,
-  onClick,
-}: {
-  value: string;
-  placeholder: string;
-  disabled?: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      disabled={disabled}
-      className="flex w-full items-center justify-between gap-3 rounded-xl border border-light-grey/35 bg-white px-4 py-2 text-left text-sm font-semibold text-dark-blue outline-none transition-colors hover:border-dark-blue disabled:cursor-not-allowed disabled:bg-background disabled:opacity-60"
-      aria-haspopup="dialog"
-      onClick={onClick}
-    >
-      <span className={value ? "text-dark-blue" : "text-light-grey"}>
-        {value || placeholder}
-      </span>
-      <Icon icon={commonIcons.search} size={18} className="text-light-grey" />
-    </button>
-  );
-}
-
 function getRowAccentClass(status: QuarterUnitRecord["status"]) {
   return status === "OCCUPIED"
     ? "border-l-4 border-l-green"
     : "border-l-4 border-l-pencen-datang";
 }
 
-function getStatusFilterLabel(status: QuarterUnitStatusFilter) {
-  if (status === "OCCUPIED") {
-    return "Didiami";
-  }
+const STATUS_LABELS: Record<QuarterUnitStatusFilter, string> = {
+  OCCUPIED: "Didiami",
+  VACANT: "Kosong",
+};
 
-  if (status === "VACANT") {
-    return "Kosong";
-  }
-
-  return "Semua Status";
+function getStatusFilterLabel(statuses: QuarterUnitStatusFilter[]) {
+  if (statuses.length === 0) return "Semua Status";
+  return statuses.map((s) => STATUS_LABELS[s]).join(", ");
 }
+
+const statusFilterOptions: Array<{
+  value: QuarterUnitStatusFilter;
+  label: string;
+  dotColor?: string;
+}> = [
+  { value: "OCCUPIED", label: "Didiami", dotColor: "bg-green" },
+  { value: "VACANT", label: "Kosong", dotColor: "bg-pencen-datang" },
+];
 
 export default function KuartersUnitsPanel({
   units,
@@ -189,15 +150,15 @@ export default function KuartersUnitsPanel({
   const editingRowRef = useRef<HTMLTableRowElement | null>(null);
   const [unitOccupancyHistory, setUnitOccupancyHistory] = useState<QuarterUnitOccupancyDetails[]>([]);
   const filterMenuRef = useRef<HTMLDivElement | null>(null);
-  const searchInputRef = useRef<HTMLInputElement | null>(null);
+  const searchInputRef = useRef<HTMLDivElement | null>(null);
   const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(
     filterQuery.trim().length > 0,
   );
   const [selectedUnitId, setSelectedUnitId] = useState<string | null>(null);
   const isSearchFilterActive = filterQuery.trim().length > 0;
-  const isStatusFilterActive = statusFilter !== "ALL";
-  const isFilterButtonActive = isFilterMenuOpen || isStatusFilterActive;
+  const isStatusFilterActive = statusFilter.length !== 2;
+  const isFilterButtonActive = isFilterMenuOpen || isSearchFilterActive || isStatusFilterActive;
 
   useEffect(() => {
     if (editor?.mode !== "edit") {
@@ -297,7 +258,7 @@ export default function KuartersUnitsPanel({
 
   useEffect(() => {
     if (isSearchOpen) {
-      searchInputRef.current?.focus();
+      searchInputRef.current?.querySelector("input")?.focus();
     }
   }, [isSearchOpen]);
 
@@ -406,9 +367,8 @@ export default function KuartersUnitsPanel({
     }
   }
 
-  function handleSelectStatusFilter(value: QuarterUnitStatusFilter) {
-    onStatusFilterChange(value);
-    setIsFilterMenuOpen(false);
+  function handleSelectStatusFilter(values: QuarterUnitStatusFilter[]) {
+    onStatusFilterChange(values);
   }
 
   function handleAssignResidentFromOverlay(unitId: string) {
@@ -459,6 +419,7 @@ export default function KuartersUnitsPanel({
             <ToolbarButton
               icon={commonIcons.filter}
               label={`Tapis status unit: ${getStatusFilterLabel(statusFilter)}`}
+
               isActive={isFilterButtonActive}
               hasPopup="menu"
               isExpanded={isFilterMenuOpen}
@@ -466,48 +427,14 @@ export default function KuartersUnitsPanel({
             />
 
             {isFilterMenuOpen ? (
-              <div
-                className="absolute right-0 top-full z-20 mt-2 w-56 rounded-2xl border border-light-grey/20 bg-white p-2 shadow-[0_18px_45px_rgba(13,47,86,0.16)]"
-                role="listbox"
-                aria-label="Tapisan status unit"
-              >
-                <div className="border-b border-light-grey/20 px-3 pb-3 pt-2">
-                  <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-grey">
-                    Status Unit
-                  </p>
-                  <p className="mt-1 text-sm text-grey">
-                    Pilih unit yang ingin dipaparkan.
-                  </p>
-                </div>
-
-                <div className="mt-2 flex flex-col gap-1">
-                  {(["ALL", "OCCUPIED", "VACANT"] as const).map((option) => {
-                    const isSelected = statusFilter === option;
-
-                    return (
-                      <button
-                        key={option}
-                        type="button"
-                        role="option"
-                        aria-selected={isSelected}
-                        className={`flex min-h-10 items-center justify-between rounded-xl px-3 py-2 text-left text-sm font-semibold transition-colors ${
-                          isSelected
-                            ? "bg-dark-blue text-white"
-                            : "text-dark-grey hover:bg-light-blue"
-                        }`}
-                        onClick={() => handleSelectStatusFilter(option)}
-                      >
-                        <span className="truncate">
-                          {getStatusFilterLabel(option)}
-                        </span>
-                        {isSelected ? (
-                          <Icon icon="done" size={16} />
-                        ) : null}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
+              <FilterOption
+                title="Status Unit"
+                description="Pilih unit yang ingin dipaparkan."
+                ariaLabel="Tapisan status unit"
+                options={statusFilterOptions}
+                selectedValues={statusFilter}
+                onSelect={handleSelectStatusFilter}
+              />
             ) : null}
           </div>
           <ToolbarButton
@@ -521,37 +448,40 @@ export default function KuartersUnitsPanel({
       {isSearchOpen ? (
       <div className="px-3">
       <div className="rounded-lg bg-white p-4 shadow">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <label className="block flex-1">
-            <span className="mb-2 block text-xs font-extrabold uppercase tracking-[0.18em] text-grey">
-              Carian Mengikut Unit atau Penghuni
-            </span>
-            <div className="flex items-center gap-3 rounded-xl border border-light-grey/30 bg-background px-3 py-2 transition-colors focus-within:border-dark-blue">
-              <Icon
-                icon={commonIcons.search}
-                size={18}
-                className="text-light-grey"
-              />
-              <input
-                ref={searchInputRef}
-                type="text"
+        <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+            <div ref={searchInputRef} className="flex-1">
+              <SharedInputField
+                label="CARIAN MENGIKUT UNIT ATAU PENGHUNI"
                 value={filterQuery}
-                onChange={(event) => onFilterQueryChange(event.target.value)}
+                state="active"
+                onChange={onFilterQueryChange}
                 placeholder="Contoh: A-01-02 atau Ahmad"
-                className="w-full border-none bg-transparent text-sm font-medium text-dark-grey outline-none placeholder:text-light-grey"
+                showLabel
+                leadingIcon={(
+                  <Icon
+                    icon={commonIcons.search}
+                    size={18}
+                    className="text-light-grey"
+                  />
+                )}
+                className="w-full"
+                activeBackgroundClass="bg-light-blue"
+                inputFontSize={12}
+                inputMinHeight={40}
               />
             </div>
-          </label>
 
-          <div className="flex items-center gap-3 self-start lg:self-end">
-            <button
-              type="button"
-              className="inline-flex min-h-10 items-center rounded-xl border border-light-grey/25 bg-white px-4 py-2 text-sm font-semibold text-grey transition-colors hover:border-dark-blue hover:text-dark-blue disabled:cursor-not-allowed disabled:opacity-40"
-              disabled={!isSearchFilterActive}
-              onClick={handleClearSearch}
-            >
-              Kosongkan
-            </button>
+            <div className="flex items-center gap-3 self-start lg:self-end">
+              <button
+                type="button"
+                className="inline-flex min-h-10 items-center rounded-xl border border-light-grey/25 bg-white px-4 py-2 text-sm font-semibold text-grey transition-colors hover:border-dark-blue hover:text-dark-blue disabled:cursor-not-allowed disabled:opacity-40"
+                disabled={!isSearchFilterActive}
+                onClick={handleClearSearch}
+              >
+                Kosongkan
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -595,7 +525,7 @@ export default function KuartersUnitsPanel({
                         : "VACANT",
                     )}`}
                   >
-                    <InputField
+                    <TableInputField
                       value={editor.draft.unitCode}
                       placeholder="Contoh: A-01-05"
                       disabled={pendingUnitId === EMPTY_QUARTER_UNIT_ID}
@@ -603,7 +533,7 @@ export default function KuartersUnitsPanel({
                     />
                   </td>
                   <td className="px-6 py-4 align-middle w-min whitespace-nowrap">
-                    <PickerField
+                    <TablePickerField
                       value={formatIcNumber(editor.draft.occupantIcNumber)}
                       placeholder="Pilih penghuni"
                       disabled={pendingUnitId === EMPTY_QUARTER_UNIT_ID}
@@ -698,9 +628,10 @@ export default function KuartersUnitsPanel({
                       }
                     >
                       {isEditing ? (
-                        <InputField
+                        <TableInputField
                           value={editor.draft.unitCode}
                           placeholder="Contoh: A-01-02"
+                          align="start"
                           disabled={isCurrentRowPending}
                           onChange={(value) => onDraftChange("unitCode", value)}
                         />
@@ -710,9 +641,10 @@ export default function KuartersUnitsPanel({
                     </td>
                     <td className={`overflow-hidden align-middle text-sm font-semibold text-dark-grey w-min whitespace-nowrap ${isEditing ? "px-3 py-4" : "px-3 py-2"}`}>
                       {isEditing ? (
-                        <PickerField
+                        <TablePickerField
                           value={formatIcNumber(editor.draft.occupantIcNumber)}
                           placeholder="Pilih Penghuni"
+                          align="start"
                           disabled={isCurrentRowPending}
                           onClick={onOpenResidentPicker}
                         />

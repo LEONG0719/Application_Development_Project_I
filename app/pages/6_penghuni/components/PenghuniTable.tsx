@@ -1,14 +1,78 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
+
+import { useSearchParams } from "next/navigation";
 
 import Icon from "@/app/components/Icon/Icon";
+import { InputField as SharedInputField } from "@/app/components/InputField";
 import { usePaginationLogic, PaginationControls } from "@/app/components/Pagination/Pagination";
-import PenghuniDetail from "./PenghuniDetail";
+import PenghuniDetail from "./PenghuniDetail/PenghuniDetail";
+import PenghuniFilter, {
+    DEFAULT_PENGHUNI_STATUS_FILTERS,
+    type PenghuniStatusFilter,
+} from "./PenghuniFilter";
+import PenghuniSearchButton, { usePenghuniSearchLogic } from "./PenghuniSearch";
+import PenghuniDownload from "./PenghuniDownload";
 import { PatternFormat } from "react-number-format";
 import type { ResidentRecord, PenghuniTableProps } from "../page";
-import { PenghuniFilter, type PenghuniFilterState } from "./PenghuniFilter";
-import { handleFilterReset, handleFilterSearch, handleResidentDelete, handleResidentUpdate } from "../controller/DatabaseControl";
+import { handleResidentDelete, handleResidentUpdate } from "../controller/DatabaseControl";
+
+// Types
+type PenghuniFilters = {
+  query: string;
+  status: PenghuniStatusFilter[];
+};
+
+// Helper functions
+function normalizeSearchValue(value: string): string {
+  return value
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+}
+
+function createEmptyPenghuniFilters(): PenghuniFilters {
+  return {
+    query: "",
+        status: [...DEFAULT_PENGHUNI_STATUS_FILTERS],
+  };
+}
+
+function filterPenghuni(
+  residents: ResidentRecord[],
+  filters: PenghuniFilters,
+): ResidentRecord[] {
+  const normalizedQuery = normalizeSearchValue(filters.query);
+
+  return residents.filter((resident) => {
+    const residentsStatus = resident.status as PenghuniStatusFilter;
+    if (!filters.status.includes(residentsStatus)) {
+      return false;
+    }
+
+    if (normalizedQuery.length === 0) {
+      return true;
+    }
+
+    const searchableFields = [
+      resident.fullName,
+      resident.icNumber,
+      resident.phone,
+      resident.email,
+      resident.position,
+      resident.department,
+      resident.quarters?.unitCode,
+      resident.quarters?.quarterName,
+      resident.quarters?.address,
+    ].filter(Boolean) as string[];
+
+    return searchableFields.some((field) =>
+      normalizeSearchValue(field).includes(normalizedQuery)
+    );
+  });
+}
 
 // Text size constants for table display
 const mainTextSize = "text-[12px]";
@@ -51,90 +115,125 @@ function getStatusBadgeColor(status: string) {
 
 export default function PenghuniTable({ residents, isLoading, errorMessage, setResidents }: PenghuniTableProps) {
     // Filter State
-    const [filterOpen, setFilterOpen] = useState(false);
-    const [filterState, setFilterState] = useState<PenghuniFilterState>({
-        nama: "",
-        noKp: "",
-        noTel: "",
-        emel: "",
-        statuses: {
-            aktif: true,
-            tidakLayak: true,
-            pencenDatang: true,
-            tidakLengkap: true,
-            keluar: true,
-        },
-    });
+    const [filters, setFilters] = useState<PenghuniFilters>(createEmptyPenghuniFilters());
 
-    // Filter logic
+    // Apply filters
     const filteredResidents = useMemo(() => {
-        return residents.filter(resident => {
-            // Check text filters. (Case-Insensitive)
-            if (filterState.nama && !resident.fullName.toLowerCase().includes(filterState.nama.toLowerCase())) 
-                return false;
-            if (filterState.noKp && !resident.icNumber.includes(filterState.noKp)) 
-                return false;
-            if (filterState.noTel && !resident.phone?.includes(filterState.noTel))
-                return false;
-            if (filterState.emel && !resident.email?.toLowerCase().includes(filterState.emel.toLowerCase()))
-                return false;
-
-            // Check status filters.
-            const statusMapping: Record<string, keyof typeof filterState.statuses> = {
-                AKTIF: "aktif",
-                TIDAK_LAYAK: "tidakLayak",
-                PENCEN_MENDATANG: "pencenDatang",
-                DATA_TIDAK_LENGKAP: "tidakLengkap",
-                KELUAR: "keluar",
-            };
-
-            const residentsStatus = statusMapping[resident.status];
-
-            if (!residentsStatus || !filterState.statuses[residentsStatus])
-                return false;
-
-            return true;
-        });
-    }, [residents, filterState]);
+        return filterPenghuni(residents, filters);
+    }, [residents, filters]);
     
     // Pagination Logic
     const itemsPerPage = 10;
     const { currentPage, totalPages, startIndex, endIndex, handlePageChange, paginationItems } = usePaginationLogic(filteredResidents.length, itemsPerPage);
-    const currentResidents = filteredResidents.slice(startIndex, endIndex); // Residents to display on the current page.
+    const currentResidents = filteredResidents.slice(startIndex, endIndex);
 
     // Selected Resident for Detail View
     const [selectedResident, setSelectedResident] = useState<ResidentRecord | null>(null);
 
-    // Handlers for Updating & Deleting Residents (Passed Down to the Detail Component)
+    // Auto-open resident detail when navigated from another page via ?targetId=
+    const searchParams = useSearchParams();
+    const didAutoOpenRef = useRef(false);
+    useEffect(() => {
+        // Wait until the data fetch is complete before trying to open the overlay
+        if (didAutoOpenRef.current || isLoading) return;
+        const targetId = searchParams.get("targetId")?.trim() ?? "";
+        if (!targetId) return;
+        didAutoOpenRef.current = true;
+        const found = residents.find((r) => r.id === targetId);
+        if (found) setSelectedResident(found);
+    }, [isLoading, residents, searchParams]);
+
+    // Handlers for Updating & Deleting Residents
     const onResidentUpdate = handleResidentUpdate.bind(null, setResidents, setSelectedResident, selectedResident?.id ?? null);
     const onResidentDelete = handleResidentDelete.bind(null, setResidents);
+
+    const {
+        isOpen: isSearchOpen,
+        isSearchFilterActive,
+        searchInputRef,
+        handleToggleSearch,
+        handleClearSearch,
+    } = usePenghuniSearchLogic({
+        value: filters.query,
+        onChange: handleSearchQueryChange,
+    });
+
+    function handleSearchQueryChange(value: string) {
+        setFilters((currentFilters) => ({
+            ...currentFilters,
+            query: value,
+        }));
+    }
+
+    function handleStatusFilterChange(values: PenghuniStatusFilter[]) {
+        setFilters((currentFilters) => ({
+            ...currentFilters,
+            status: values,
+        }));
+    }
 
     return (
         <div className="flex flex-col gap-3 rounded-lg bg-light-blue p-1">
             {/* Header of Table Section */}
             <div className="flex flex-row justify-between px-3 pt-3">
                 <div>   
-                    <div className="text-lg font-bold">Senarai Penghuni</div>
-                    <div className="text-xs">Menguruskan pangkalan data penghuni kuarters kerajaan.</div>
+                    <div className="text-lg font-bold text-dark-grey">Senarai Penghuni</div>
+                    <div className="text-xs text-grey">Menguruskan pangkalan data penghuni kuarters kerajaan.</div>
                 </div>
                 <div className="flex flex-row gap-4 items-center">
-                    <Icon icon="download" className="text-grey"></Icon>
-                    <button 
-                        className={`flex items-center justify-center ${filterOpen ? 'bg-dark-blue text-white p-2 rounded-md shadow' : 'text-grey'}`}
-                        onClick={() => setFilterOpen(!filterOpen)}
-                    >
-                        <Icon icon="filter"></Icon>
-                        {filterOpen && <span className="ml-1 font-bold text-xs">Penapis</span>}
-                    </button>
+                    <PenghuniSearchButton
+                        isOpen={isSearchOpen}
+                        onToggle={handleToggleSearch}
+                    />
+                    <PenghuniFilter
+                        selectedValues={filters.status}
+                        onSelect={handleStatusFilterChange}
+                        isSearchFilterActive={isSearchFilterActive}
+                    />
+                    <PenghuniDownload residents={filteredResidents} />
                 </div>
             </div>
-            
-            {/* Filter */}
-            {filterOpen && 
+
+            {/* Search Bar */}
+            {isSearchOpen ? (
                 <div className="px-3">
-                    <PenghuniFilter onSearch={handleFilterSearch.bind(null, setFilterState)} onReset={handleFilterReset.bind(null, setFilterState)} />
+                    <div className="rounded-lg bg-white p-4 shadow">
+                        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+                            <div ref={searchInputRef} className="flex-1">
+                                <SharedInputField
+                                    label="CARIAN MENGIKUT NAMA, IC, EMAIL, TELEFON, KUARTERS"
+                                    value={filters.query}
+                                    state="active"
+                                    onChange={handleSearchQueryChange}
+                                    placeholder="Cth: Ahmad, 123456-78-9012, atau unit A-01-05"
+                                    showLabel
+                                    leadingIcon={(
+                                        <Icon
+                                            icon="search"
+                                            size={18}
+                                            className="text-light-grey"
+                                        />
+                                    )}
+                                    className="w-full"
+                                    activeBackgroundClass="bg-light-blue"
+                                    inputFontSize={12}
+                                    inputMinHeight={40}
+                                />
+                            </div>
+                            <div className="flex items-center gap-3 self-start lg:self-end">
+                                <button
+                                    type="button"
+                                    className="inline-flex min-h-10 items-center rounded-xl border border-light-grey/25 bg-white px-4 py-2 text-sm font-semibold text-grey transition-colors hover:border-dark-blue hover:text-dark-blue disabled:cursor-not-allowed disabled:opacity-40"
+                                    disabled={!isSearchFilterActive}
+                                    onClick={handleClearSearch}
+                                >
+                                    Kosongkan
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-            }
+            ) : null}
 
             {/* Table */}
             <div className="rounded-lg overflow-x-auto overflow-y-auto">
@@ -171,7 +270,6 @@ export default function PenghuniTable({ residents, isLoading, errorMessage, setR
                                 <td className="px-3 py-4 text-center text-grey" colSpan={7}>Tiada hasil mencari dengan penapis yang dipilih.</td>
                             </tr>
                         ) : (
-                            // Render residents for the current page.
                             currentResidents.map((resident) => (
                                 <tr key={resident.id} className={`text-sm border-l-4 ${getStatusBadgeColor(resident.status)} border-b border-b-light-grey/20`}>
                                     {/* Penghuni */}
@@ -258,6 +356,16 @@ export default function PenghuniTable({ residents, isLoading, errorMessage, setR
                     </tfoot>
                 </table>
             </div>
+
+            {/* Loading Overlay When Navigated via "?targetId=" & Data is Still Fetching */}
+            {isLoading && searchParams.get("targetId") && (
+                <div className="absolute inset-0 z-30 flex items-center justify-center backdrop-blur-sm bg-black/80">
+                    <div className="flex flex-col items-center gap-3">
+                        <div className="h-8 w-8 animate-spin rounded-full border-4 border-white/20 border-t-white" aria-hidden="true" />
+                        <p className="text-xs font-bold tracking-widest text-white uppercase">Sedang Mencari Data...</p>
+                    </div>
+                </div>
+            )}
 
             {/* Overlay Window (Resident Detail) */}
             {selectedResident && (

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type Dispatch, type SetStateAction } from "react";
+import { Suspense, useEffect, useState, type Dispatch, type SetStateAction } from "react";
 import { PenghuniHeader } from "./components/PenghuniHeader";
 import PenghuniTable from "./components/PenghuniTable";
 import PenghuniCreate from "./components/PenghuniCreate";
@@ -119,12 +119,14 @@ export default function PenghuniPage() {
             <PenghuniHeader residents={residents} />
 
             {/* Table */}
-            <PenghuniTable
-                residents={residents}
-                isLoading={isLoading}
-                errorMessage={errorMessage}
-                setResidents={setResidents}
-            />
+            <Suspense>
+                <PenghuniTable
+                    residents={residents}
+                    isLoading={isLoading}
+                    errorMessage={errorMessage}
+                    setResidents={setResidents}
+                />
+            </Suspense>
 
             {/* Floating Action Button (FAB) */}
             <button
