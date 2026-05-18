@@ -41,7 +41,6 @@ export function resolveResidentStatusRules(
                 { label: "Tidak Layak", color: "text-x-layak" },
             ],
             state: editing ? "active" : "inactive",
-            forcedStatus: "PENCEN_MENDATANG",
             allowedStatuses: ["PENCEN_MENDATANG", "TIDAK_LAYAK"],
         };
     }

@@ -27,7 +27,7 @@ export default function ToolbarIconButton({
       className={`relative inline-flex h-10 w-10 items-center justify-center rounded-lg border p-2 transition-colors ${
         isActive
           ? "border-dark-blue bg-dark-blue text-white"
-          : "border-light-grey/20 bg-white text-grey hover:border-dark-blue hover:text-dark-blue"
+          : "border-light-grey/20 bg-white text-grey hover:border-dark-blue hover:text-dark-blue active:bg-dark-blue active:border-dark-blue active:text-white"
       } disabled:cursor-not-allowed disabled:opacity-40`}
       aria-label={label}
       aria-expanded={isExpanded}

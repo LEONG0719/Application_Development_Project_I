@@ -1,222 +1,125 @@
 "use client";
 
-import { useState } from "react";
-import Icon from "@/app/components/Icon/Icon";
-import { InputField, InputFieldFormat } from "../../../components/InputField";
+import { useEffect, useRef, useState } from "react";
+
+import FilterOption, { type FilterOption as FilterItemOption } from "@/app/components/FIlter/FilterOption";
+import { commonIcons } from "@/app/components/Icon/Icon";
+import ToolbarIconButton from "@/app/components/ToolbarIconButton";
+
+export type PenghuniStatusFilter =
+  | "AKTIF"
+  | "TIDAK_LAYAK"
+  | "PENCEN_MENDATANG"
+  | "DATA_TIDAK_LENGKAP";
 
 export type PenghuniFilterState = {
-    nama: string;
-    noKp: string;
-    noTel: string;
-    emel: string;
-    statuses: {
-        aktif: boolean;
-        tidakLayak: boolean;
-        pencenDatang: boolean;
-        tidakLengkap: boolean;
-        keluar: boolean;
-    };
+  nama: string;
+  noKp: string;
+  noTel: string;
+  emel: string;
+  statuses: {
+    aktif: boolean;
+    tidakLayak: boolean;
+    pencenDatang: boolean;
+    tidakLengkap: boolean;
+  };
 };
 
-type PenghuniFilterProps = {
-    onSearch?: (filters: PenghuniFilterState) => void;
-    onReset?: () => void;
+export const DEFAULT_PENGHUNI_STATUS_FILTERS: PenghuniStatusFilter[] = [
+  "AKTIF",
+  "TIDAK_LAYAK",
+  "PENCEN_MENDATANG",
+  "DATA_TIDAK_LENGKAP",
+];
+
+const STATUS_LABELS: Record<PenghuniStatusFilter, string> = {
+  AKTIF: "Aktif",
+  TIDAK_LAYAK: "Tidak Layak",
+  PENCEN_MENDATANG: "Pencen Mendatang",
+  DATA_TIDAK_LENGKAP: "Tidak Lengkap",
 };
 
-type CheckboxFieldProps = {
-    label: string;
-    borderColor: string;
-    textColor: string;
-    accentColor: string;
-    checked?: boolean;
-    onChange?: (checked: boolean) => void;
-};
+const STATUS_FILTER_OPTIONS: FilterItemOption<PenghuniStatusFilter>[] = [
+  { value: "AKTIF", label: "Aktif", dotColor: "bg-aktif" },
+  { value: "TIDAK_LAYAK", label: "Tidak Layak", dotColor: "bg-x-layak" },
+  { value: "PENCEN_MENDATANG", label: "Pencen Mendatang", dotColor: "bg-pencen-datang" },
+  { value: "DATA_TIDAK_LENGKAP", label: "Tidak Lengkap", dotColor: "bg-x-lengkap" },
+];
 
-function CheckboxField({ label, borderColor, textColor, accentColor, checked, onChange }: CheckboxFieldProps) {
-    return (
-        <label 
-            className="flex items-center gap-2 cursor-pointer group"
-            style={{ '--custom-accent': accentColor } as any}
-        >
-            <div className="relative flex items-center justify-center w-4 h-4">
-                {/* Native Checkbox (Hidden) */}
-                <input
-                    type="checkbox"
-                    checked={checked}
-                    onChange={(e) => onChange?.(e.target.checked)}
-                    className={`peer appearance-none m-0 w-4 h-4 border-2 ${borderColor} bg-white rounded cursor-pointer transition-colors checked:bg-(--custom-accent) checked:border-(--custom-accent)`}
-                />
+function getStatusFilterLabel(statuses: PenghuniStatusFilter[]) {
+  if (statuses.length === 0 || statuses.length === DEFAULT_PENGHUNI_STATUS_FILTERS.length) {
+    return "Semua Status";
+  }
 
-                {/* Custom White Checkmark */}
-                <svg
-                    className="absolute w-3 h-3 text-white pointer-events-none opacity-0 peer-checked:opacity-100"
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="3.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                >
-                    <polyline points="20 6 9 17 4 12" />
-                </svg>
-            </div>
-
-            {/* Label Text */}
-            <span className={`${textColor} text-sm font-medium tracking-wider`}>{label}</span>
-        </label>
-    );
+  return statuses.map((status) => STATUS_LABELS[status]).join(", ");
 }
 
-export function PenghuniFilter({ onSearch, onReset }: PenghuniFilterProps) {
-    // Filter State
-    const [filterState, setFilterState] = useState<PenghuniFilterState>({
-        nama: "",
-        noKp: "",
-        noTel: "",
-        emel: "",
-        statuses: {
-            aktif: true,
-            tidakLayak: true,
-            pencenDatang: true,
-            tidakLengkap: true,
-            keluar: true,
-        },
-    });
+type PenghuniFilterProps = {
+  selectedValues: PenghuniStatusFilter[];
+  onSelect: (values: PenghuniStatusFilter[]) => void;
+  isSearchFilterActive: boolean;
+};
 
-    // Handlers for Search and Reset
-    function handleSearch() {
-        onSearch?.(filterState);
+export default function PenghuniFilter({
+  selectedValues,
+  onSelect,
+  isSearchFilterActive,
+}: PenghuniFilterProps) {
+  const menuRef = useRef<HTMLDivElement | null>(null);
+  const [isOpen, setIsOpen] = useState(false);
+
+  const isStatusFilterActive =
+    selectedValues.length !== DEFAULT_PENGHUNI_STATUS_FILTERS.length;
+  const isActive = isOpen || isSearchFilterActive || isStatusFilterActive;
+
+  useEffect(() => {
+    if (!isOpen) {
+      return;
     }
 
-    // Reset filter state to default values and call onReset callback.
-    function handleReset() {
-        const resetState: PenghuniFilterState = {
-            nama: "",
-            noKp: "",
-            noTel: "",
-            emel: "",
-            statuses: {
-                aktif: true,
-                tidakLayak: true,
-                pencenDatang: true,
-                tidakLengkap: true,
-                keluar: true,
-            },
-        };
-        setFilterState(resetState);
-        onReset?.();
+    function handlePointerDown(event: PointerEvent) {
+      const target = event.target;
+
+      if (!(target instanceof Node)) {
+        return;
+      }
+
+      if (menuRef.current?.contains(target)) {
+        return;
+      }
+
+      setIsOpen(false);
     }
 
-    return (
-        <div className="relative p-4 bg-white rounded-lg shadow">
-            {/* Arrow Pointing to the Filter Button */}
-            <div className="absolute bg-white right-8.5 -top-2 w-4 h-4 rotate-45"></div>
+    document.addEventListener("pointerdown", handlePointerDown);
 
-            <div className="flex flex-col gap-6">
-                {/* Filter Content */}
-                <div className="grid grid-cols-4 gap-x-4 gap-y-6">
-                    <InputField
-                        label="NAMA"
-                        value={filterState.nama}
-                        onChange={(value) => setFilterState(prev => ({ ...prev, nama: value }))}
-                        state="active"
-                        placeholder="Cth: Ahmad Zaki"
-                        inputFontSize={12}
-                        inputMinHeight={40}
-                        activeBackgroundClass="bg-light-blue"
-                    />
-                    <InputFieldFormat
-                        label="NO.K/P"
-                        format="######-##-####"
-                        value={filterState.noKp}
-                        onChange={(value) => setFilterState(prev => ({ ...prev, noKp: value }))}
-                        state="active"
-                        placeholder="Cth: XXXXXX-XX-XXXX"
-                        inputFontSize={12}
-                        inputMinHeight={40}
-                        activeBackgroundClass="bg-light-blue"
-                    />
-                    <InputFieldFormat 
-                        label="NO. TEL"
-                        format="###-#### ####"
-                        value={filterState.noTel}
-                        onChange={(value) => setFilterState(prev => ({ ...prev, noTel: value }))}
-                        state="active"
-                        placeholder="Cth: 012-3456789"
-                        inputFontSize={12}
-                        inputMinHeight={40}
-                        activeBackgroundClass="bg-light-blue"
-                    />
-                    <InputField
-                        label="EMEL"
-                        value={filterState.emel}
-                        onChange={(value) => setFilterState(prev => ({ ...prev, emel: value }))}
-                        state="active"
-                        placeholder="Cth: example@email.com"
-                        inputFontSize={12}
-                        inputMinHeight={40}
-                        activeBackgroundClass="bg-light-blue"
-                    />
-                    
-                    {/* Checkboxes */}
-                    <div className="col-span-4 flex flex-row justify-between gap-2">
-                        <div className="flex flex-row gap-4">
-                            <CheckboxField
-                                label="Aktif"
-                                borderColor="border-aktif"
-                                textColor="text-black"
-                                accentColor="var(--color-aktif)"
-                                checked={filterState.statuses.aktif}
-                                onChange={(checked) => setFilterState(prev => ({ ...prev, statuses: { ...prev.statuses, aktif: checked } }))}
-                            />
-                            <CheckboxField
-                                label="Tidak Layak"
-                                borderColor="border-x-layak"
-                                textColor="text-black"
-                                accentColor="var(--color-x-layak)"
-                                checked={filterState.statuses.tidakLayak}
-                                onChange={(checked) => setFilterState(prev => ({ ...prev, statuses: { ...prev.statuses, tidakLayak: checked } }))}
-                            />
-                            <CheckboxField
-                                label="Pencen Mendatang"
-                                borderColor="border-pencen-datang"
-                                textColor="text-black"
-                                accentColor="var(--color-pencen-datang)"
-                                checked={filterState.statuses.pencenDatang}
-                                onChange={(checked) => setFilterState(prev => ({ ...prev, statuses: { ...prev.statuses, pencenDatang: checked } }))}
-                            />
-                            <CheckboxField
-                                label="Tidak Lengkap"
-                                borderColor="border-x-lengkap"
-                                textColor="text-black"
-                                accentColor="var(--color-x-lengkap)"
-                                checked={filterState.statuses.tidakLengkap}
-                                onChange={(checked) => setFilterState(prev => ({ ...prev, statuses: { ...prev.statuses, tidakLengkap: checked } }))}
-                            />
-                        </div>
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+    };
+  }, [isOpen]);
 
-                        <div className="flex flex-row gap-4">
-                            {/* Reset Button */}
-                            <button 
-                                onClick={handleReset}
-                                className="font-semibold text-sm text-gray-500 hover:text-gray-700 transition-colors"
-                            >
-                                Set Semula
-                            </button>
+  return (
+    <div ref={menuRef} className="relative">
+      <ToolbarIconButton
+        icon={commonIcons.filter}
+        label={`Tapis status penghuni: ${getStatusFilterLabel(selectedValues)}`}
+        isActive={isActive}
+        hasPopup="menu"
+        isExpanded={isOpen}
+        onClick={() => setIsOpen((currentState) => !currentState)}
+      />
 
-                            {/* Search Button */}
-                            <button 
-                                onClick={handleSearch}
-                                className="font-bold text-sm flex items-center gap-1 bg-dark-blue text-white px-6 py-2 rounded hover:opacity-90 transition-opacity"
-                            >
-                                <Icon icon="search" size={20} />
-                                Cari
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
+      {isOpen ? (
+        <FilterOption<PenghuniStatusFilter>
+          title="Status Penghuni"
+          description="Pilih status yang ingin dipaparkan."
+          ariaLabel="Tapisan status penghuni"
+          defaultLabel="Semua Status"
+          options={STATUS_FILTER_OPTIONS}
+          selectedValues={selectedValues}
+          onSelect={onSelect}
+        />
+      ) : null}
+    </div>
+  );
 }

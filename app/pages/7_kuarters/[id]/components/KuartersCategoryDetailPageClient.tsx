@@ -42,13 +42,21 @@ type ResidentPickerState = {
 };
 
 type KuartersCategoryDetailPageClientProps = {
-  initialData: KuartersCategoryDetailInitialData;
+  categoryId: string;
   initialNotice?: KuartersNotice | null;
 };
 
 type ApiResponseShape = {
   success: boolean;
   message: string;
+};
+
+type QuarterCategoryUnitsResponse = {
+  success: boolean;
+  message: string;
+  data?: {
+    quarterCategory?: KuartersCategoryDetailInitialData;
+  };
 };
 
 async function parseApiResponse<T extends ApiResponseShape>(
@@ -71,17 +79,29 @@ function getErrorMessage(error: unknown, fallbackMessage: string) {
 }
 
 export default function KuartersCategoryDetailPageClient({
-  initialData,
+  categoryId,
   initialNotice = null,
 }: KuartersCategoryDetailPageClientProps) {
-  const [units, setUnits] = useState<QuarterUnitRecord[]>(initialData.units);
+  const [detailData, setDetailData] = useState<KuartersCategoryDetailInitialData>({
+    id: categoryId,
+    categoryName: "Maklumat kategori kuarters",
+    address: null,
+    rates: {
+      rentalPrice: null,
+      maintenancePrice: null,
+      penaltyPrice: null,
+    },
+    summary: null,
+    units: [],
+  });
+  const [units, setUnits] = useState<QuarterUnitRecord[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [filters, setFilters] = useState(createEmptyQuarterUnitFilters);
   const [editor, setEditor] = useState<KuartersUnitEditorState | null>(null);
   const [notice, setNotice] = useState<KuartersNotice | null>(initialNotice);
   const [pendingUnitId, setPendingUnitId] = useState<string | null>(null);
   const [pendingAction, setPendingAction] = useState<PendingAction>(null);
-  const [isTableLoading, setIsTableLoading] = useState(false);
+  const [isTableLoading, setIsTableLoading] = useState(true);
   const [residentPicker, setResidentPicker] = useState<ResidentPickerState>({
     isOpen: false,
     isLoading: false,
@@ -93,12 +113,59 @@ export default function KuartersCategoryDetailPageClient({
     residentPicker.searchQuery,
   );
   const summary = buildQuarterUnitSummary(units);
+  const sortedUnits = sortQuarterUnits(units);
   const hasActiveFilters = hasActiveQuarterUnitFilters(filters);
-  const filteredUnits = filterQuarterUnits(units, filters);
+  const filteredUnits = filterQuarterUnits(sortedUnits, filters);
   const pagination = buildQuarterUnitPagination(filteredUnits, currentPage, {
     hasActiveFilter: hasActiveFilters,
     totalRecords: units.length,
   });
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    async function loadQuarterUnitsData() {
+      setIsTableLoading(true);
+
+      try {
+        const response = await fetch(`/api/quarter-categories/${categoryId}/units`, {
+          signal: controller.signal,
+        });
+        const payload = (await response.json().catch(() => null)) as QuarterCategoryUnitsResponse | null;
+
+        if (!response.ok || !payload?.success || !payload.data?.quarterCategory) {
+          throw new Error(payload?.message ?? "Gagal mendapatkan data unit kuarters.");
+        }
+
+        setDetailData(payload.data.quarterCategory);
+        setUnits(sortQuarterUnits(payload.data.quarterCategory.units));
+      } catch (error) {
+        if (controller.signal.aborted) {
+          return;
+        }
+
+        setDetailData((current) => ({
+          ...current,
+          id: categoryId,
+        }));
+        setUnits([]);
+        showNotice({
+          tone: "error",
+          message: getErrorMessage(error, "Gagal mendapatkan data butiran kategori kuarters."),
+        });
+      } finally {
+        if (!controller.signal.aborted) {
+          setIsTableLoading(false);
+        }
+      }
+    }
+
+    void loadQuarterUnitsData();
+
+    return () => {
+      controller.abort();
+    };
+  }, [categoryId]);
 
   useEffect(() => {
     if (!residentPicker.isOpen) {
@@ -189,11 +256,11 @@ export default function KuartersCategoryDetailPageClient({
     }));
   }
 
-  function handleStatusFilterChange(value: "ALL" | "OCCUPIED" | "VACANT") {
+  function handleStatusFilterChange(values: ("OCCUPIED" | "VACANT")[]) {
     setCurrentPage(1);
     setFilters((currentFilters) => ({
       ...currentFilters,
-      status: value,
+      status: values,
     }));
   }
 
@@ -369,7 +436,7 @@ export default function KuartersCategoryDetailPageClient({
 
       const response =
         editor.mode === "create"
-          ? await fetch(`/api/quarter-categories/${initialData.id}/units`, {
+          ? await fetch(`/api/quarter-categories/${detailData.id}/units`, {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
@@ -377,7 +444,7 @@ export default function KuartersCategoryDetailPageClient({
               body: JSON.stringify(payload),
             })
           : await fetch(
-              `/api/quarter-categories/${initialData.id}/units/${editor.rowId}`,
+              `/api/quarter-categories/${detailData.id}/units/${editor.rowId}`,
               {
                 method: "PATCH",
                 headers: {
@@ -482,7 +549,7 @@ export default function KuartersCategoryDetailPageClient({
       setIsTableLoading(true);
 
       const response = await fetch(
-        `/api/quarter-categories/${initialData.id}/units/${rowId}`,
+        `/api/quarter-categories/${detailData.id}/units/${rowId}`,
         {
           method: "DELETE",
         },
@@ -537,9 +604,9 @@ export default function KuartersCategoryDetailPageClient({
   return (
     <div className="flex flex-col gap-4">
       <KuartersCategoryDetailHeader
-        categoryName={initialData.categoryName}
-        address={initialData.address}
-        rates={initialData.rates}
+        categoryName={detailData.categoryName}
+        address={detailData.address}
+        rates={detailData.rates}
       />
       <KuartersFeedbackBanner
         notice={notice}
@@ -548,9 +615,9 @@ export default function KuartersCategoryDetailPageClient({
       <KuartersOverviewCards cards={buildKuartersSummaryCards(summary)} />
       <KuartersUnitsPanel
         isLoading={isTableLoading}
-        address={initialData.address}
-        categoryId={initialData.id}
-        categoryName={initialData.categoryName}
+        address={detailData.address}
+        categoryId={detailData.id}
+        categoryName={detailData.categoryName}
         currentPage={pagination.currentPage}
         editor={editor}
         exportUnits={filteredUnits}

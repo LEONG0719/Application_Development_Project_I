@@ -241,7 +241,7 @@ export default function KuartersUnitDatePicker({
 
         {/* Placeholder or Selected Date */}
         {/* If value exists, format it for display. Otherwise, show placeholder text. */}
-        <span className={value ? "truncate" : "truncate text-grey"}>
+        <span className={`flex items-center justify-center w-full ${value ? "truncate" : "truncate text-grey"}`}>
           {value ? formatDatePickerLabel(value) : "Pilih Tarikh"}
         </span>
       </button>

@@ -15,6 +15,7 @@ type CalenderProps = {
     onChange: (value: string) => void;
     onClose: () => void;
     disableAbsolutePositioning?: boolean;
+    scale?: number;
 };
 
 // Helper function to parse date string in "YYYY-MM-DD" format and return a Date object. Returns null if the input is invalid.
@@ -99,6 +100,7 @@ export default function Calender({
     onChange,
     onClose,
     disableAbsolutePositioning = false,
+    scale,
 }: CalenderProps) {
     const initialDate = parseDateInput(value);
     const [visibleMonth, setVisibleMonth] = useState(initialDate ?? startOfDay(new Date()));
@@ -135,7 +137,10 @@ export default function Calender({
         return null;
 
     return (
-        <div className={`${disableAbsolutePositioning ? "relative" : "absolute top-full left-0 right-0"} z-50 w-full rounded-3xl bg-white p-2 shadow-lg flex flex-col gap-2`}>
+        <div
+            className={`${disableAbsolutePositioning ? "relative" : "absolute top-full left-0 right-0"} z-50 w-full rounded-3xl bg-white p-2 shadow-lg flex flex-col gap-2`}
+            style={scale !== undefined ? { zoom: scale } : undefined}
+        >
             {/* Header (Month and Year) */}
             <div className="flex items-center justify-between">
                 {/* Previous Month Button */}

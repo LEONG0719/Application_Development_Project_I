@@ -71,7 +71,6 @@ export function handleFilterReset(
             tidakLayak: true,
             pencenDatang: true,
             tidakLengkap: true,
-            keluar: true,
         },
     });
 }

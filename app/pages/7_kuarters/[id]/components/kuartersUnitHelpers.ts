@@ -12,7 +12,7 @@ export const EMPTY_QUARTER_UNIT_ID = "__new__";
 export type QuarterUnitRecord = QuarterUnitListItem;
 export type KuartersCategoryDetailInitialData = QuarterCategoryUnitsDetail;
 export type QuarterCategoryRates = QuarterCategoryUnitsDetail["rates"];
-export type QuarterUnitStatusFilter = "ALL" | "OCCUPIED" | "VACANT";
+export type QuarterUnitStatusFilter = "OCCUPIED" | "VACANT";
 
 export type QuarterUnitDraft = {
   unitCode: string;
@@ -70,7 +70,8 @@ export type QuarterUnitPaginationState = {
 
 export type QuarterUnitFilters = {
   query: string;
-  status: QuarterUnitStatusFilter;
+  /** Array of selected status filters. When all statuses are selected, Semua is active. */
+  status: QuarterUnitStatusFilter[];
 };
 
 type BuildQuarterUnitPaginationOptions = {
@@ -93,7 +94,7 @@ export function createEmptyQuarterUnitDraft(): QuarterUnitDraft {
 export function createEmptyQuarterUnitFilters(): QuarterUnitFilters {
   return {
     query: "",
-    status: "ALL",
+    status: ["OCCUPIED", "VACANT"],
   };
 }
 
@@ -158,7 +159,8 @@ export function buildQuarterUnitSummary(
 }
 
 export function hasActiveQuarterUnitFilters(filters: QuarterUnitFilters) {
-  return filters.query.trim().length > 0 || filters.status !== "ALL";
+  const allStatusesSelected = filters.status.length === 2;
+  return filters.query.trim().length > 0 || !allStatusesSelected;
 }
 
 export function filterQuarterUnits(
@@ -168,8 +170,7 @@ export function filterQuarterUnits(
   const normalizedQuery = normalizeSearchValue(filters.query);
 
   return units.filter((unit) => {
-    const matchesStatus =
-      filters.status === "ALL" || unit.status === filters.status;
+    const matchesStatus = filters.status.includes(unit.status as QuarterUnitStatusFilter);
 
     if (!matchesStatus) {
       return false;

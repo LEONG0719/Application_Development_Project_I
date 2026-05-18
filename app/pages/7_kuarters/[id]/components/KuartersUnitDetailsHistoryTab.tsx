@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import Icon, { commonIcons } from "@/app/components/Icon/Icon";
-import ToolbarButton from "@/app/components/Icon/ToolbarIconButton";
+import ToolbarButton from "@/app/components/ToolbarIconButton";
 import {
   PaginationControls,
   usePaginationLogic,
