@@ -89,8 +89,6 @@ export async function POST(request: Request) {
     // We assume the admin making this change is logged in. 
     // In your actual app, you would get this from your Auth session.
    
-    const adminId = currentAdmin?.profile.id; // Current admin, when the session is available.
-
     // We use the start of the current month as the charge period for these new additions
     const currentMonth = new Date();
     currentMonth.setDate(1);
@@ -123,7 +121,6 @@ export async function POST(request: Request) {
                     residentId: resident.id,
                     chargeMonth: currentMonth,
                     unitId: resident.occupancies[0]?.unitId || null,
-                    createdById: adminId,
                 }
             });
         }
@@ -150,7 +147,6 @@ export async function POST(request: Request) {
                         transactionDate: new Date(),
                         category: "CAJ_PENYELENGGARAAN",
                         debitAmount: maintenanceRate,
-                        createdById: adminId,
                     }
                 });
             }
@@ -181,7 +177,6 @@ export async function POST(request: Request) {
                     category: "CAJ_TAMBAHAN",
                     description: item.catatan,
                     debitAmount: item.amaun,
-                    createdById: adminId,
                 }
             });
         }
@@ -211,7 +206,6 @@ export async function POST(request: Request) {
                     category: "REBAT",
                     description: item.catatan,
                     creditAmount: item.amaun,
-                    createdById: adminId,
                 }
             });
         }
@@ -235,7 +229,6 @@ export async function POST(request: Request) {
             create: {
                 residentId: resident.id,
                 totalArrearsAmount: netChange,
-                createdById: adminId,
             },
             update: {
                 totalArrearsAmount: { increment: netChange }

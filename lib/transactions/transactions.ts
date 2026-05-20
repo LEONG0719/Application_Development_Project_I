@@ -114,7 +114,7 @@ export async function getTransactionsList(params: TransactionFilterParams) {
  */
 export async function reverseTransaction(
   originalTxId: string, 
-  adminId: string, 
+  _adminId: string, 
   remarks: string
 ) {
   return prisma.$transaction(async (tx) => {
@@ -147,7 +147,6 @@ export async function reverseTransaction(
         creditAmount: original.debitAmount,
         description: remarks,
         relatedTransactionId: original.id, 
-        createdById: adminId,
       },
     });
     return pembalikan;
@@ -159,7 +158,7 @@ export async function reverseTransaction(
  */
 export async function adjustTransaction(
   originalTxId: string,
-  adminId: string,
+  _adminId: string,
   newAmount: number,
   remarks: string
 ) {
@@ -229,7 +228,6 @@ export async function adjustTransaction(
         creditAmount: newCredit,
         description: remarks,
         relatedTransactionId: original.id, 
-        createdById: adminId,
       },
     });
 
