@@ -400,5 +400,7 @@ function getTodayStartInMalaysia() {
   const month = parts.find((part) => part.type === "month")?.value;
   const day = parts.find((part) => part.type === "day")?.value;
 
-  return new Date(`${year}-${month}-${day}T00:00:00.000+08:00`);
+  return new Date(
+    Date.UTC(Number(year), Number(month) - 1, Number(day), 0, 0, 0, 0),
+  );
 }

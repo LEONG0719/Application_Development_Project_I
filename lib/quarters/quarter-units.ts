@@ -628,7 +628,25 @@ function parseOccupancyDate(
     };
   }
 
-  const date = new Date(`${value}T00:00:00.000+08:00`);
+  const [yearRaw, monthRaw, dayRaw] = value.split("-");
+  const year = Number(yearRaw);
+  const month = Number(monthRaw);
+  const day = Number(dayRaw);
+
+  if (
+    !Number.isInteger(year) ||
+    !Number.isInteger(month) ||
+    !Number.isInteger(day)
+  ) {
+    return {
+      ok: false,
+      message: `${options.label} mesti dalam format tarikh yang sah.`,
+    };
+  }
+
+  // Store as UTC midnight for the selected calendar date to avoid day shifting
+  // when viewing raw DB values in UTC.
+  const date = new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0));
 
   if (Number.isNaN(date.getTime())) {
     return {
