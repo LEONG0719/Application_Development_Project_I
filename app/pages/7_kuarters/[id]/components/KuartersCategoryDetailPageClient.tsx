@@ -26,6 +26,7 @@ import {
   sortQuarterUnits,
   validateQuarterUnitDraft,
   type KuartersCategoryDetailInitialData,
+  type AvailableResidentOccupancyRecord,
   type KuartersUnitEditorState,
   type QuarterUnitDraft,
   type QuarterUnitMutationResponse,
@@ -109,6 +110,8 @@ export default function KuartersCategoryDetailPageClient({
     searchQuery: "",
     residents: [],
   });
+  const [selectedResidentOccupancyRanges, setSelectedResidentOccupancyRanges] =
+    useState<AvailableResidentOccupancyRecord[]>([]);
   const deferredResidentPickerSearchQuery = useDeferredValue(
     residentPicker.searchQuery,
   );
@@ -276,6 +279,7 @@ export default function KuartersCategoryDetailPageClient({
       rowId: EMPTY_QUARTER_UNIT_ID,
       draft: createEmptyQuarterUnitDraft(),
     });
+    setSelectedResidentOccupancyRanges([]);
     setNotice(null);
   }
 
@@ -290,6 +294,7 @@ export default function KuartersCategoryDetailPageClient({
       rowId: unit.id,
       draft: createDraftFromQuarterUnit(unit),
     });
+    setSelectedResidentOccupancyRanges([]);
     setNotice(null);
   }
 
@@ -316,6 +321,7 @@ export default function KuartersCategoryDetailPageClient({
 
     closeResidentPicker();
     setEditor(null);
+    setSelectedResidentOccupancyRanges([]);
   }
 
   function handleOpenResidentPicker() {
@@ -387,6 +393,7 @@ export default function KuartersCategoryDetailPageClient({
         },
       };
     });
+    setSelectedResidentOccupancyRanges(resident.occupancyRanges ?? []);
     closeResidentPicker();
   }
 
@@ -623,6 +630,7 @@ export default function KuartersCategoryDetailPageClient({
         exportUnits={filteredUnits}
         filterQuery={filters.query}
         statusFilter={filters.status}
+        selectedResidentOccupancyRanges={selectedResidentOccupancyRanges}
         hasActiveFilters={hasActiveFilters}
         isResidentPickerOpen={residentPicker.isOpen}
         onAddUnit={handleAddUnit}

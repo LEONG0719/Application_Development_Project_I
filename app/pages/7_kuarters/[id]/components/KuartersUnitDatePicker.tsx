@@ -2,9 +2,17 @@
 
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import Calender from "@/app/components/Calender/Calender";
+import Calender, {
+  type DisabledDateGroup,
+  type DisabledDateMeta,
+} from "@/app/components/Calender/Calender";
 import Icon from "@/app/components/Icon/Icon";
-import type { QuarterUnitOccupancyDetails } from "@/lib/quarters/quarter-units";
+
+type OccupancyDateRange = {
+  moveInDate: string;
+  moveOutDate: string | null;
+  status: "CURRENT" | "PAST";
+};
 
 type KuartersUnitDatePickerProps = {
   fieldType: "moveInDate" | "moveOutDate";
@@ -12,7 +20,8 @@ type KuartersUnitDatePickerProps = {
   moveInDate?: string;
   disabled?: boolean;
   required?: boolean;
-  occupancyHistory: QuarterUnitOccupancyDetails[];
+  occupancyHistory: OccupancyDateRange[];
+  residentOccupancyHistory?: OccupancyDateRange[];
   onChange: (value: string) => void;
 };
 
@@ -57,7 +66,7 @@ function getDatesBetween(startDate: string, endDate: string): string[] {
 // Helper function that takes a list of occupancy records and returns all occupied dates
 // (inclusive of moveInDate and moveOutDate) as a flat, deduplicated array of "YYYY-MM-DD" strings.
 // For records with no moveOutDate (still active), today is used as the end boundary.
-function getOccupiedDates(occupancyHistory: QuarterUnitOccupancyDetails[]): string[] {
+function getOccupiedDates(occupancyHistory: OccupancyDateRange[]): string[] {
   const today = formatDateToString(new Date());
   const dateSet = new Set<string>();
 
@@ -96,6 +105,7 @@ export default function KuartersUnitDatePicker({
   disabled = false,
   required = false,
   occupancyHistory = [],
+  residentOccupancyHistory = [],
   onChange,
 }: KuartersUnitDatePickerProps) {
   // Floating Picker State & Refs 
@@ -163,42 +173,107 @@ export default function KuartersUnitDatePicker({
   }, [isOpen]);
 
   // --- Date Restriction Logic ---
+  // 1) Collect blocked dates from two sources:
+  //    - Selected Unit Has Been Occupied: Used to block Tarikh Masuk (Yellow).
+  //    - Selected Resident Has Been Occupied in Other Units: Used to block Tarikh Masuk (Blue).
   //
-  // Source data: occupancyHistory. (Passed from parent, fetched via API when editing a unit.)
+  // 2) For Tarikh Keluar, build [minDate, maxDate] constraints:
+  //    - minDate = Selected Tarikh Masuk.
+  //                It prevents selecting a Tarikh Keluar that is earlier than Tarikh Masuk. (Red)
+  //    - maxDate = Day before the earliest blocked date after Tarikh Masuk.
+  //                It ensures between Tarikh Masuk and Tarikh Keluar there is no occupied date to avoid selecting a Tarikh Keluar that overlaps with occupied dates. (Orange)
+  //                Example: Tarikh Masuk = 1, disabled = [5, 6, 7] → maxDate = 4.
   //
-  // disabledDates: All individual dates covered by PAST occupancy records.
-  //   - CURRENT occupancy is excluded because the active tenant's period should not block new entries.
-  //   - Each record's moveInDate..moveOutDate range is expanded into individual "YYYY-MM-DD" strings using getOccupiedDates → getDatesBetween.
-  //   - Dates are deduplicated via a Set.
-  //   - These dates are greyed out / unselectable in the calendar for both Tarikh Masuk and Tarikh Keluar.
-  //
-  // minDate (Tarikh Keluar only): the selected Tarikh Masuk.
-  //   - Prevents the user from picking a Tarikh Keluar that is earlier than Tarikh Masuk.
-  //
-  // maxDate (Tarikh Keluar only): the day before the earliest disabled date that falls after Tarikh Masuk.
-  //   - Ensures the range [Tarikh Masuk, Tarikh Keluar] contains no disabled (occupied) dates.
-  //   - Example: Tarikh Masuk = 1, disabled = [5, 6, 7] → maxDate = 4.
-  //   - If no disabled date exists after Tarikh Masuk, maxDate is undefined (no upper cap).
+  // 3) Pass visual metadata so calendar can color and explain each disabled rule via tooltip.
 
-  const disabledDates = getOccupiedDates(occupancyHistory.filter((record) => record.status !== "CURRENT"));
+  // Tarikh Masuk Blocking Notes
+  const UNIT_OCCUPIED_NOTE = "Tarikh ini unit sudah didiami penghuni lain.";
+  const RESIDENT_OCCUPIED_NOTE = "Tarikh ini penghuni telah mendiami unit lain.";
+  // Tarikh Keluar Blocking Notes
+  const MOVE_OUT_MIN_NOTE = "Tarikh Keluar tidak boleh lebih awal daripada Tarikh Masuk.";
+  const MOVE_OUT_RANGE_NOTE = "Julat Tarikh Masuk hingga Tarikh Keluar tidak boleh merangkumi tarikh berpenghuni.";
 
+  // Tarikh Masuk Blocking: Dates occupied by other residents in this unit. (Exclude CURRENT to avoid blocking active edit context.)
+  const unitPastDates = getOccupiedDates(occupancyHistory.filter((record) => record.status !== "CURRENT"));
+  // Tarikh Masuk Blocking: Dates where the same resident is already assigned in another unit.
+  const residentOccupiedDates = getOccupiedDates(residentOccupancyHistory);
+
+  // Union set used by Tarikh Keluar range validation logic.
+  const blockedDatesForRange = Array.from(
+    new Set([...unitPastDates, ...residentOccupiedDates]),
+  );
+
+  // Tarikh Masuk Blocking: Grouped disabled rules with distinct colors and notes.
+  const moveInDisabledDateGroups: DisabledDateGroup[] = [
+    {
+      dates: unitPastDates,
+      note: UNIT_OCCUPIED_NOTE,
+      textColor: "#854d0e", // Dark Yellow
+      backgroundColor: "#fef9c3", // Light Yellow
+    },
+    {
+      dates: residentOccupiedDates,
+      note: RESIDENT_OCCUPIED_NOTE,
+      textColor: "#1e3a8a", // Dark Blue
+      backgroundColor: "#dbeafe", // Light Blue
+    },
+  ].filter((group) => group.dates.length > 0);
+
+  // Tarikh Masuk Blocking Dates Array
+  const moveInDisabledDates = Array.from(
+    new Set(moveInDisabledDateGroups.flatMap((group) => group.dates)),
+  );
+
+  // Tarikh Keluar Blocking: Lower bound cannot be earlier than Tarikh Masuk.
   const minDate = fieldType === "moveOutDate" ? moveInDate : undefined;
-
+  // Tarikh Keluar Blocking: Upper bound stops right before the first blocked date after Tarikh Masuk.
   const maxDate = (() => {
-    if (fieldType !== "moveOutDate" || !moveInDate) return undefined;
+    // Tarikh Masuk or Tarikh Keluar is empty (User hasn't selected anything yet.) → no maxDate restriction.
+    if (fieldType !== "moveOutDate" || !moveInDate)
+      return undefined;
 
-    const firstBlockedAfterMoveIn = disabledDates
-      .filter((d) => d > moveInDate)
+    // Find the earliest blocked date that is greater than the selected Tarikh Masuk.
+    const firstBlockedAfterMoveIn = blockedDatesForRange
+      .filter((date) => date > moveInDate)
       .sort()[0];
 
-    if (!firstBlockedAfterMoveIn) return undefined;
+    // If no blocked date exists after Tarikh Masuk, there is no upper bound restriction.
+    if (!firstBlockedAfterMoveIn)
+      return undefined;
 
-    const dayBefore = parseDateInput(firstBlockedAfterMoveIn);
-    if (!dayBefore) return undefined;
+    // maxDate is the day before the first blocked date after Tarikh Masuk.
+    const dayBeforeFirstBlocked = parseDateInput(firstBlockedAfterMoveIn);
+    if (!dayBeforeFirstBlocked)
+      return undefined;
 
-    dayBefore.setDate(dayBefore.getDate() - 1);
-    return formatDateToString(dayBefore);
+    // Subtract one day to get the maxDate. (Since the blocked date itself is not allowed, we need to step back one day.)
+    dayBeforeFirstBlocked.setDate(dayBeforeFirstBlocked.getDate() - 1);
+    return formatDateToString(dayBeforeFirstBlocked);
   })();
+
+  // Tarikh Keluar Blocking: Visual hint for minDate rule (< Tarikh Masuk).
+  const moveOutMinDateMeta: DisabledDateMeta | undefined =
+    fieldType === "moveOutDate" && moveInDate
+      ? {
+          note: MOVE_OUT_MIN_NOTE,
+          textColor: "#991b1b", // Dark Red
+          backgroundColor: "#fee2e2", // Light Red
+        }
+      : undefined;
+
+  // Tarikh Keluar Blocking: Visual hint for maxDate rule. (Range must not include occupied dates.)
+  const moveOutMaxDateMeta: DisabledDateMeta | undefined =
+    fieldType === "moveOutDate" && maxDate
+      ? {
+          note: MOVE_OUT_RANGE_NOTE,
+          textColor: "#9a3412", // Dark Orange
+          backgroundColor: "#ffedd5", // Light Orange
+        }
+      : undefined;
+
+  // Calendar Component Props: Disabled dates and groups are only relevant for Tarikh Masuk since Tarikh Keluar uses min/max date restrictions instead of discrete disabled dates.
+  const calendarDisabledDates = fieldType === "moveInDate" ? moveInDisabledDates : [];
+  const calendarDisabledDateGroups = fieldType === "moveInDate" ? moveInDisabledDateGroups : [];
 
   // --- End of Date Restriction Logic ---
 
@@ -206,14 +281,15 @@ export default function KuartersUnitDatePicker({
   useEffect(() => {
     if (!value) return;
 
-    const isDisabled = disabledDates.includes(value);
+    const isDisabled =
+      fieldType === "moveInDate" && calendarDisabledDates.includes(value);
     const isBelowMin = minDate ? value < minDate : false;
     const isAboveMax = maxDate ? value > maxDate : false;
 
     if (isDisabled || isBelowMin || isAboveMax) {
       onChange("");
     }
-  }, [value, disabledDates, minDate, maxDate]);
+  }, [value, fieldType, calendarDisabledDates, minDate, maxDate, onChange]);
 
   return (
     <div ref={containerRef} className="relative w-full">
@@ -270,7 +346,10 @@ export default function KuartersUnitDatePicker({
                 required={required}
                 minDate={minDate}
                 maxDate={maxDate}
-                disabledDates={disabledDates}
+                disabledDates={calendarDisabledDates}
+                disabledDateGroups={calendarDisabledDateGroups}
+                minDateDisabledMeta={moveOutMinDateMeta}
+                maxDateDisabledMeta={moveOutMaxDateMeta}
                 disableAbsolutePositioning={true}
                 onChange={(newValue) => {
                   onChange(newValue);
