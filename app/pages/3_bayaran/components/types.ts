@@ -8,6 +8,10 @@ export type BayaranHistoryItem = {
   sourceFile: string | null;
 };
 
+export type BayaranHistoryRecord = BayaranHistoryItem & {
+  sourceLabel: string;
+};
+
 export type BayaranDetailData = {
   profile: {
     residentId: string;
