@@ -1,12 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import Icon from "@/app/components/Icon/Icon";
-import ToolbarButton from "@/app/components/ToolbarIconButton";
 import Link from "next/link";
 
-import type { BayaranDetailData, BayaranDetailResponse } from "./types";
+import BayaranHistoryDownload from "./BayaranHistoryDownload";
+import { useBayaranHistoryFilter } from "./BayaranHistoryFilter";
+import type {
+  BayaranDetailData,
+  BayaranDetailResponse,
+  BayaranHistoryRecord,
+} from "./types";
 
 type ButiranBayaranModalProps = {
   isOpen: boolean;
@@ -116,7 +121,7 @@ export default function ButiranBayaranModal({
           ) : activeTab === "maklumat" && data ? (
             <MaklumatBayaranTab data={data} />
           ) : activeTab === "sejarah" && data ? (
-            <SejarahPembayaranTab records={data.uploadedHistory} />
+            <SejarahPembayaranTab data={data} />
           ) : (
             <EmptyState message="Tiada butiran bayaran ditemui." />
           )}
@@ -206,18 +211,25 @@ function MaklumatBayaranTab({ data }: { data: BayaranDetailData }) {
   );
 }
 
-function SejarahPembayaranTab({
-  records,
-}: {
-  records: BayaranDetailData["uploadedHistory"];
-}) {
+function SejarahPembayaranTab({ data }: { data: BayaranDetailData }) {
+  const records = useMemo(() => buildPaymentHistoryRecords(data), [data]);
+  const { filteredRecords, FilterButton } = useBayaranHistoryFilter(records);
+  const emptyMessage =
+    records.length === 0
+      ? "Tiada sejarah pembayaran ditemui."
+      : "Tiada rekod sejarah pembayaran sepadan dengan tapisan.";
+
   return (
     <div>
       <div className="mb-4 flex items-center justify-between">
         <SectionTitle>Sejarah Pembayaran</SectionTitle>
         <div className="flex gap-3">
-          <ToolbarButton icon="download" label="Muat turun sejarah pembayaran" />
-          <ToolbarButton icon="filter" label="Tapis sejarah pembayaran" />
+          <BayaranHistoryDownload
+            records={filteredRecords}
+            residentIc={data.profile.icNumber}
+            residentName={data.profile.fullName}
+          />
+          {FilterButton}
         </div>
       </div>
 
@@ -228,19 +240,20 @@ function SejarahPembayaranTab({
               <th className="px-6 py-4">Tarikh</th>
               <th className="px-6 py-4">ID</th>
               <th className="px-6 py-4">No. Resit</th>
+              <th className="px-6 py-4 text-center">Sumber</th>
               <th className="px-6 py-4">Catatan</th>
               <th className="px-6 py-4 text-right">Amaun (RM)</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
-            {records.length === 0 ? (
+            {filteredRecords.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-6 py-10 text-center text-sm text-grey">
-                  Tiada sejarah pembayaran daripada muat naik ditemui.
+                <td colSpan={6} className="px-6 py-10 text-center text-sm text-grey">
+                  {emptyMessage}
                 </td>
               </tr>
             ) : (
-              records.map((record) => (
+              filteredRecords.map((record) => (
                 <tr key={record.id} className="transition-colors hover:bg-gray-50">
                   <td className="px-6 py-4 font-bold text-dark-grey">
                     {formatDate(record.paymentDate)}
@@ -250,6 +263,11 @@ function SejarahPembayaranTab({
                   </td>
                   <td className="px-6 py-4 font-medium text-dark-grey">
                     {record.receiptNo}
+                  </td>
+                  <td className="px-6 py-4 text-center">
+                    <span className="inline-flex rounded-full bg-light-blue px-2.5 py-1 text-[10px] font-extrabold uppercase text-dark-blue">
+                      {record.sourceLabel}
+                    </span>
                   </td>
                   <td className="px-6 py-4 text-dark-grey">{record.description}</td>
                   <td className="px-6 py-4 text-right font-extrabold text-green">
@@ -262,26 +280,57 @@ function SejarahPembayaranTab({
         </table>
       </div>
 
-      {records.length > 0 ? (
+      {filteredRecords.length > 0 ? (
         <div className="flex items-center justify-between pt-4 text-xs font-semibold text-grey">
           <div className="flex gap-1">
-            <button className="rounded border border-gray-200 px-3 py-1.5 hover:bg-gray-50">
+            <button
+              type="button"
+              disabled
+              className="rounded border border-gray-200 px-3 py-1.5 text-light-grey"
+            >
               &lt;
             </button>
-            <button className="rounded border border-dark-blue bg-dark-blue px-3 py-1.5 text-white">
+            <button
+              type="button"
+              className="rounded border border-dark-blue bg-dark-blue px-3 py-1.5 text-white"
+            >
               1
             </button>
-            <button className="rounded border border-gray-200 bg-white px-3 py-1.5 hover:bg-gray-50">
+            <button
+              type="button"
+              disabled
+              className="rounded border border-gray-200 bg-white px-3 py-1.5 text-light-grey"
+            >
               &gt;
             </button>
           </div>
           <p>
-            Menunjukkan 1-{records.length} Daripada {records.length} Rekod
+            Menunjukkan {filteredRecords.length} Daripada {records.length} Rekod
           </p>
         </div>
       ) : null}
     </div>
   );
+}
+
+function buildPaymentHistoryRecords(
+  data: BayaranDetailData,
+): BayaranHistoryRecord[] {
+  return [
+    ...data.uploadedHistory.map((record) => ({
+      ...record,
+      sourceLabel: "Muat Naik",
+    })),
+    ...data.manualPayments.map((record) => ({
+      ...record,
+      sourceLabel: "Manual",
+    })),
+  ].sort((left, right) => {
+    const leftTime = new Date(left.paymentDate).getTime();
+    const rightTime = new Date(right.paymentDate).getTime();
+
+    return rightTime - leftTime;
+  });
 }
 
 function TabButton({
