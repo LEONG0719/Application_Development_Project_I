@@ -62,12 +62,14 @@ export async function getTransactionsList(params: TransactionFilterParams) {
   if (statuses && statuses.length > 0) andConditions.push({ status: { in: statuses } });
 
   if (search) {
+    const cleanSearch = search.trim();
     andConditions.push({
       OR: [
-        { description: { contains: search, mode: "insensitive" } },
-        { receiptNo: { contains: search, mode: "insensitive" } }, 
-        { resident: { fullName: { contains: search, mode: "insensitive" } } }, 
-        { resident: { icNumber: { contains: search, mode: "insensitive" } } }, 
+        { transactionNo: { contains: cleanSearch, mode: "insensitive" } },
+        { description: { contains: cleanSearch, mode: "insensitive" } },
+        { receiptNo: { contains: cleanSearch, mode: "insensitive" } }, 
+        { resident: { fullName: { contains: cleanSearch, mode: "insensitive" } } }, 
+        { resident: { icNumber: { contains: cleanSearch, mode: "insensitive" } } }, 
       ],
     });
   }
