@@ -215,7 +215,7 @@ export default async function BayaranPage({ searchParams }: BayaranPageProps) {
               action="/pages/3_bayaran"
               className="relative rounded-t-xl bg-white px-6 pb-7 pt-5 shadow-sm"
             >
-              <span className="absolute right-2 top-[-11px] h-0 w-0 border-x-[12px] border-b-[12px] border-x-transparent border-b-white" />
+              <span className="absolute right-2 -top-2.75 h-0 w-0 border-x-12 border-b-12 border-x-transparent border-b-white" />
               <input type="hidden" name="statusMode" value="1" />
               <div className="grid grid-cols-[1fr_1fr_1fr_1fr] gap-6">
                 <Field
@@ -272,7 +272,7 @@ export default async function BayaranPage({ searchParams }: BayaranPageProps) {
                       />
                       <span
                         className={[
-                          "flex h-3.5 w-3.5 items-center justify-center rounded-[2px] border border-[#D0D5DD] bg-white text-transparent transition-colors peer-checked:border-transparent peer-checked:text-white",
+                          "flex h-3.5 w-3.5 items-center justify-center rounded-xs border border-[#D0D5DD] bg-white text-transparent transition-colors peer-checked:border-transparent peer-checked:text-white",
                           status.checkedClass,
                         ].join(" ")}
                       >

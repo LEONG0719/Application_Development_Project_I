@@ -193,7 +193,7 @@ export default function TambahBayaranModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-3 backdrop-blur-sm">
-      <div className="flex max-h-[86vh] w-full max-w-[780px] flex-col overflow-hidden rounded-lg bg-white shadow-2xl">
+      <div className="flex max-h-[86vh] w-full max-w-195 flex-col overflow-hidden rounded-lg bg-white shadow-2xl">
         <div className="flex shrink-0 items-start justify-between bg-dark-blue px-6 py-4 text-white">
           <div>
             <h2 className="text-[1.1rem] font-extrabold uppercase tracking-wide">
