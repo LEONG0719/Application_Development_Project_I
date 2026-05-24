@@ -3,6 +3,10 @@ import { randomUUID } from "crypto";
 import { Prisma } from "@prisma/client";
 
 import type { ExtractedPenghuniRecord } from "@/app/pages/2_muat_naik/components/extract-review-shared";
+import {
+  getTodayStartInMalaysia,
+  resolveQuarterUnitOccupancyState,
+} from "@/lib/quarters/quarter-units";
 import type { VerifyResult } from "@/lib/uploaded-document/verification";
 import { findUnitIdForPenghuniRecord } from "@/lib/uploaded-document/penghuni/queries";
 import {
@@ -157,7 +161,7 @@ export async function verifyPenghuniDrafts(
     rowsToVerify,
     existingResidentIds,
   );
-  await writePenghuniOccupancies(tx, rowsToVerify);
+  const additionalAffectedUnitIds = await writePenghuniOccupancies(tx, rowsToVerify);
 
   await tx.residentDraft.deleteMany({
     where: { id: { in: rowsToVerify.map((row) => row.draft.id) } },
@@ -165,7 +169,10 @@ export async function verifyPenghuniDrafts(
 
   await syncUnitOccupancyStatuses(
     tx,
-    rowsToVerify.map((row) => row.unitId).filter(Boolean),
+    [
+      ...rowsToVerify.map((row) => row.unitId).filter(Boolean),
+      ...additionalAffectedUnitIds,
+    ],
   );
 
   const summaryMessages = [
@@ -369,10 +376,13 @@ async function writePenghuniOccupancies(
   );
 
   if (occupancyRows.length === 0) {
-    return;
+    return [];
   }
 
-  await markOtherCurrentPenghuniOccupanciesPast(tx, occupancyRows);
+  const additionalAffectedUnitIds = await markOtherCurrentPenghuniOccupanciesPast(
+    tx,
+    occupancyRows,
+  );
   const occupancyIdByDraftId = await findPenghuniOccupancyIdsToUpdate(
     tx,
     occupancyRows,
@@ -397,12 +407,16 @@ async function writePenghuniOccupancies(
         VALUES ${Prisma.join(
           rowsToUpdate.map((row) => {
             const occupancyId = occupancyIdByDraftId.get(row.draft.id);
+            const occupancyState = resolveQuarterUnitOccupancyState({
+              moveInDate: row.moveInDate,
+              moveOutDate: row.moveOutDate,
+            });
 
             return Prisma.sql`(
               ${occupancyId}::uuid,
               ${row.moveInDate}::timestamp,
               ${row.moveOutDate}::timestamp,
-              ${row.moveOutDate ? "PAST" : "CURRENT"}::"OccupancyStatus"
+              ${occupancyState.occupancyStatus}::"OccupancyStatus"
             )`;
           }),
         )}
@@ -413,27 +427,42 @@ async function writePenghuniOccupancies(
 
   if (rowsToCreate.length > 0) {
     await tx.unitOccupancy.createMany({
-      data: rowsToCreate.map((row) => ({
-        residentId: row.residentId,
-        unitId: row.unitId,
-        moveInDate: row.moveInDate,
-        moveOutDate: row.moveOutDate,
-        status: row.moveOutDate ? "PAST" : "CURRENT",
-        description: "Dicipta selepas pengesahan dokumen penghuni.",
-      })),
+      data: rowsToCreate.map((row) => {
+        const occupancyState = resolveQuarterUnitOccupancyState({
+          moveInDate: row.moveInDate,
+          moveOutDate: row.moveOutDate,
+        });
+
+        return {
+          residentId: row.residentId,
+          unitId: row.unitId,
+          moveInDate: row.moveInDate,
+          moveOutDate: row.moveOutDate,
+          status: occupancyState.occupancyStatus,
+          description: "Dicipta selepas pengesahan dokumen penghuni.",
+        };
+      }),
     });
   }
+
+  return additionalAffectedUnitIds;
 }
 
 async function markOtherCurrentPenghuniOccupanciesPast(
   tx: Prisma.TransactionClient,
   occupancyRows: (PreparedPenghuniDraft & { unitId: string; moveInDate: Date })[],
 ) {
-  await tx.$executeRaw`
+  const referenceDate = getTodayStartInMalaysia();
+
+  const affectedRows = await tx.$queryRaw<{ unitId: string }[]>`
     UPDATE "UnitOccupancy" AS occupancy
     SET
-      "status" = 'PAST'::"OccupancyStatus",
       "moveOutDate" = COALESCE(occupancy."moveOutDate", updates."moveInDate"),
+      "status" = CASE
+        WHEN updates."moveInDate" < ${referenceDate}::timestamp
+        THEN 'PAST'::"OccupancyStatus"
+        ELSE 'CURRENT'::"OccupancyStatus"
+      END,
       "updatedAt" = NOW()
     FROM (
       VALUES ${Prisma.join(
@@ -446,7 +475,10 @@ async function markOtherCurrentPenghuniOccupanciesPast(
     WHERE occupancy."residentId" = updates."residentId"
       AND occupancy."status" = 'CURRENT'::"OccupancyStatus"
       AND occupancy."unitId" <> updates."unitId"
+    RETURNING occupancy."unitId" AS "unitId"
   `;
+
+  return [...new Set(affectedRows.map((row) => row.unitId))];
 }
 
 async function findPenghuniOccupancyIdsToUpdate(
@@ -653,6 +685,21 @@ async function syncUnitOccupancyStatuses(
     return;
   }
 
+  const referenceDate = getTodayStartInMalaysia();
+
+  await tx.$executeRaw`
+    UPDATE "UnitOccupancy" AS occupancy
+    SET
+      "status" = CASE
+        WHEN occupancy."moveOutDate" IS NOT NULL
+          AND occupancy."moveOutDate" < ${referenceDate}::timestamp
+        THEN 'PAST'::"OccupancyStatus"
+        ELSE 'CURRENT'::"OccupancyStatus"
+      END,
+      "updatedAt" = NOW()
+    WHERE occupancy."unitId" IN (${Prisma.join(unitIds)})
+  `;
+
   await tx.$executeRaw`
     UPDATE "Unit" AS unit
     SET
@@ -661,7 +708,11 @@ async function syncUnitOccupancyStatuses(
           SELECT 1
           FROM "UnitOccupancy" occupancy
           WHERE occupancy."unitId" = unit."id"
-            AND occupancy."status" = 'CURRENT'::"OccupancyStatus"
+            AND occupancy."moveInDate" <= ${referenceDate}::timestamp
+            AND (
+              occupancy."moveOutDate" IS NULL
+              OR occupancy."moveOutDate" >= ${referenceDate}::timestamp
+            )
         )
         THEN 'OCCUPIED'::"UnitStatus"
         ELSE 'VACANT'::"UnitStatus"

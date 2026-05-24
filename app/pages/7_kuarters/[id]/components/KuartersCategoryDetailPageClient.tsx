@@ -439,7 +439,6 @@ export default function KuartersCategoryDetailPageClient({
     try {
       setPendingUnitId(editor.rowId);
       setPendingAction("save");
-      setIsTableLoading(true);
 
       const response =
         editor.mode === "create"
@@ -506,7 +505,6 @@ export default function KuartersCategoryDetailPageClient({
     } finally {
       setPendingUnitId(null);
       setPendingAction(null);
-      setIsTableLoading(false);
     }
   }
 
