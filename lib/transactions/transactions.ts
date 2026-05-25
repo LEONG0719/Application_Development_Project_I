@@ -67,12 +67,14 @@ export async function getTransactionsList(params: TransactionFilterParams) {
   if (statuses && statuses.length > 0) andConditions.push({ status: { in: statuses } });
 
   if (search) {
+    const cleanSearch = search.trim();
     andConditions.push({
       OR: [
-        { description: { contains: search, mode: "insensitive" } },
-        { receiptNo: { contains: search, mode: "insensitive" } }, 
-        { resident: { fullName: { contains: search, mode: "insensitive" } } }, 
-        { resident: { icNumber: { contains: search, mode: "insensitive" } } }, 
+        { transactionNo: { contains: cleanSearch, mode: "insensitive" } },
+        { description: { contains: cleanSearch, mode: "insensitive" } },
+        { receiptNo: { contains: cleanSearch, mode: "insensitive" } }, 
+        { resident: { fullName: { contains: cleanSearch, mode: "insensitive" } } }, 
+        { resident: { icNumber: { contains: cleanSearch, mode: "insensitive" } } }, 
       ],
     });
   }
@@ -94,7 +96,11 @@ export async function getTransactionsList(params: TransactionFilterParams) {
             }
           }
         },
-        relatedTransaction: true, // Parent related transaction
+        relatedTransaction: {
+          include: {
+            childTransactions: true,
+          },
+        }, // Parent related transaction
         childTransactions: true,  // Child related transactions (Reversals/Adjustments)
       },
       orderBy: [
@@ -124,7 +130,10 @@ export async function reverseTransaction(
 ) {
   return prisma.$transaction(async (tx) => {
     // 1. Find the original
-    const original = await tx.transaction.findUnique({ where: { id: originalTxId } });
+    const original = await tx.transaction.findUnique({ 
+        where: { id: originalTxId },
+        include: { childTransactions: true } 
+    });
     if (!original) throw new Error("Transaksi asal tidak dijumpai.");
     
     // Allow both NORMAL and DILARASKAN to be reversed based on your business rules
@@ -138,8 +147,38 @@ export async function reverseTransaction(
       data: { status: "DIBALIKAN" }, 
     });
 
+    // --- NEW LOGIC: SYNC WITH BILLING ENGINE (MONTHLY CHARGE) ---
+    const isDebitOriginal = Number(original.debitAmount) > 0;
+    const originalAmount = isDebitOriginal ? Number(original.debitAmount) : Number(original.creditAmount);
+
+    // Calculate the current net amount taking into account any past adjustments
+    const pastPelarasans = original.childTransactions.filter((c) => c.status === "PELARASAN");
+    const totalPastDebit = pastPelarasans.reduce((sum, c) => sum + Number(c.debitAmount), 0);
+    const totalPastCredit = pastPelarasans.reduce((sum, c) => sum + Number(c.creditAmount), 0);
+    
+    let currentNet = originalAmount;
+    if (isDebitOriginal) {
+        currentNet = currentNet + totalPastDebit - totalPastCredit;
+    } else {
+        currentNet = currentNet + totalPastCredit - totalPastDebit;
+    }
+
+    if (original.residentId) {
+        await applyFinancialDeltaToBilling(tx, original.residentId, original.transactionDate, original.category, -currentNet, remarks);
+    }
+    // -------------------------------------------------------------
+
     // 3. Create the Balancing Reversal Record
     const newTransactionNo = await generateTransactionNo(tx); // Generate ID
+
+    let reverseDebit = 0;
+    let reverseCredit = 0;
+    
+    if (isDebitOriginal) {
+        reverseCredit = currentNet;
+    } else {
+        reverseDebit = currentNet;
+    }
 
     const pembalikan = await tx.transaction.create({
       data: {
@@ -148,8 +187,8 @@ export async function reverseTransaction(
         transactionDate: new Date(), 
         category: "LAIN_LAIN", // Strictly set to LAIN_LAIN
         status: "PEMBALIKAN",
-        debitAmount: original.creditAmount, 
-        creditAmount: original.debitAmount,
+        debitAmount: reverseDebit, 
+        creditAmount: reverseCredit,
         description: remarks,
         relatedTransactionId: original.id, 
       },
@@ -200,6 +239,12 @@ export async function adjustTransaction(
     if (deltaAmount === 0) {
         throw new Error("Tiada perubahan jumlah dikesan.");
     }
+
+    // --- NEW LOGIC: SYNC WITH BILLING ENGINE (MONTHLY CHARGE) ---
+    if (original.residentId) {
+        await applyFinancialDeltaToBilling(tx, original.residentId, original.transactionDate, original.category, deltaAmount, remarks);
+    }
+    // -------------------------------------------------------------
 
     // 4. Tentukan Debit atau Kredit untuk rekod PELARASAN baru
     let newDebit = 0;
@@ -303,4 +348,140 @@ export async function generateTransactionNos(
 
     return `${datePrefix}-${sequenceStr}`;
   });
+}
+
+// ==========================================
+// 4. SYNC HELPER (LEDGER TO BILLING ENGINE)
+// ==========================================
+
+function getUtcMonthStart(date: Date) {
+  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1));
+}
+
+/**
+ * Ensures that any reversal or adjustment applied to the Ledger (Transactions)
+ * is accurately mathematically mirrored in the MonthlyCharge and Arrears tables.
+ */
+async function applyFinancialDeltaToBilling(
+  tx: Prisma.TransactionClient,
+  residentId: string,
+  transactionDate: Date,
+  category: TransactionCategory,
+  deltaAmount: number,
+  remarks: string
+) {
+  if (!residentId || deltaAmount === 0) return;
+
+  // 1. Force the date to the UTC 1st of the transaction's month to find the correct MonthlyCharge.
+  const chargeMonth = getUtcMonthStart(transactionDate);
+
+  let monthlyCharge = await tx.monthlyCharge.findUnique({
+    where: { residentId_chargeMonth: { residentId, chargeMonth } }
+  });
+
+  if (!monthlyCharge) {
+    monthlyCharge = await tx.monthlyCharge.create({
+      data: { residentId, chargeMonth }
+    });
+  }
+
+  let arrearsDelta = 0;
+
+  // 2. Apply the mathematical delta to the exact correct category
+  switch (category) {
+    case "CAJ_SEWA":
+      await tx.monthlyCharge.update({
+        where: { id: monthlyCharge.id },
+        data: {
+          rentalAmount: { increment: deltaAmount },
+          totalMonthlyCharge: { increment: deltaAmount },
+          balanceForMonth: { increment: deltaAmount },
+        }
+      });
+      arrearsDelta = deltaAmount;
+      break;
+    case "CAJ_PENYELENGGARAAN":
+      await tx.monthlyCharge.update({
+        where: { id: monthlyCharge.id },
+        data: {
+          maintenanceAmount: { increment: deltaAmount },
+          totalMonthlyCharge: { increment: deltaAmount },
+          balanceForMonth: { increment: deltaAmount },
+        }
+      });
+      arrearsDelta = deltaAmount;
+      break;
+    case "CAJ_PENALTI":
+      await tx.monthlyCharge.update({
+        where: { id: monthlyCharge.id },
+        data: {
+          penaltyAmount: { increment: deltaAmount },
+          totalMonthlyCharge: { increment: deltaAmount },
+          balanceForMonth: { increment: deltaAmount },
+        }
+      });
+      arrearsDelta = deltaAmount;
+      break;
+    case "CAJ_TAMBAHAN":
+      // We explicitly create a nested item here so it renders individually in the Frontend Details Modal!
+      await tx.additionalCharge.create({
+        data: {
+          monthlyChargeId: monthlyCharge.id,
+          chargeDate: new Date(), // Time the adjustment was physically made
+          description: `[Pelarasan] ${remarks}`,
+          amount: deltaAmount
+        }
+      });
+      await tx.monthlyCharge.update({
+        where: { id: monthlyCharge.id },
+        data: {
+          additionalChargesTotal: { increment: deltaAmount },
+          totalMonthlyCharge: { increment: deltaAmount },
+          balanceForMonth: { increment: deltaAmount },
+        }
+      });
+      arrearsDelta = deltaAmount;
+      break;
+    case "REBAT":
+      await tx.rebate.create({
+        data: {
+          monthlyChargeId: monthlyCharge.id,
+          rebateDate: new Date(),
+          description: `[Pelarasan] ${remarks}`,
+          amount: deltaAmount
+        }
+      });
+      await tx.monthlyCharge.update({
+        where: { id: monthlyCharge.id },
+        data: {
+          rebateTotal: { increment: deltaAmount },
+          balanceForMonth: { increment: -deltaAmount },
+        }
+      });
+      arrearsDelta = -deltaAmount; // Rebates lower arrears. So +Rebate = -Arrears
+      break;
+    case "BAYARAN":
+      await tx.monthlyCharge.update({
+        where: { id: monthlyCharge.id },
+        data: {
+          paymentReceived: { increment: deltaAmount },
+          balanceForMonth: { increment: -deltaAmount },
+        }
+      });
+      arrearsDelta = -deltaAmount; // Payments lower arrears. So +Payment = -Arrears
+      break;
+    default:
+      // Fallback for BAKI_AWAL or LAIN_LAIN to ensure the master total is always updated
+      arrearsDelta = deltaAmount;
+      break;
+  }
+
+  // 3. Keep the global Arrears Summary updated
+  if (arrearsDelta !== 0) {
+    await tx.arrearsSummary.upsert({
+      where: { residentId: residentId },
+      create: { residentId: residentId, totalArrearsAmount: arrearsDelta },
+      update: { totalArrearsAmount: { increment: arrearsDelta } }
+    });
+  }
 }
