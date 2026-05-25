@@ -10,6 +10,21 @@ import type { TunggakanListItem, TunggakanSummary } from "@/lib/arrears/arrears"
 import KemasKiniModal from "./KemasKiniModal";
 import ButiranTunggakanModal from "./ButiranTunggakanModal";
 
+const getCurrentMonthInputValue = () => {
+  const today = new Date();
+  return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}`;
+};
+
+const formatMonthLabel = (monthValue: string) => {
+  const [year, month] = monthValue.split("-").map(Number);
+  if (!year || !month) return "Bulan";
+
+  return new Intl.DateTimeFormat("ms-MY", {
+    month: "short",
+    year: "numeric",
+    timeZone: "UTC",
+  }).format(new Date(Date.UTC(year, month - 1, 1)));
+};
 
 export default function TunggakanPageClient() {
   // --- STATE MANAGEMENT ---
@@ -30,7 +45,9 @@ export default function TunggakanPageClient() {
   const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);  
   const [currentPage, setCurrentPage] = useState(1);
   const [pageInput, setPageInput] = useState("");
+  const [selectedChargeMonth, setSelectedChargeMonth] = useState(getCurrentMonthInputValue);
   const ITEMS_PER_PAGE = 5;
+  const selectedChargeMonthLabel = useMemo(() => formatMonthLabel(selectedChargeMonth), [selectedChargeMonth]);
 
   const fetchBillingStatus = async () => {
     try {
@@ -52,7 +69,11 @@ export default function TunggakanPageClient() {
     console.log(">>> fetch started");
     try {
       setIsLoading(true);
-      const response = await fetch(`/api/arrear?t=${Date.now()}`, {
+      const params = new URLSearchParams({
+        t: String(Date.now()),
+        chargeMonth: selectedChargeMonth,
+      });
+      const response = await fetch(`/api/arrear?${params.toString()}`, {
         cache: "no-store"
       });
       console.log(">>> response status:", response.status);
@@ -79,7 +100,7 @@ export default function TunggakanPageClient() {
   useEffect(() => {
     fetchTunggakanData();
     fetchBillingStatus();
-  }, []);
+  }, [selectedChargeMonth]);
 
   // Reset to page 1 whenever a filter changes
   useEffect(() => {
@@ -175,11 +196,11 @@ export default function TunggakanPageClient() {
             { width: 18 }, // IC
             { width: 16 }, // Kelas
             { width: 18 }, // Unit
-            { width: 12 }, // Sewa
-            { width: 12 }, // Senggara
-            { width: 12 }, // Penalti
-            { width: 12 }, // Tambahan
-            { width: 12 }, // Rebat
+            { width: 16 }, // Sewa
+            { width: 16 }, // Senggara
+            { width: 16 }, // Penalti
+            { width: 16 }, // Tambahan
+            { width: 16 }, // Rebat
             { width: 14 }, // Tunggakan
           ],
           rows: [
@@ -189,11 +210,11 @@ export default function TunggakanPageClient() {
               { value: "NO. KAD PENGENALAN", style: "header" },
               { value: "KELAS KUARTERS",  style: "header" },
               { value: "KOD UNIT",        style: "header" },
-              { value: "SEWA (RM)",       style: "header", align: "right" },
-              { value: "SENGGARA (RM)",   style: "header", align: "right" },
-              { value: "PENALTI (RM)",    style: "header", align: "right" },
-              { value: "TAMBAHAN (RM)",   style: "header", align: "right" },
-              { value: "REBAT (RM)",      style: "header", align: "right" },
+              { value: `SEWA ${selectedChargeMonthLabel} (RM)`,       style: "header", align: "right" },
+              { value: `SENGGARA ${selectedChargeMonthLabel} (RM)`,   style: "header", align: "right" },
+              { value: `PENALTI ${selectedChargeMonthLabel} (RM)`,    style: "header", align: "right" },
+              { value: `TAMBAHAN ${selectedChargeMonthLabel} (RM)`,   style: "header", align: "right" },
+              { value: `REBAT ${selectedChargeMonthLabel} (RM)`,      style: "header", align: "right" },
               { value: "TUNGGAKAN (RM)",  style: "header", align: "right" },
             ],
             // Data rows
@@ -317,6 +338,18 @@ export default function TunggakanPageClient() {
                 {isBilledThisMonth ? `Caj ${targetBillingMonthLabel ?? "Bulan Sasaran"} Selesai` : isBillingRunning ? "Sedang Menjana..." : "Jana Bil Manual"}
               </button>
 
+              <label className="h-10 px-3 bg-white border border-gray-200 text-dark-blue rounded shadow-sm flex items-center gap-2 text-sm font-bold">
+                <Icon icon="calendar_month" size={18} />
+                <span className="sr-only">Pilih bulan caj</span>
+                <input
+                  type="month"
+                  value={selectedChargeMonth}
+                  onChange={(event) => setSelectedChargeMonth(event.target.value)}
+                  className="bg-transparent text-sm font-bold text-dark-blue outline-none cursor-pointer"
+                  aria-label="Pilih bulan caj"
+                />
+              </label>
+
               <ToolbarButton
                 icon="download"
                 label={
@@ -377,12 +410,27 @@ export default function TunggakanPageClient() {
                 </th>
                 <th className="px-6 py-4">PENGHUNI</th>
                 <th className="px-6 py-4">KUARTERS</th>
-                <th className="px-6 py-4 text-right">SEWA (RM)</th>
-                <th className="px-6 py-4 text-right">SENGGARA (RM)</th>
-                <th className="px-6 py-4 text-right">PENALTI (RM)</th>
-                <th className="px-6 py-4 text-right">TAMBAHAN (RM)</th>
-                <th className="px-6 py-4 text-right">REBAT (RM)</th>
-                <th className="px-6 py-4 text-right">TUNGGAKAN (RM)</th>
+                <th className="px-4 py-4 text-right min-w-24">
+                  <span className="block leading-tight">SEWA</span>
+                  <span className="block text-[10px] leading-tight normal-case text-light-grey">{selectedChargeMonthLabel}</span>
+                </th>
+                <th className="px-4 py-4 text-right min-w-28">
+                  <span className="block leading-tight">SENGGARA</span>
+                  <span className="block text-[10px] leading-tight normal-case text-light-grey">{selectedChargeMonthLabel}</span>
+                </th>
+                <th className="px-4 py-4 text-right min-w-24">
+                  <span className="block leading-tight">PENALTI</span>
+                  <span className="block text-[10px] leading-tight normal-case text-light-grey">{selectedChargeMonthLabel}</span>
+                </th>
+                <th className="px-4 py-4 text-right min-w-28">
+                  <span className="block leading-tight">TAMBAHAN</span>
+                  <span className="block text-[10px] leading-tight normal-case text-light-grey">{selectedChargeMonthLabel}</span>
+                </th>
+                <th className="px-4 py-4 text-right min-w-24">
+                  <span className="block leading-tight">REBAT</span>
+                  <span className="block text-[10px] leading-tight normal-case text-light-grey">{selectedChargeMonthLabel}</span>
+                </th>
+                <th className="px-6 py-4 text-right">TUNGGAKAN TERKINI (RM)</th>
                 <th className="px-6 py-4 text-center">TINDAKAN</th>
               </tr>
             </thead>

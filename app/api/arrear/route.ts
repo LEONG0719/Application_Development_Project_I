@@ -7,8 +7,23 @@ import { generateTransactionNo } from "@/lib/transactions/transactions";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+function getChargeMonthFromRequest(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const monthParam = searchParams.get("chargeMonth");
+
+  if (monthParam && /^\d{4}-\d{2}$/.test(monthParam)) {
+    const [year, month] = monthParam.split("-").map(Number);
+    return new Date(Date.UTC(year, month - 1, 1));
+  }
+
+  const today = new Date();
+  return new Date(Date.UTC(today.getFullYear(), today.getMonth(), 1));
+}
+
+export async function GET(request: Request) {
   try {
+    const selectedChargeMonth = getChargeMonthFromRequest(request);
+
     // 1. Fetch all residents with their active units and complete charge history
     const residents = await prisma.resident.findMany({
       // We only want verified residents. You can adjust this 'where' clause 
@@ -24,6 +39,7 @@ export async function GET() {
           },
         },
         monthlyCharges: {
+          where: { chargeMonth: selectedChargeMonth },
           include: {
             additionalCharges: true,
             rebates: true,
