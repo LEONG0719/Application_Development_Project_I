@@ -146,7 +146,7 @@ export async function GET() {
           transactions.push({
             transactionNo: transactionNos[transactionNoIndex++],
             residentId: item.residentId,
-            transactionDate: today,
+            transactionDate: billingMonth,
             category: "CAJ_SEWA" as const,
             debitAmount: item.rentalToAdd,
             description: item.moveOutDate ? "Caj Sewa (Prorata Pindah Keluar)" : "Caj Sewa Bulanan",
@@ -157,7 +157,7 @@ export async function GET() {
           transactions.push({
             transactionNo: transactionNos[transactionNoIndex++],
             residentId: item.residentId,
-            transactionDate: today,
+            transactionDate: billingMonth,
             category: "CAJ_PENALTI" as const,
             debitAmount: item.penaltyToAdd,
             description: "Denda / Penalti Hilang Kelayakan",

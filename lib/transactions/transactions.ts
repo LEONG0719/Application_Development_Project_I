@@ -152,9 +152,9 @@ export async function reverseTransaction(
     const originalAmount = isDebitOriginal ? Number(original.debitAmount) : Number(original.creditAmount);
 
     // Calculate the current net amount taking into account any past adjustments
-    const pastPelarasans = original.childTransactions.filter((c: any) => c.status === "PELARASAN");
-    const totalPastDebit = pastPelarasans.reduce((sum: number, c: any) => sum + Number(c.debitAmount), 0);
-    const totalPastCredit = pastPelarasans.reduce((sum: number, c: any) => sum + Number(c.creditAmount), 0);
+    const pastPelarasans = original.childTransactions.filter((c) => c.status === "PELARASAN");
+    const totalPastDebit = pastPelarasans.reduce((sum, c) => sum + Number(c.debitAmount), 0);
+    const totalPastCredit = pastPelarasans.reduce((sum, c) => sum + Number(c.creditAmount), 0);
     
     let currentNet = originalAmount;
     if (isDebitOriginal) {
@@ -354,12 +354,16 @@ export async function generateTransactionNos(
 // 4. SYNC HELPER (LEDGER TO BILLING ENGINE)
 // ==========================================
 
+function getUtcMonthStart(date: Date) {
+  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1));
+}
+
 /**
  * Ensures that any reversal or adjustment applied to the Ledger (Transactions)
  * is accurately mathematically mirrored in the MonthlyCharge and Arrears tables.
  */
 async function applyFinancialDeltaToBilling(
-  tx: any, 
+  tx: Prisma.TransactionClient,
   residentId: string,
   transactionDate: Date,
   category: TransactionCategory,
@@ -368,8 +372,8 @@ async function applyFinancialDeltaToBilling(
 ) {
   if (!residentId || deltaAmount === 0) return;
 
-  // 1. Force the date to the 1st of the transaction's month to find the correct MonthlyCharge
-  const chargeMonth = new Date(transactionDate.getFullYear(), transactionDate.getMonth(), 1);
+  // 1. Force the date to the UTC 1st of the transaction's month to find the correct MonthlyCharge.
+  const chargeMonth = getUtcMonthStart(transactionDate);
 
   let monthlyCharge = await tx.monthlyCharge.findUnique({
     where: { residentId_chargeMonth: { residentId, chargeMonth } }
@@ -386,15 +390,36 @@ async function applyFinancialDeltaToBilling(
   // 2. Apply the mathematical delta to the exact correct category
   switch (category) {
     case "CAJ_SEWA":
-      await tx.monthlyCharge.update({ where: { id: monthlyCharge.id }, data: { rentalAmount: { increment: deltaAmount } } });
+      await tx.monthlyCharge.update({
+        where: { id: monthlyCharge.id },
+        data: {
+          rentalAmount: { increment: deltaAmount },
+          totalMonthlyCharge: { increment: deltaAmount },
+          balanceForMonth: { increment: deltaAmount },
+        }
+      });
       arrearsDelta = deltaAmount;
       break;
     case "CAJ_PENYELENGGARAAN":
-      await tx.monthlyCharge.update({ where: { id: monthlyCharge.id }, data: { maintenanceAmount: { increment: deltaAmount } } });
+      await tx.monthlyCharge.update({
+        where: { id: monthlyCharge.id },
+        data: {
+          maintenanceAmount: { increment: deltaAmount },
+          totalMonthlyCharge: { increment: deltaAmount },
+          balanceForMonth: { increment: deltaAmount },
+        }
+      });
       arrearsDelta = deltaAmount;
       break;
     case "CAJ_PENALTI":
-      await tx.monthlyCharge.update({ where: { id: monthlyCharge.id }, data: { penaltyAmount: { increment: deltaAmount } } });
+      await tx.monthlyCharge.update({
+        where: { id: monthlyCharge.id },
+        data: {
+          penaltyAmount: { increment: deltaAmount },
+          totalMonthlyCharge: { increment: deltaAmount },
+          balanceForMonth: { increment: deltaAmount },
+        }
+      });
       arrearsDelta = deltaAmount;
       break;
     case "CAJ_TAMBAHAN":
@@ -407,7 +432,14 @@ async function applyFinancialDeltaToBilling(
           amount: deltaAmount
         }
       });
-      await tx.monthlyCharge.update({ where: { id: monthlyCharge.id }, data: { additionalChargesTotal: { increment: deltaAmount } } });
+      await tx.monthlyCharge.update({
+        where: { id: monthlyCharge.id },
+        data: {
+          additionalChargesTotal: { increment: deltaAmount },
+          totalMonthlyCharge: { increment: deltaAmount },
+          balanceForMonth: { increment: deltaAmount },
+        }
+      });
       arrearsDelta = deltaAmount;
       break;
     case "REBAT":
@@ -419,11 +451,23 @@ async function applyFinancialDeltaToBilling(
           amount: deltaAmount
         }
       });
-      await tx.monthlyCharge.update({ where: { id: monthlyCharge.id }, data: { rebateTotal: { increment: deltaAmount } } });
+      await tx.monthlyCharge.update({
+        where: { id: monthlyCharge.id },
+        data: {
+          rebateTotal: { increment: deltaAmount },
+          balanceForMonth: { increment: -deltaAmount },
+        }
+      });
       arrearsDelta = -deltaAmount; // Rebates lower arrears. So +Rebate = -Arrears
       break;
     case "BAYARAN":
-      await tx.monthlyCharge.update({ where: { id: monthlyCharge.id }, data: { paymentReceived: { increment: deltaAmount } } });
+      await tx.monthlyCharge.update({
+        where: { id: monthlyCharge.id },
+        data: {
+          paymentReceived: { increment: deltaAmount },
+          balanceForMonth: { increment: -deltaAmount },
+        }
+      });
       arrearsDelta = -deltaAmount; // Payments lower arrears. So +Payment = -Arrears
       break;
     default:

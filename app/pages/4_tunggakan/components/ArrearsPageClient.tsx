@@ -607,6 +607,7 @@ export default function TunggakanPageClient() {
           await fetchTunggakanData();
           setSelectedIds([]);
         }}
+        chargeMonth={selectedChargeMonth}
         selectedCount={selectedIds.length} 
         selectedIds={selectedIds}
       />

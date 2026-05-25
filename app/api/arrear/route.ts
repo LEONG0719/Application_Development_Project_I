@@ -9,7 +9,11 @@ export const dynamic = "force-dynamic";
 
 function getChargeMonthFromRequest(request: Request) {
   const { searchParams } = new URL(request.url);
-  const monthParam = searchParams.get("chargeMonth");
+  return getChargeMonthFromMonthValue(searchParams.get("chargeMonth"));
+}
+
+function getChargeMonthFromMonthValue(monthValue: unknown) {
+  const monthParam = typeof monthValue === "string" ? monthValue : null;
 
   if (monthParam && /^\d{4}-\d{2}$/.test(monthParam)) {
     const [year, month] = monthParam.split("-").map(Number);
@@ -103,14 +107,14 @@ export async function POST(request: Request) {
     }
 
     const { residentIds, cajSenggaraEnabled, cajTambahan, rebat } = parsedData.data;
+    const chargeMonth = getChargeMonthFromMonthValue(
+      body && typeof body === "object" && !Array.isArray(body)
+        ? (body as Record<string, unknown>).chargeMonth
+        : null
+    );
 
     // We assume the admin making this change is logged in. 
     // In your actual app, you would get this from your Auth session.
-   
-    // We use the start of the current month as the charge period for these new additions
-    const currentMonth = new Date();
-    currentMonth.setDate(1);
-    currentMonth.setHours(0, 0, 0, 0);
 
     // 2. Fetch required reference data for the selected residents
     const residentsInfo = await prisma.resident.findMany({
@@ -130,14 +134,14 @@ export async function POST(request: Request) {
         
         // Find or Create the Monthly Charge record for this month
         let monthlyCharge = await tx.monthlyCharge.findUnique({
-          where: { residentId_chargeMonth: { residentId: resident.id, chargeMonth: currentMonth } }
+          where: { residentId_chargeMonth: { residentId: resident.id, chargeMonth } }
         });
 
         if (!monthlyCharge) {
             monthlyCharge = await tx.monthlyCharge.create({
                 data: {
                     residentId: resident.id,
-                    chargeMonth: currentMonth,
+                    chargeMonth,
                     unitId: resident.occupancies[0]?.unitId || null,
                 }
             });
@@ -162,7 +166,7 @@ export async function POST(request: Request) {
                     data: {
                         transactionNo: txNoSenggara, // 2. ADD THIS
                         residentId: resident.id,
-                        transactionDate: new Date(),
+                        transactionDate: chargeMonth,
                         category: "CAJ_PENYELENGGARAAN",
                         debitAmount: maintenanceRate,
                     }
@@ -191,7 +195,7 @@ export async function POST(request: Request) {
                 data: {
                     transactionNo: txNoTambahan, // 2. ADD THIS
                     residentId: resident.id,
-                    transactionDate: new Date(item.tarikh),
+                    transactionDate: chargeMonth,
                     category: "CAJ_TAMBAHAN",
                     description: item.catatan,
                     debitAmount: item.amaun,
@@ -220,7 +224,7 @@ export async function POST(request: Request) {
                 data: {
                     transactionNo: txNoRebat, // 2. ADD THIS
                     residentId: resident.id,
-                    transactionDate: new Date(item.tarikh),
+                    transactionDate: chargeMonth,
                     category: "REBAT",
                     description: item.catatan,
                     creditAmount: item.amaun,
