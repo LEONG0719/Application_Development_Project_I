@@ -398,7 +398,7 @@ async function getBalanceTableColumns(client: SchemaClient) {
 }
 
 function getMonthStart(value: Date) {
-  return new Date(value.getFullYear(), value.getMonth(), 1);
+  return new Date(Date.UTC(value.getUTCFullYear(), value.getUTCMonth(), 1));
 }
 
 async function getTableColumns(client: SchemaClient, tableName: string) {
