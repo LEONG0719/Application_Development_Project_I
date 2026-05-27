@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import Link from "next/link";
 
 import Icon from "@/app/components/Icon/Icon";
@@ -33,14 +33,18 @@ type AuditLogPageResponse = {
 
 export default function AuditLogTablePanel({
   auditRows,
+  dataKey,
   filterOptions,
   filters,
   hasActiveFilters,
+  initialErrorMessage = "",
+  isInitialLoading = false,
   pagination,
   isBootstrapping = false,
   bootstrapError = "",
 }: {
   auditRows: AuditLogListItem[];
+  dataKey: string;
   filterOptions: {
     actionTypes: {
       value: string;
@@ -53,12 +57,17 @@ export default function AuditLogTablePanel({
   };
   filters: AuditLogFilters;
   hasActiveFilters: boolean;
+  initialErrorMessage?: string;
+  isInitialLoading?: boolean;
   pagination: AuditPagination;
   isBootstrapping?: boolean;
   bootstrapError?: string;
 }) {
-  const [rows, setRows] = useState(auditRows);
-  const [currentPagination, setCurrentPagination] = useState(pagination);
+  const [pageData, setPageData] = useState<{
+    dataKey: string;
+    rows: AuditLogListItem[];
+    pagination: AuditPagination;
+  } | null>(null);
   const [isLoadingPage, setIsLoadingPage] = useState(false);
   const [pageError, setPageError] = useState("");
   const [isSearchOpen, setIsSearchOpen] = useState(Boolean(filters.search?.trim()));
@@ -80,6 +89,14 @@ export default function AuditLogTablePanel({
     setCurrentPagination(pagination);
     setPageError("");
   }, [auditRows, pagination]);
+  const [pageError, setPageError] = useState<{
+    dataKey: string;
+    message: string;
+  } | null>(null);
+  const activePageData = pageData?.dataKey === dataKey ? pageData : null;
+  const rows = activePageData?.rows ?? auditRows;
+  const currentPagination = activePageData?.pagination ?? pagination;
+  const currentPageError = pageError?.dataKey === dataKey ? pageError.message : "";
 
   async function handlePageChange(page: number) {
     const safePage = Math.min(Math.max(1, page), currentPagination.totalPages);
@@ -91,7 +108,7 @@ export default function AuditLogTablePanel({
     const queryString = buildAuditLogQueryString(filters, { page: safePage });
 
     setIsLoadingPage(true);
-    setPageError("");
+    setPageError(null);
 
     try {
       const response = await fetch(`/api/audit-logs${queryString}`, {
@@ -107,19 +124,24 @@ export default function AuditLogTablePanel({
         );
       }
 
-      setRows(payload.data.records);
-      setCurrentPagination(payload.data.pagination);
+      setPageData({
+        dataKey,
+        rows: payload.data.records,
+        pagination: payload.data.pagination,
+      });
       window.history.replaceState(
         null,
         "",
         `/pages/8_jejak_audit${queryString}`,
       );
     } catch (error) {
-      setPageError(
-        error instanceof Error
-          ? error.message
-          : "Gagal mendapatkan rekod jejak audit.",
-      );
+      setPageError({
+        dataKey,
+        message:
+          error instanceof Error
+            ? error.message
+            : "Gagal mendapatkan rekod jejak audit.",
+      });
     } finally {
       setIsLoadingPage(false);
     }
@@ -198,12 +220,17 @@ export default function AuditLogTablePanel({
             {bootstrapError}
           </div>
         ) : pageError ? (
+      <div className="overflow-hidden rounded-lg bg-white">
+        {currentPageError || initialErrorMessage ? (
           <div className="border-b border-light-grey/20 bg-[#FFF4F4] px-4 py-3 text-sm font-semibold text-[#B42318]">
-            {pageError}
+            {currentPageError || initialErrorMessage}
           </div>
         ) : null}
 
-        <div className="overflow-x-auto overflow-y-auto" aria-busy={isLoadingPage}>
+        <div
+          className="overflow-x-auto overflow-y-auto"
+          aria-busy={isLoadingPage || isInitialLoading}
+        >
           <table className="w-full min-w-245 text-left">
             <thead className="bg-background">
               <tr className="bg-background text-xs font-bold text-grey">
@@ -225,6 +252,8 @@ export default function AuditLogTablePanel({
                     Sedang membaca rekod jejak audit...
                   </td>
                 </tr>
+              {isInitialLoading ? (
+                <AuditLoadingRows />
               ) : rows.length > 0 ? (
                 rows.map((row) => (
                   <tr
@@ -279,6 +308,22 @@ export default function AuditLogTablePanel({
         />
       </div>
     </section>
+  );
+}
+
+function AuditLoadingRows() {
+  return (
+    <>
+      {Array.from({ length: 5 }, (_, index) => (
+        <tr key={index} className="border-t border-light-grey/20">
+          {Array.from({ length: 6 }, (_, cellIndex) => (
+            <td key={cellIndex} className="px-3 py-3">
+              <div className="h-4 w-full max-w-32 animate-pulse rounded bg-light-blue" />
+            </td>
+          ))}
+        </tr>
+      ))}
+    </>
   );
 }
 

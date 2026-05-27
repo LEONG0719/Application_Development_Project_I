@@ -27,6 +27,18 @@ export default function AuditLogDetailOverlay({
   errorMessage: string | null;
   onRetry: () => void;
   onClose: () => void;
+import type { AuditLogDetailItem } from "@/lib/audit/audit-logs";
+
+export default function AuditLogDetailOverlay({
+  auditLog,
+  closeHref,
+  errorMessage,
+  isLoading = false,
+}: {
+  auditLog: AuditLogDetailItem | null;
+  closeHref: string;
+  errorMessage?: string;
+  isLoading?: boolean;
 }) {
   return (
     <div className="fixed top-0 left-55 right-0 bottom-0 z-50 bg-black/40 backdrop-blur-sm p-12 flex items-start justify-center">
@@ -112,6 +124,42 @@ export default function AuditLogDetailOverlay({
                   />
                 </div>
               </section>
+          <div className="flex min-h-108 items-center justify-center px-5 py-7 sm:px-8 sm:py-8">
+            <div className="w-full max-w-md rounded-xl border border-light-grey/20 bg-white p-6 text-center">
+              <h4 className="text-lg font-extrabold text-dark-grey">
+                Memuatkan butiran...
+              </h4>
+              <p className="mt-2 text-sm leading-6 text-grey">
+                Sila tunggu sebentar sementara rekod audit dibuka.
+              </p>
+            </div>
+          </div>
+        ) : auditLog ? (
+          <div className="max-h-[calc(100vh-11rem)] overflow-auto px-5 py-6 sm:px-6">
+            <section className="mb-7">
+              <div className="mb-5 flex items-center justify-between gap-4">
+                <SectionTitle>Maklumat Aktiviti</SectionTitle>
+              </div>
+
+              <div className="grid items-start gap-x-4 gap-y-5 md:grid-cols-12">
+                <ModalField
+                  label="Sasaran Data"
+                  value={auditLog.targetData ?? auditLog.target}
+                  tone="strong"
+                  className="md:col-span-5"
+                />
+                <ModalField
+                  label="Modul"
+                  value={auditLog.module}
+                  className="md:col-span-4"
+                />
+                <ModalField
+                  label="Jenis Tindakan"
+                  value={formatEnumLabel(auditLog.actionType)}
+                  tone="strong"
+                  className="md:col-span-3"
+                />
+              </div>
 
               <section className="flex flex-col gap-4">
                 <Topic content="PENERANGAN PERUBAHAN" />
@@ -137,10 +185,92 @@ export default function AuditLogDetailOverlay({
                   rekod operasi.
                 </p>
               </div>
+                <ModalField
+                  label="Tarikh & Masa"
+                  value={auditLog.timestampLabel}
+                  className="md:col-span-4"
+                />
+                <ModalField
+                  label="Jenis Data"
+                  value={
+                    auditLog.entityType
+                      ? formatEnumLabel(auditLog.entityType)
+                      : "N/A"
+                  }
+                  tone={auditLog.entityType ? "default" : "muted"}
+                  className="md:col-span-4"
+                />
+              </div>
+            </section>
+
+            <section>
+              <div className="mb-5">
+                <SectionTitle>Penerangan Perubahan</SectionTitle>
+              </div>
+              <div className="min-h-28 overflow-hidden rounded-lg border border-[#DCE3F2] bg-[#EEF4FF] px-4 py-3 text-sm font-semibold leading-6 text-dark-grey">
+                {auditLog.description || "N/A"}
+              </div>
+            </section>
+          </div>
+        ) : (
+          <div className="flex min-h-108 items-center justify-center px-5 py-7 sm:px-8 sm:py-8">
+            <div className="w-full max-w-md rounded-xl border border-red/20 bg-white p-6 text-center">
+              <h4 className="text-lg font-extrabold text-dark-grey">
+                Rekod tidak ditemui
+              </h4>
+              <p className="mt-2 text-sm leading-6 text-grey">
+                {errorMessage ??
+                  "Rekod audit ini mungkin telah dipadam atau tidak termasuk dalam rekod operasi."}
+              </p>
             </div>
           </div>
         )}
       </section>
+    </div>
+  );
+}
+
+function formatEnumLabel(value: string) {
+  return value.replace(/_/g, " ");
+}
+
+function SectionTitle({ children }: { children: string }) {
+  return (
+    <h4 className="flex items-center gap-2 text-[13px] font-extrabold uppercase tracking-[0.2em] text-dark-blue">
+      <span className="h-4 w-1 rounded-sm bg-dark-blue" aria-hidden="true" />
+      {children}
+    </h4>
+  );
+}
+
+function ModalField({
+  label,
+  value,
+  tone = "default",
+  className = "",
+}: {
+  label: string;
+  value: string;
+  tone?: "default" | "muted" | "strong";
+  className?: string;
+}) {
+  const valueClass = {
+    default: "text-dark-grey",
+    muted: "text-light-grey",
+    strong: "font-extrabold text-dark-grey",
+  }[tone];
+
+  return (
+    <div className={`flex min-w-0 flex-col gap-2 ${className}`}>
+      <label className="block h-3 text-[10px] font-extrabold uppercase leading-3 tracking-[0.13em] text-grey">
+        {label}
+      </label>
+      <div
+        className={`flex h-12 items-center overflow-hidden rounded-lg border border-[#DCE3F2] bg-[#EEF4FF] px-4 text-sm ${valueClass}`}
+        title={value}
+      >
+        <span className="truncate">{value}</span>
+      </div>
     </div>
   );
 }

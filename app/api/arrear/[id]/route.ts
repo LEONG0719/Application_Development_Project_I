@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { mapTunggakanForApi } from "@/lib/arrears/arrears"; // Make sure this path is correct!
 
+export const dynamic = "force-dynamic";
+
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> } // <-- Update the type to a Promise
@@ -13,6 +15,7 @@ export async function GET(
     const resident = await prisma.resident.findUnique({
       where: { id: residentId },
       include: {
+        arrearsSummary: true,
         occupancies: {
           where: { status: "CURRENT" },
           include: {
@@ -28,7 +31,6 @@ export async function GET(
         // Pull their full transaction ledger, newest first
         transactions: {
           orderBy: { transactionDate: 'desc' },
-          where: { status: "NORMAL" } 
         }
       },
     });
@@ -73,7 +75,7 @@ export async function GET(
     const history = resident.transactions.map(t => ({
       tarikh: new Date(t.transactionDate).toLocaleDateString('en-GB'),
       id: t.id.substring(0, 8).toUpperCase(), // Create a short transaction ID for the UI
-      kategori: t.category.replace(/_/g, ' '), // Formats "CAJ_TAMBAHAN" to "CAJ TAMBAHAN"
+      kategori: t.status === "NORMAL" ? t.category.replace(/_/g, ' ') : `${t.category.replace(/_/g, ' ')} (${t.status})`,
       catatan: t.description || "-",
       debit: Number(t.debitAmount || 0),
       kredit: Number(t.creditAmount || 0),

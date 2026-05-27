@@ -58,9 +58,12 @@ export function usePenghuniDetailHistoryFilter(
 
     const filteredHistory = isActive
         ? records.filter((record) => {
-              // Use string comparison for dates in YYYY-MM-DD format to avoid timezone issues.
-              if (dateFilter.startDate && record.tarikh < dateFilter.startDate) return false;
-              if (dateFilter.endDate && record.tarikh > dateFilter.endDate) return false;
+              // Convert DD/MM/YYYY to YYYY-MM-DD for accurate string comparison
+              const parts = record.tarikh.split("/");
+              const formattedTarikh = parts.length === 3 ? `${parts[2]}-${parts[1]}-${parts[0]}` : record.tarikh;
+
+              if (dateFilter.startDate && formattedTarikh < dateFilter.startDate) return false;
+              if (dateFilter.endDate && formattedTarikh > dateFilter.endDate) return false;
               return true;
           })
         : records;

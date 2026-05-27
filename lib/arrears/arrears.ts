@@ -6,7 +6,8 @@ import type {
   MonthlyCharge,
   AdditionalCharge,
   Rebate,
-  UnitOccupancy
+  UnitOccupancy,
+  ArrearsSummary
 } from "@prisma/client";
 
 // --- TYPES ---
@@ -17,6 +18,7 @@ export type TunggakanListItem = {
   icNumber: string;
   quarterClass: string; // e.g., "PPR Kempas"
   unitCode: string;     // e.g., "Blok B-04-12"
+  quarterAddress: string;
   sewa: number;
   senggara: number;
   penalti: number;
@@ -46,6 +48,7 @@ export type ResidentTunggakanDetails = {
   age: number;
   quarterClass: string;
   unitCode: string;
+  quarterAddress: string;
   moveInDate: string | null;
   moveOutDate: string | null;
   status: string;
@@ -96,12 +99,14 @@ export function mapTunggakanForApi(
   resident: Resident & {
       occupancies: (UnitOccupancy & { unit: Unit & { quarterCategory: QuarterCategory } })[];
       monthlyCharges: (MonthlyCharge & { additionalCharges: AdditionalCharge[], rebates: Rebate[] })[];
+      arrearsSummary?: ArrearsSummary | null;
   }
 ): TunggakanListItem {
   
   const activeOccupancy = resident.occupancies.find(o => o.status === "CURRENT");
   const quarterClass = activeOccupancy?.unit.quarterCategory?.categoryName || "Tiada";
   const unitCode = activeOccupancy?.unit.unitCode || "Tiada";
+  const quarterAddress = activeOccupancy?.unit.quarterCategory?.address || "";
 
   let sewa = 0;
   let senggara = 0;
@@ -120,8 +125,8 @@ export function mapTunggakanForApi(
       charge.rebates.forEach(r => { rebat += Number(r.amount) });
   });
 
-  // 3. SUBTRACT PAYMENTS FROM THE FINAL CALCULATION
-  const jumlahTunggakan = (sewa + senggara + penalti + tambahan) - rebat - bayaran;
+  // DIRECTLY USE THE MASTER ARREARS SUMMARY TABLE FOR NET TOTAL (Single Source of Truth!)
+  const jumlahTunggakan = resident.arrearsSummary ? Number(resident.arrearsSummary.totalArrearsAmount) : 0;
 
   return {
       id: resident.id,
@@ -129,6 +134,7 @@ export function mapTunggakanForApi(
       icNumber: resident.icNumber,
       quarterClass,
       unitCode,
+      quarterAddress,
       sewa: Number(sewa.toFixed(2)),
       senggara: Number(senggara.toFixed(2)),
       penalti: Number(penalti.toFixed(2)),
