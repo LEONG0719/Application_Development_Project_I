@@ -253,6 +253,7 @@ export default function JejakAuditPageClient({
       />
       <AuditLogTablePanel
         auditRows={auditRows}
+        dataKey={buildAuditLogQueryString(filters, { page: pagination.currentPage })}
         filterOptions={filterOptions}
         filters={filters}
         hasActiveFilters={hasActiveFilters}
