@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Icon from "../../../components/Icon/Icon";
-import ToolbarButton from "@/app/components/ToolbarIconButton";
+import Icon from "@/app/components/Icon/Icon";
+import ButiranTunggakanHistory from "./ButiranTunggakanHistory";
 
 type ButiranTunggakanModalProps = {
   isOpen: boolean;
@@ -11,13 +11,13 @@ type ButiranTunggakanModalProps = {
 };
 
 // Define the shape of the data we expect from the API
-type ProfileData = {
+export type ProfileData = {
   fullName: string; icNumber: string; age: number; kelas: string;
   unit: string; tarikhMasuk: string; tarikhKeluar: string; status: string;
   charges: { sewa: number; senggara: number; penalti: number; tambahan: number; rebat: number; total: number; };
 };
 
-type HistoryData = {
+export type HistoryData = {
   tarikh: string; id: string; kategori: string; catatan: string; debit: number; kredit: number;
 };
 
@@ -307,62 +307,7 @@ export default function ButiranTunggakanModal({ isOpen, onClose, residentId }: B
           {/* TAB 2: SEJARAH TUNGGAKAN */}
           {activeTab === "sejarah" && data?.history && (
             <div className={`transition-opacity duration-300 ${isLoading ? 'opacity-20' : 'opacity-100'}`}>
-              <div className="flex items-center justify-between mb-4">
-                <span className="border-l-4 border-dark-blue pl-3 py-0.5 text-xs text-dark-blue font-bold tracking-widest">
-                  SEJARAH TUNGGAKAN
-                </span>
-                <div className="flex gap-4">
-                  <ToolbarButton
-                    icon="download"
-                    label="Muat turun sejarah tunggakan"
-                  />
-                  <ToolbarButton icon="filter" label="Tapis sejarah tunggakan" />
-                </div>
-              </div>
-
-              <div className="bg-white border border-gray-100 rounded-xl shadow-sm overflow-hidden">
-                <table className="w-full text-left text-sm">
-                  <thead className="bg-light-blue border-b border-gray-100 text-grey text-[10px] uppercase font-bold tracking-wider">
-                    <tr>
-                      <th className="px-6 py-4">Tarikh</th>
-                      <th className="px-6 py-4">ID Transaksi</th>
-                      <th className="px-6 py-4">Kategori</th>
-                      <th className="px-6 py-4">Catatan</th>
-                      <th className="px-6 py-4 text-right">Debit (RM)</th>
-                      <th className="px-6 py-4 text-right">Kredit (RM)</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100">
-                    {data.history.length === 0 ? (
-                      <tr>
-                        <td colSpan={6} className="px-6 py-8 text-center text-sm text-grey">Tiada rekod transaksi dijumpai.</td>
-                      </tr>
-                    ) : (
-                      data.history.map((row, idx) => (
-                        <tr key={idx} className="hover:bg-gray-50 transition-colors">
-                          <td className="px-6 py-4 font-bold text-dark-grey">{row.tarikh}</td>
-                          <td className="px-6 py-4 text-xs text-light-grey">{row.id}</td>
-                          <td className="px-6 py-4 font-medium text-dark-grey">{row.kategori}</td>
-                          <td className="px-6 py-4 text-dark-grey">{row.catatan}</td>
-                          <td className={`px-6 py-4 text-right font-bold ${row.debit > 0 ? "text-red" : "text-dark-grey"}`}>{formatRM(row.debit)}</td>
-                          <td className={`px-6 py-4 text-right font-bold ${row.kredit > 0 ? "text-green" : "text-dark-grey"}`}>{formatRM(row.kredit)}</td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
-              
-              {data.history.length > 0 && (
-                <div className="pt-4 flex items-center justify-between text-xs text-grey">
-                  <div className="flex gap-1">
-                    <button className="px-3 py-1.5 border border-gray-200 rounded hover:bg-gray-50">&lt;</button>
-                    <button className="px-3 py-1.5 border border-dark-blue rounded bg-dark-blue text-white">1</button>
-                    <button className="px-3 py-1.5 border border-gray-200 rounded hover:bg-gray-50 bg-white">&gt;</button>
-                  </div>
-                  <div>Menunjukkan <span className="font-bold text-dark-grey">{data.history.length}</span> Rekod</div>
-                </div>
-              )}
+              <ButiranTunggakanHistory history={data.history} residentId={residentId} />
             </div>
           )}
         </div>

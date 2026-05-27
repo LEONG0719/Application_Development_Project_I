@@ -8,7 +8,7 @@ import Icon from "../../../components/Icon/Icon";
 import ToolbarButton from "@/app/components/ToolbarIconButton";
 import type { TunggakanListItem, TunggakanSummary } from "@/lib/arrears/arrears"; // Make sure this path is correct!
 import KemasKiniModal from "./KemasKiniModal";
-import ButiranTunggakanModal from "./ButiranTunggakanModal";
+import ButiranTunggakanModal from "./ButiranTunggakan/ButiranTunggakanModal";
 
 const getCurrentMonthInputValue = () => {
   const today = new Date();
@@ -476,7 +476,7 @@ export default function TunggakanPageClient() {
                     </td>
                     <td className="px-6 py-4">
                       <div className="font-bold text-dark-grey">{row.quarterClass}</div>
-                      <div className="text-xs text-light-grey mt-1 max-w-[240px] leading-snug whitespace-normal">
+                      <div className="text-xs text-light-grey mt-1 max-w-60 leading-snug whitespace-normal">
                         {row.quarterAddress ? `${row.unitCode}, ${row.quarterAddress}` : row.unitCode}
                       </div>
                     </td>
