@@ -68,8 +68,8 @@ export default function ButiranTunggakanModal({ isOpen, onClose, residentId }: B
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-      <div className="bg-light-blue rounded-xl shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col max-h-[90vh]">
+    <div className="fixed top-0 left-55 right-0 bottom-0 z-50 bg-black/40 backdrop-blur-sm p-12 flex items-start justify-center">
+      <div className="bg-light-blue rounded-lg shadow-2xl w-full overflow-hidden flex flex-col max-h-full">
         
         {/* Header */}
         <div className="bg-dark-blue px-8 py-5 flex justify-between items-start text-white">
