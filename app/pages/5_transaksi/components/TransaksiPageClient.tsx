@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -8,6 +9,7 @@ import TransaksiReverseModal from "./TransaksiReverseModal";
 import TransaksiAdjustModal from "./TransaksiAdjustModal";
 import Icon from "../../../components/Icon"; 
 import TransaksiViewModal from "./TransaksiViewModal";
+import { downloadXlsxFile } from "@/lib/download/xlsx-export";
 
 interface SummaryData {
   totalCount: number;
@@ -32,6 +34,169 @@ export default function TransaksiPageClient() {
   const [selectedAdjustTx, setSelectedAdjustTx] = useState<any>(null);
   const [activeFilters, setActiveFilters] = useState<FilterState>(defaultFilters);
   const [selectedViewTx, setSelectedViewTx] = useState<any>(null);
+  const [isExporting, setIsExporting] = useState(false);
+
+  const handleExport = async () => {
+    setIsExporting(true);
+    try {
+      const queryParams = new URLSearchParams();
+      
+      if (activeFilters.search) queryParams.append("search", activeFilters.search);
+      if (activeFilters.startDate) queryParams.append("startDate", activeFilters.startDate);
+      if (activeFilters.endDate) queryParams.append("endDate", activeFilters.endDate);
+      if (activeFilters.statuses.length > 0) {
+        queryParams.append("statuses", activeFilters.statuses.join(","));
+      }
+      if (activeFilters.categories && activeFilters.categories.length > 0) {
+        queryParams.append("categories", activeFilters.categories.join(","));
+      }
+      if (activeFilters.types && activeFilters.types.length === 1) {
+        queryParams.append("type", activeFilters.types[0]);
+      }
+      
+      // Fetch all transactions matching filters
+      queryParams.append("page", "1");
+      queryParams.append("limit", "100000"); 
+      
+      const response = await fetch(`/api/transactions?${queryParams.toString()}`);
+      const result = await response.json();
+
+      if (!result.ok) {
+        alert(result.message || "Gagal memuat turun data untuk dieksport.");
+        return;
+      }
+
+      const allTx = result.data || [];
+
+      // Sort logic identical to TransaksiTable
+      const sorted = [...allTx].sort((a: any, b: any) => {
+        const timeA = new Date(a.createdAt || a.transactionDate).getTime();
+        const timeB = new Date(b.createdAt || b.transactionDate).getTime();
+        if (timeB !== timeA) return timeB - timeA;
+        return (b.transactionNo || b.id).localeCompare(a.transactionNo || a.id);
+      });
+
+      const getRelatedChildren = (tx: any) => {
+        return (tx.relatedTransaction?.childTransactions || tx.childTransactions || [])
+          .filter((child: any) => child.status === "PELARASAN" || child.status === "PEMBALIKAN")
+          .sort((a: any, b: any) => {
+            const timeA = new Date(a.createdAt || a.transactionDate).getTime();
+            const timeB = new Date(b.createdAt || b.transactionDate).getTime();
+            if (timeB !== timeA) return timeB - timeA;
+            return (b.transactionNo || b.id).localeCompare(a.transactionNo || a.id);
+          });
+      };
+
+      const newestRelatedChildByParentId = new Map<string, string>();
+      sorted.forEach((tx: any) => {
+        const isRelatedChild = ["PELARASAN", "PEMBALIKAN"].includes(tx.status) && tx.relatedTransactionId;
+        if (!isRelatedChild || !tx.relatedTransactionId) return;
+
+        if (!newestRelatedChildByParentId.has(tx.relatedTransactionId)) {
+          newestRelatedChildByParentId.set(tx.relatedTransactionId, tx.id);
+        }
+      });
+
+      const displayTxs = sorted.filter((tx: any) => {
+        const isRelatedChild = ["PELARASAN", "PEMBALIKAN"].includes(tx.status) && tx.relatedTransactionId;
+        if (!isRelatedChild) return true;
+
+        const relatedChildren = getRelatedChildren(tx);
+        if (relatedChildren.length > 0) {
+          return relatedChildren[0].id === tx.id;
+        }
+
+        return !!tx.relatedTransactionId && newestRelatedChildByParentId.get(tx.relatedTransactionId) === tx.id;
+      });
+
+      // Prepare Excel rows
+      const headers = [
+        { value: "Tarikh", style: "header" as const, align: "left" as const },
+        { value: "ID Transaksi", style: "header" as const, align: "left" as const },
+        { value: "Kategori", style: "header" as const, align: "left" as const },
+        { value: "Status", style: "header" as const, align: "left" as const },
+        { value: "ID Berkaitan", style: "header" as const, align: "left" as const },
+        { value: "Penghuni", style: "header" as const, align: "left" as const },
+        { value: "No. Kad Pengenalan", style: "header" as const, align: "left" as const },
+        { value: "No. Resit", style: "header" as const, align: "left" as const },
+        { value: "Catatan", style: "header" as const, align: "left" as const },
+        { value: "Debit (RM)", style: "header" as const, align: "right" as const },
+        { value: "Kredit (RM)", style: "header" as const, align: "right" as const }
+      ];
+
+      const rows = [
+        headers,
+        ...displayTxs.map((tx: any) => {
+          const isDilaraskan = tx.status === "DILARASKAN";
+          let finalDebit = Number(tx.debitAmount);
+          let finalCredit = Number(tx.creditAmount);
+          
+          if (isDilaraskan && (tx.childTransactions?.length ?? 0) > 0) {
+            const pelarasanTxs = (tx.childTransactions ?? []).filter((c: any) => c.status === "PELARASAN");
+            const totalDeltaDebit = pelarasanTxs.reduce((sum: number, c: any) => sum + Number(c.debitAmount), 0);
+            const totalDeltaCredit = pelarasanTxs.reduce((sum: number, c: any) => sum + Number(c.creditAmount), 0);
+            
+            if (finalDebit > 0) finalDebit = finalDebit + totalDeltaDebit - totalDeltaCredit;
+            if (finalCredit > 0) finalCredit = finalCredit + totalDeltaCredit - totalDeltaDebit;
+          }
+
+          let displayRelatedId = 'N/A';
+          if (isDilaraskan || tx.status === "DIBALIKAN") {
+            const fixes = getRelatedChildren(tx);
+            if (fixes.length > 0) {
+              displayRelatedId = fixes[0].transactionNo || fixes[0].id.split('-')[0] + '...';
+            }
+          } else if (tx.relatedTransaction) {
+            displayRelatedId = tx.relatedTransaction.transactionNo || tx.relatedTransaction.id.split('-')[0] + '...';
+          }
+
+          return [
+            new Date(tx.transactionDate).toLocaleDateString("en-GB"),
+            tx.transactionNo || tx.id.split('-')[0] + '...',
+            tx.category.replace(/_/g, ' '),
+            tx.status,
+            displayRelatedId,
+            tx.resident?.fullName || 'Tiada',
+            tx.resident?.icNumber || 'Tiada',
+            tx.receiptNo || 'N/A',
+            tx.description || '',
+            finalDebit > 0 ? { value: finalDebit, type: "number" as const, align: "right" as const } : 0.00,
+            finalCredit > 0 ? { value: finalCredit, type: "number" as const, align: "right" as const } : 0.00
+          ];
+        })
+      ];
+
+      // Download the Excel file
+      downloadXlsxFile({
+        filename: `Senarai_Transaksi_${new Date().toISOString().slice(0, 10)}`,
+        sheets: [
+          {
+            name: "Transaksi",
+            columns: [
+              { width: 12 }, // Tarikh
+              { width: 20 }, // ID Transaksi
+              { width: 22 }, // Kategori
+              { width: 15 }, // Status
+              { width: 20 }, // ID Berkaitan
+              { width: 25 }, // Penghuni
+              { width: 20 }, // No. Kad Pengenalan
+              { width: 20 }, // No. Resit
+              { width: 30 }, // Catatan
+              { width: 15 }, // Debit
+              { width: 15 }  // Kredit
+            ],
+            rows
+          }
+        ]
+      });
+
+    } catch (error) {
+      console.error("Export failed:", error);
+      alert("Ralat berlaku semasa mengeksport data.");
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   // ==========================================
   // PAGINATION STATES
@@ -80,6 +245,7 @@ export default function TransaksiPageClient() {
 
   // Fetch whenever the page number OR the active filters change
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchTransactions(activeFilters, currentPage);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage]); // We only watch currentPage here to trigger pagination fetches
@@ -137,6 +303,8 @@ export default function TransaksiPageClient() {
         <TransaksiFilterPanel 
           onSearch={handleSearch}
           isLoading={isLoading}
+          onExport={handleExport}
+          isExporting={isExporting}
         />
 
         {/* Pass ONLY currentTransactions instead of all transactions */}

@@ -15,6 +15,8 @@ export interface FilterState {
 interface TransaksiFilterPanelProps {
   onSearch: (filters: FilterState) => void;
   isLoading: boolean;
+  onExport: () => void;
+  isExporting: boolean;
 }
 
 const STATUS_OPTIONS = [
@@ -34,7 +36,7 @@ const TYPE_OPTIONS = [
   { value: "CREDIT", label: "KREDIT", color: "bg-[#DCFCE7] text-[#16A34A] border border-[#BBF7D0]" },
 ];
 
-export default function TransaksiFilterPanel({ onSearch, isLoading }: TransaksiFilterPanelProps) {
+export default function TransaksiFilterPanel({ onSearch, isLoading, onExport, isExporting }: TransaksiFilterPanelProps) {
   const [isOpen, setIsOpen] = useState(true); // Collapsible state
   
   const [filters, setFilters] = useState<FilterState>({
@@ -90,13 +92,27 @@ export default function TransaksiFilterPanel({ onSearch, isLoading }: TransaksiF
     <div className="bg-white p-6 border-b border-gray-100 rounded-t-xl">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-lg font-bold text-[#151E66]">Senarai Transaksi</h2>
-        <button 
-          onClick={() => setIsOpen(!isOpen)}
-          className="flex items-center gap-2 bg-[#5d5c8d] hover:bg-[#4c4b7c] text-white px-4 py-2 rounded text-sm font-semibold transition-colors"
-        >
-          <Icon icon="filter" size={18} />
-          {isOpen ? "Tutup Penapis" : "Penapis"}
-        </button>
+        <div className="flex items-center gap-2.5">
+          <button 
+            onClick={onExport}
+            disabled={isExporting || isLoading}
+            className="flex items-center justify-center text-gray-500 hover:text-dark-blue p-2 rounded hover:bg-gray-100 transition-colors disabled:opacity-50 cursor-pointer"
+            title="Eksport Excel"
+          >
+            {isExporting ? (
+              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-[#5d5c8d]"></div>
+            ) : (
+              <Icon icon="download" size={20} />
+            )}
+          </button>
+          <button 
+            onClick={() => setIsOpen(!isOpen)}
+            className="flex items-center gap-2 bg-[#5d5c8d] hover:bg-[#4c4b7c] text-white px-4 py-2 rounded text-sm font-semibold transition-colors cursor-pointer"
+          >
+            <Icon icon="filter" size={18} />
+            {isOpen ? "Tutup Penapis" : "Penapis"}
+          </button>
+        </div>
       </div>
 
       {isOpen && (
