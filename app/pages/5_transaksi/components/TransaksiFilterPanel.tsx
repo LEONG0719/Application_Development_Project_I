@@ -91,7 +91,7 @@ export default function TransaksiFilterPanel({ onSearch, isLoading, onExport, is
   return (
     <div className="bg-white p-6 border-b border-gray-100 rounded-t-xl">
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-lg font-bold text-[#151E66]">Senarai Transaksi</h2>
+        <h2 className="text-lg font-bold text-dark-blue">Senarai Transaksi</h2>
         <div className="flex items-center gap-2.5">
           <button 
             onClick={onExport}
@@ -127,7 +127,7 @@ export default function TransaksiFilterPanel({ onSearch, isLoading, onExport, is
                 placeholder="Cth: Ahmad Ali..." 
                 value={filters.search}
                 onChange={e => setFilters({...filters, search: e.target.value})}
-                className="w-full bg-[#EFF4FF] border border-transparent rounded p-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-[#5d5c8d] text-slate-700 placeholder:text-gray-400"
+                className="w-full bg-light-blue border border-transparent rounded p-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-[#5d5c8d] text-slate-700 placeholder:text-gray-400"
               />
             </div>
             <div>
@@ -136,7 +136,7 @@ export default function TransaksiFilterPanel({ onSearch, isLoading, onExport, is
                 type="date" 
                 value={filters.startDate}
                 onChange={e => setFilters({...filters, startDate: e.target.value})}
-                className="w-full bg-[#EFF4FF] border border-transparent rounded p-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-[#5d5c8d] text-slate-700"
+                className="w-full bg-light-blue border border-transparent rounded p-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-[#5d5c8d] text-slate-700"
               />
             </div>
             <div>
@@ -145,7 +145,7 @@ export default function TransaksiFilterPanel({ onSearch, isLoading, onExport, is
                 type="date" 
                 value={filters.endDate}
                 onChange={e => setFilters({...filters, endDate: e.target.value})}
-                className="w-full bg-[#EFF4FF] border border-transparent rounded p-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-[#5d5c8d] text-slate-700"
+                className="w-full bg-light-blue border border-transparent rounded p-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-[#5d5c8d] text-slate-700"
               />
             </div>
           </div>

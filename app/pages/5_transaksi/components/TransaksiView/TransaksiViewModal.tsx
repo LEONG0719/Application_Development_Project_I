@@ -63,7 +63,7 @@ export default function TransaksiViewModal({ isOpen, onClose, transaction }: Tra
     
     switch (status) {
       case "NORMAL":
-        return <span className={`bg-[#CFFAFE] text-[#0E7490] ${baseClass}`}>NORMAL</span>;
+        return <span className={`bg-normal text-[#0E7490] ${baseClass}`}>NORMAL</span>;
       case "DIBALIKAN":
       case "PEMBALIKAN":
         return <span className={`bg-[#DC2626] text-white ${baseClass}`}>{displayStatus}</span>;
@@ -113,10 +113,10 @@ export default function TransaksiViewModal({ isOpen, onClose, transaction }: Tra
 
   return (
     <div className="fixed top-0 left-55 right-0 bottom-0 z-50 bg-black/40 backdrop-blur-sm p-12 flex items-start justify-center">
-      <div className="bg-light-blue rounded-lg shadow-2xl w-full max-w-[900px] overflow-hidden flex flex-col max-h-full">
+      <div className="bg-light-blue rounded-lg shadow-2xl w-full max-w-225 overflow-hidden flex flex-col max-h-full">
         
         {/* Header */}
-        <header className="bg-[#151E66] px-8 py-5 flex justify-between items-start text-white shrink-0">
+        <header className="bg-dark-blue px-8 py-5 flex justify-between items-start text-white shrink-0">
           <div className="flex flex-col">
             <h1 className="text-[1.1rem] font-bold uppercase tracking-wide">Butiran Transaksi</h1>
             <p className="text-[10px] font-semibold text-blue-200 mt-1 uppercase tracking-widest">
@@ -160,7 +160,7 @@ export default function TransaksiViewModal({ isOpen, onClose, transaction }: Tra
                 <div>
                   <div className="flex justify-between items-center mb-5">
                     <div className="flex items-center text-xs font-bold text-dark-blue uppercase tracking-widest">
-                      <span className="inline-block w-1 h-[18px] bg-dark-blue mr-3 rounded-sm"></span>
+                      <span className="inline-block w-1 h-4.5 bg-dark-blue mr-3 rounded-sm"></span>
                       Maklumat Penghuni
                     </div>
                      {(transaction?.residentId || transaction?.resident?.id) && (
@@ -176,53 +176,53 @@ export default function TransaksiViewModal({ isOpen, onClose, transaction }: Tra
                   <div className="grid grid-cols-12 gap-5">
                       <div className="flex flex-col col-span-6">
                           <span className="text-[10px] font-bold text-gray-500 mb-2 uppercase tracking-wider pl-1">Nama Penghuni</span>
-                          <div className="bg-transparent border border-light-grey/40 rounded-lg px-4 py-[14px] text-sm text-[#0B1C30] min-h-[48px] flex items-center font-bold">
+                          <div className="bg-transparent border border-light-grey/40 rounded-lg px-4 py-3.5 text-sm text-[#0B1C30] min-h-12 flex items-center font-bold">
                               {loadingResident ? "Memuatkan..." : (residentDetails?.fullName || transaction.resident?.fullName || "Tiada")}
                           </div>
                       </div>
                       <div className="flex flex-col col-span-4">
                           <span className="text-[10px] font-bold text-gray-500 mb-2 uppercase tracking-wider pl-1">No. Kad Pengenalan</span>
-                          <div className="bg-transparent border border-light-grey/40 rounded-lg px-4 py-[14px] text-sm text-[#0B1C30] min-h-[48px] flex items-center font-bold">
+                          <div className="bg-transparent border border-light-grey/40 rounded-lg px-4 py-3.5 text-sm text-[#0B1C30] min-h-12 flex items-center font-bold">
                               {loadingResident ? "Memuatkan..." : (residentDetails?.icNumber || transaction.resident?.icNumber || "Tiada")}
                           </div>
                       </div>
                       <div className="flex flex-col col-span-2">
                           <span className="text-[10px] font-bold text-gray-500 mb-2 uppercase tracking-wider pl-1">Umur</span>
-                          <div className="bg-transparent border border-light-grey/40 rounded-lg px-4 py-[14px] text-sm text-[#0B1C30] min-h-[48px] flex items-center font-bold">
+                          <div className="bg-transparent border border-light-grey/40 rounded-lg px-4 py-3.5 text-sm text-[#0B1C30] min-h-12 flex items-center font-bold">
                               {loadingResident ? "Memuatkan..." : getAgeFromIc(residentDetails?.icNumber || transaction.resident?.icNumber)}
                           </div>
                       </div>
 
                       <div className="flex flex-col col-span-6">
                           <span className="text-[10px] font-bold text-gray-500 mb-2 uppercase tracking-wider pl-1">Kelas</span>
-                          <div className="bg-transparent border border-light-grey/40 rounded-lg px-4 py-[14px] text-sm text-[#0B1C30] min-h-[48px] flex items-center justify-between font-bold">
+                          <div className="bg-transparent border border-light-grey/40 rounded-lg px-4 py-3.5 text-sm text-[#0B1C30] min-h-12 flex items-center justify-between font-bold">
                               {loadingResident ? "Memuatkan..." : (residentDetails?.quarters?.quarterName || "N/A")}
                               {!loadingResident && <Icon icon="externalLink" size={16} className="text-light-grey" />}
                           </div>
                       </div>
                       <div className="flex flex-col col-span-6">
                           <span className="text-[10px] font-bold text-gray-500 mb-2 uppercase tracking-wider pl-1">Unit Kuarters</span>
-                          <div className="bg-transparent border border-light-grey/40 rounded-lg px-4 py-[14px] text-sm font-bold text-[#151E66] min-h-[48px] flex items-center justify-between">
+                          <div className="bg-transparent border border-light-grey/40 rounded-lg px-4 py-3.5 text-sm font-bold text-dark-blue min-h-12 flex items-center justify-between">
                               {loadingResident ? "Memuatkan..." : (residentDetails?.quarters?.unitCode || "N/A")}
-                              {!loadingResident && <Icon icon="externalLink" size={16} className="text-[#151E66]" />}
+                              {!loadingResident && <Icon icon="externalLink" size={16} className="text-dark-blue" />}
                           </div>
                       </div>
 
                       <div className="flex flex-col col-span-3">
                           <span className="text-[10px] font-bold text-gray-500 mb-2 uppercase tracking-wider pl-1">Tarikh Masuk</span>
-                          <div className="bg-transparent border border-light-grey/40 rounded-lg px-4 py-[14px] text-sm text-[#0B1C30] min-h-[48px] flex items-center font-bold">
+                          <div className="bg-transparent border border-light-grey/40 rounded-lg px-4 py-3.5 text-sm text-[#0B1C30] min-h-12 flex items-center font-bold">
                               {loadingResident ? "Memuatkan..." : (residentDetails?.quarters?.moveInDate ? new Date(residentDetails.quarters.moveInDate).toLocaleDateString("en-GB") : "N/A")}
                           </div>
                       </div>
                       <div className="flex flex-col col-span-3">
                           <span className="text-[10px] font-bold text-gray-500 mb-2 uppercase tracking-wider pl-1">Tarikh Keluar</span>
-                          <div className="bg-transparent border border-light-grey/40 rounded-lg px-4 py-[14px] text-sm text-light-grey min-h-[48px] flex items-center font-bold">
+                          <div className="bg-transparent border border-light-grey/40 rounded-lg px-4 py-3.5 text-sm text-light-grey min-h-12 flex items-center font-bold">
                               {loadingResident ? "Memuatkan..." : (residentDetails?.quarters?.moveOutDate ? new Date(residentDetails.quarters.moveOutDate).toLocaleDateString("en-GB") : "N/A")}
                           </div>
                       </div>
                       <div className="flex flex-col col-span-6">
                           <span className="text-[10px] font-bold text-gray-500 mb-2 uppercase tracking-wider pl-1">Status Penghuni</span>
-                          <div className="bg-transparent border border-light-grey/40 rounded-lg px-4 py-[14px] text-sm text-[#059669] font-bold min-h-[48px] flex items-center justify-between">
+                          <div className="bg-transparent border border-light-grey/40 rounded-lg px-4 py-3.5 text-sm text-[#059669] font-bold min-h-12 flex items-center justify-between">
                               {loadingResident ? "Memuatkan..." : (residentDetails?.status === "VERIFIED" ? "Aktif" : residentDetails?.status || "N/A")}
                           </div>
                       </div>
@@ -233,7 +233,7 @@ export default function TransaksiViewModal({ isOpen, onClose, transaction }: Tra
                 <div>
                   <div className="flex justify-between items-center mb-5">
                     <div className="flex items-center text-xs font-bold text-dark-blue uppercase tracking-widest">
-                      <span className="inline-block w-1 h-[18px] bg-dark-blue mr-3 rounded-sm"></span>
+                      <span className="inline-block w-1 h-4.5 bg-dark-blue mr-3 rounded-sm"></span>
                       Maklumat Transaksi
                     </div>
                     {getStatusBadge(transaction.status)}
@@ -242,46 +242,46 @@ export default function TransaksiViewModal({ isOpen, onClose, transaction }: Tra
                   <div className="grid grid-cols-12 gap-5">
                       <div className="flex flex-col col-span-6">
                           <span className="text-[10px] font-bold text-gray-500 mb-2 uppercase tracking-wider pl-1">Tarikh</span>
-                          <div className="bg-transparent border border-light-grey/40 rounded-lg px-4 py-[14px] text-sm text-[#0B1C30] min-h-[48px] flex items-center font-bold">
+                          <div className="bg-transparent border border-light-grey/40 rounded-lg px-4 py-3.5 text-sm text-[#0B1C30] min-h-12 flex items-center font-bold">
                               {new Date(transaction.transactionDate).toLocaleDateString("en-GB")}
                           </div>
                       </div>
                       <div className="flex flex-col col-span-6">
                           <span className="text-[10px] font-bold text-gray-500 mb-2 uppercase tracking-wider pl-1">ID</span>
-                          <div className="bg-transparent border border-light-grey/40 rounded-lg px-4 py-[14px] text-sm text-[#0B1C30] min-h-[48px] flex items-center font-bold">
+                          <div className="bg-transparent border border-light-grey/40 rounded-lg px-4 py-3.5 text-sm text-[#0B1C30] min-h-12 flex items-center font-bold">
                               {transaction.transactionNo || transaction.id.split("-")[0] + "..."}
                           </div>
                       </div>
 
                       <div className="flex flex-col col-span-6">
                           <span className="text-[10px] font-bold text-gray-500 mb-2 uppercase tracking-wider pl-1">Kategori</span>
-                          <div className="bg-transparent border border-light-grey/40 rounded-lg px-4 py-[14px] text-sm text-[#0B1C30] min-h-[48px] flex items-center capitalize font-bold">
+                          <div className="bg-transparent border border-light-grey/40 rounded-lg px-4 py-3.5 text-sm text-[#0B1C30] min-h-12 flex items-center capitalize font-bold">
                               {transaction.category.replace(/_/g, " ")}
                           </div>
                       </div>
                       <div className="flex flex-col col-span-6">
                           <span className="text-[10px] font-bold text-gray-500 mb-2 uppercase tracking-wider pl-1">No Resit</span>
-                          <div className="bg-transparent border border-light-grey/40 rounded-lg px-4 py-[14px] text-sm text-[#0B1C30] min-h-[48px] flex items-center font-bold">
+                          <div className="bg-transparent border border-light-grey/40 rounded-lg px-4 py-3.5 text-sm text-[#0B1C30] min-h-12 flex items-center font-bold">
                               {transaction.receiptNo || "Tiada"}
                           </div>
                       </div>
 
                       <div className="flex flex-col col-span-6">
                           <span className="text-[10px] font-bold text-gray-500 mb-2 uppercase tracking-wider pl-1">Debit (RM)</span>
-                          <div className={`bg-transparent border border-light-grey/40 rounded-lg px-4 py-[14px] text-sm min-h-[48px] flex items-center ${Number(transaction.debitAmount) > 0 ? "text-[#DC2626] font-bold" : "text-[#0B1C30] font-bold"}`}>
+                          <div className={`bg-transparent border border-light-grey/40 rounded-lg px-4 py-3.5 text-sm min-h-12 flex items-center ${Number(transaction.debitAmount) > 0 ? "text-[#DC2626] font-bold" : "text-[#0B1C30] font-bold"}`}>
                               {Number(transaction.debitAmount) > 0 ? formatRM(transaction.debitAmount) : "0.00"}
                           </div>
                       </div>
                       <div className="flex flex-col col-span-6">
                           <span className="text-[10px] font-bold text-gray-500 mb-2 uppercase tracking-wider pl-1">Kredit (RM)</span>
-                          <div className={`bg-transparent border border-light-grey/40 rounded-lg px-4 py-[14px] text-sm min-h-[48px] flex items-center ${Number(transaction.creditAmount) > 0 ? "text-[#059669] font-bold" : "text-[#0B1C30] font-bold"}`}>
+                          <div className={`bg-transparent border border-light-grey/40 rounded-lg px-4 py-3.5 text-sm min-h-12 flex items-center ${Number(transaction.creditAmount) > 0 ? "text-[#059669] font-bold" : "text-[#0B1C30] font-bold"}`}>
                               {Number(transaction.creditAmount) > 0 ? formatRM(transaction.creditAmount) : "0.00"}
                           </div>
                       </div>
 
                       <div className="flex flex-col col-span-12">
                           <span className="text-[10px] font-bold text-gray-500 mb-2 uppercase tracking-wider pl-1">Catatan</span>
-                          <div className="bg-transparent border border-light-grey/40 rounded-lg px-4 py-[14px] text-sm text-[#0B1C30] min-h-[48px] flex items-center font-bold">
+                          <div className="bg-transparent border border-light-grey/40 rounded-lg px-4 py-3.5 text-sm text-[#0B1C30] min-h-12 flex items-center font-bold">
                               {transaction.description || "Tiada catatan"}
                           </div>
                       </div>

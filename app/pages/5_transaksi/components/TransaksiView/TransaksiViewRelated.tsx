@@ -34,7 +34,7 @@ export default function TransaksiViewRelated({ records, transactionNo }: Transak
     
     switch (status) {
       case "NORMAL":
-        return <span className={`bg-[#CFFAFE] text-[#0E7490] ${baseClass}`}>NORMAL</span>;
+        return <span className={`bg-normal text-[#0E7490] ${baseClass}`}>NORMAL</span>;
       case "DIBALIKAN":
       case "PEMBALIKAN":
         return <span className={`bg-[#DC2626] text-white ${baseClass}`}>{displayStatus}</span>;
@@ -55,7 +55,7 @@ export default function TransaksiViewRelated({ records, transactionNo }: Transak
     <div className="flex flex-col gap-4 animate-in fade-in duration-200">
       {/* Header bar */}
       <div className="flex flex-row items-center justify-between">
-        <span className="border-l-4 border-[#151E66] pl-3 py-0.5 text-xs text-[#151E66] font-bold tracking-widest">
+        <span className="border-l-4 border-dark-blue pl-3 py-0.5 text-xs text-dark-blue font-bold tracking-widest">
           TRANSAKSI BERKAITAN
         </span>
         <div className="flex flex-row gap-4 items-center">
@@ -97,7 +97,7 @@ export default function TransaksiViewRelated({ records, transactionNo }: Transak
                 return (
                   <tr key={row.id} className="text-sm border-b border-light-grey/20 transition-colors hover:bg-gray-50">
                     <td className="px-4 py-3 text-left text-slate-700">{formattedDate}</td>
-                    <td className="px-4 py-3 text-left font-bold text-[#151E66]">{row.transactionNo || row.id}</td>
+                    <td className="px-4 py-3 text-left font-bold text-dark-blue">{row.transactionNo || row.id}</td>
                     <td className="px-4 py-3 text-left">{getStatusBadge(row.status)}</td>
                     <td className="px-4 py-3 text-left text-slate-600">{row.description || "-"}</td>
                     <td className={`px-4 py-3 text-right ${debitVal > 0 ? "font-bold text-[#BA1A1A]" : "text-slate-400"}`}>
@@ -114,7 +114,7 @@ export default function TransaksiViewRelated({ records, transactionNo }: Transak
             {/* Total Row */}
             {filteredRecords.length > 0 && (
               <tr className="text-sm font-bold bg-[#F9FBFF] border-b border-light-grey/20">
-                <td className="px-4 py-3 text-left text-[#151E66]" colSpan={4}>
+                <td className="px-4 py-3 text-left text-dark-blue" colSpan={4}>
                   JUMLAH
                 </td>
                 <td className="px-4 py-3 text-right text-[#BA1A1A]">
@@ -129,7 +129,7 @@ export default function TransaksiViewRelated({ records, transactionNo }: Transak
         </table>
 
         {/* Clean Footer Amaun Bersih Bar */}
-        <div className="bg-[#151E66] px-6 py-4 flex justify-between items-center text-white">
+        <div className="bg-dark-blue px-6 py-4 flex justify-between items-center text-white">
           <span className="text-[10px] font-bold tracking-widest uppercase text-slate-300">
             Amaun Bersih
           </span>
