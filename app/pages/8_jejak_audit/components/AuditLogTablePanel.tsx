@@ -69,7 +69,10 @@ export default function AuditLogTablePanel({
     pagination: AuditPagination;
   } | null>(null);
   const [isLoadingPage, setIsLoadingPage] = useState(false);
-  const [pageError, setPageError] = useState("");
+  const [pageError, setPageError] = useState<{
+    dataKey: string;
+    message: string;
+  } | null>(null);
   const [isSearchOpen, setIsSearchOpen] = useState(Boolean(filters.search?.trim()));
 
   const {
@@ -84,15 +87,6 @@ export default function AuditLogTablePanel({
     onOpenChange: setIsSearchOpen,
   });
 
-  useEffect(() => {
-    setRows(auditRows);
-    setCurrentPagination(pagination);
-    setPageError("");
-  }, [auditRows, pagination]);
-  const [pageError, setPageError] = useState<{
-    dataKey: string;
-    message: string;
-  } | null>(null);
   const activePageData = pageData?.dataKey === dataKey ? pageData : null;
   const rows = activePageData?.rows ?? auditRows;
   const currentPagination = activePageData?.pagination ?? pagination;
@@ -219,9 +213,7 @@ export default function AuditLogTablePanel({
           <div className="border-b border-light-grey/20 bg-[#FFF4F4] px-4 py-3 text-sm font-semibold text-[#B42318]">
             {bootstrapError}
           </div>
-        ) : pageError ? (
-      <div className="overflow-hidden rounded-lg bg-white">
-        {currentPageError || initialErrorMessage ? (
+        ) : currentPageError || initialErrorMessage ? (
           <div className="border-b border-light-grey/20 bg-[#FFF4F4] px-4 py-3 text-sm font-semibold text-[#B42318]">
             {currentPageError || initialErrorMessage}
           </div>
@@ -252,7 +244,7 @@ export default function AuditLogTablePanel({
                     Sedang membaca rekod jejak audit...
                   </td>
                 </tr>
-              {isInitialLoading ? (
+              ) : isInitialLoading ? (
                 <AuditLoadingRows />
               ) : rows.length > 0 ? (
                 rows.map((row) => (
