@@ -69,7 +69,7 @@ export default function ButiranTunggakanModal({ isOpen, onClose, residentId }: B
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-      <div className="bg-[#F8FAFC] rounded-xl shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col max-h-[90vh]">
+      <div className="bg-light-blue rounded-xl shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col max-h-[90vh]">
         
         {/* Header */}
         <div className="bg-dark-blue px-8 py-5 flex justify-between items-start text-white">
@@ -85,36 +85,36 @@ export default function ButiranTunggakanModal({ isOpen, onClose, residentId }: B
         </div>
 
         {/* Tabs */}
-        <div className="flex bg-white px-8 pt-2">
+        <nav className="flex items-center justify-center gap-8 bg-white border-b border-light-grey/20">
           <button 
             onClick={() => setActiveTab("maklumat")} 
-            className={`px-6 py-3 text-xs font-bold uppercase tracking-wider border-b-2 transition-colors ${activeTab === "maklumat" ? "border-dark-blue text-dark-blue" : "border-transparent text-grey hover:text-dark-blue"}`}
+            className={`py-4 text-xs font-bold uppercase tracking-widest border-b-4 transition-colors duration-200 ${activeTab === "maklumat" ? "border-dark-blue text-dark-blue" : "border-transparent text-light-grey hover:text-dark-blue"}`}
           >
             Maklumat Tunggakan
           </button>
           <button 
             onClick={() => setActiveTab("sejarah")} 
-            className={`px-6 py-3 text-xs font-bold uppercase tracking-wider border-b-2 transition-colors ${activeTab === "sejarah" ? "border-dark-blue text-dark-blue" : "border-transparent text-grey hover:text-dark-blue"}`}
+            className={`py-4 text-xs font-bold uppercase tracking-widest border-b-4 transition-colors duration-200 ${activeTab === "sejarah" ? "border-dark-blue text-dark-blue" : "border-transparent text-light-grey hover:text-dark-blue"}`}
           >
             Sejarah Tunggakan
           </button>
-        </div>
+        </nav>
 
         {/* Body */}
-        <div className="p-8 overflow-y-auto flex-1 bg-[#F8FAFC] relative min-h-75">
+        <div className="p-8 overflow-y-auto flex-1 bg-light-blue relative min-h-75">
           
           {/* LOADING STATE */}
           {isLoading && (
-            <div className="absolute inset-0 z-10 bg-[#F8FAFC]/80 backdrop-blur-sm flex flex-col items-center justify-center text-dark-blue">
+            <div className="absolute inset-0 z-10 bg-light-blue/80 backdrop-blur-sm flex flex-col items-center justify-center text-dark-blue">
               <Icon
                 icon="progress_activity"
                 size={48}
                 className="animate-spin text-dark-blue mb-3"
               />
-                <p className="text-sm font-bold text-dark-blue uppercase tracking-widest animate-pulse">
+              <p className="text-sm font-bold text-dark-blue uppercase tracking-widest animate-pulse">
                 Menarik Rekod Penghuni...
-                </p>
-                <p className="text-xs text-light-grey mt-1">Sila tunggu sebentar</p>
+              </p>
+              <p className="text-xs text-light-grey mt-1">Sila tunggu sebentar</p>
             </div>
           )}
 
@@ -122,92 +122,176 @@ export default function ButiranTunggakanModal({ isOpen, onClose, residentId }: B
           {activeTab === "maklumat" && data?.profile && (
             <div className={`space-y-8 transition-opacity duration-300 ${isLoading ? 'opacity-20' : 'opacity-100'}`}>
               
-              <section>
+              <section className="flex flex-col gap-4">
                 <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-1 h-4 bg-dark-blue rounded-full"></div>
-                    <h3 className="font-bold text-dark-blue text-xs uppercase tracking-wider">Maklumat Penghuni</h3>
-                  </div>
+                  <span className="border-l-4 border-dark-blue pl-3 py-0.5 text-xs text-dark-blue font-bold tracking-widest">
+                    MAKLUMAT PENGHUNI
+                  </span>
                   <button className="text-[10px] font-bold text-dark-blue flex items-center gap-1 hover:underline">
                     PROFIL PENUH <Icon icon="chevronRight" size={16} />
                   </button>
                 </div>
 
-                <div className="grid grid-cols-3 gap-5 pl-4">
-                  <div>
-                    <label className="block text-[10px] font-bold text-grey uppercase tracking-wider mb-1.5">Nama Penghuni</label>
-                    <input type="text" readOnly value={data.profile.fullName} className="w-full bg-white border border-gray-100 rounded-md p-2.5 text-sm font-medium text-dark-grey shadow-sm" />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] font-bold text-grey uppercase tracking-wider mb-1.5">No. Kad Pengenalan</label>
-                    <input type="text" readOnly value={data.profile.icNumber} className="w-full bg-white border border-gray-100 rounded-md p-2.5 text-sm font-medium text-dark-grey shadow-sm" />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] font-bold text-grey uppercase tracking-wider mb-1.5">Umur</label>
-                    <input type="text" readOnly value={data.profile.age || "-"} className="w-full bg-white border border-gray-100 rounded-md p-2.5 text-sm font-medium text-dark-grey shadow-sm" />
-                  </div>
-
-                  <div>
-                    <label className="block text-[10px] font-bold text-grey uppercase tracking-wider mb-1.5">Kelas</label>
-                    <div className="relative">
-                      <input type="text" readOnly value={data.profile.kelas} className="w-full bg-white border border-gray-100 rounded-md p-2.5 text-sm font-medium text-dark-grey shadow-sm pr-8" />
-                      <Icon icon="externalLink" size={16} className="absolute right-3 top-2.5 text-light-grey" />
+                <div className="grid grid-cols-12 gap-5">
+                  <div className="col-span-6 flex flex-col gap-2 tracking-widest">
+                    <label className="font-bold text-gray-500 pl-1 text-[10px] uppercase">Nama Penghuni</label>
+                    <div className="relative flex items-center">
+                      <input
+                        type="text"
+                        readOnly
+                        value={data.profile.fullName}
+                        className="w-full rounded-md text-sm min-h-12 border border-light-grey/40 outline-none pl-3 pr-3 py-3 bg-transparent font-bold text-dark-blue"
+                      />
                     </div>
                   </div>
-                  <div>
-                    <label className="block text-[10px] font-bold text-grey uppercase tracking-wider mb-1.5">Unit Kuarters</label>
-                    <div className="relative">
-                      <input type="text" readOnly value={data.profile.unit} className="w-full bg-white border border-gray-100 rounded-md p-2.5 text-sm font-medium text-dark-grey shadow-sm pr-8" />
-                      <Icon icon="externalLink" size={16} className="absolute right-3 top-2.5 text-light-grey" />
+                  <div className="col-span-4 flex flex-col gap-2 tracking-widest">
+                    <label className="font-bold text-gray-500 pl-1 text-[10px] uppercase">No. Kad Pengenalan</label>
+                    <div className="relative flex items-center">
+                      <input
+                        type="text"
+                        readOnly
+                        value={data.profile.icNumber}
+                        className="w-full rounded-md text-sm min-h-12 border border-light-grey/40 outline-none pl-3 pr-3 py-3 bg-transparent font-bold text-dark-blue"
+                      />
                     </div>
                   </div>
-                  <div></div>
+                  <div className="col-span-2 flex flex-col gap-2 tracking-widest">
+                    <label className="font-bold text-gray-500 pl-1 text-[10px] uppercase">Umur</label>
+                    <div className="relative flex items-center">
+                      <input
+                        type="text"
+                        readOnly
+                        value={data.profile.age || "-"}
+                        className="w-full rounded-md text-sm min-h-12 border border-light-grey/40 outline-none pl-3 pr-3 py-3 bg-transparent font-bold text-dark-blue"
+                      />
+                    </div>
+                  </div>
 
-                  <div>
-                    <label className="block text-[10px] font-bold text-grey uppercase tracking-wider mb-1.5">Tarikh Masuk</label>
-                    <input type="text" readOnly value={data.profile.tarikhMasuk} className="w-full bg-white border border-gray-100 rounded-md p-2.5 text-sm font-medium text-dark-grey shadow-sm" />
+                  <div className="col-span-6 flex flex-col gap-2 tracking-widest">
+                    <label className="font-bold text-gray-500 pl-1 text-[10px] uppercase">Kelas</label>
+                    <div className="relative flex items-center">
+                      <input
+                        type="text"
+                        readOnly
+                        value={data.profile.kelas}
+                        className="w-full rounded-md text-sm min-h-12 border border-light-grey/40 outline-none pl-3 pr-10 py-3 bg-transparent font-bold text-dark-blue"
+                      />
+                      <Icon icon="externalLink" size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-light-grey" />
+                    </div>
                   </div>
-                  <div>
-                    <label className="block text-[10px] font-bold text-grey uppercase tracking-wider mb-1.5">Tarikh Keluar</label>
-                    <input type="text" readOnly value={data.profile.tarikhKeluar} className="w-full bg-white border border-gray-100 rounded-md p-2.5 text-sm font-medium text-light-grey shadow-sm" />
+                  <div className="col-span-6 flex flex-col gap-2 tracking-widest">
+                    <label className="font-bold text-gray-500 pl-1 text-[10px] uppercase">Unit Kuarters</label>
+                    <div className="relative flex items-center">
+                      <input
+                        type="text"
+                        readOnly
+                        value={data.profile.unit}
+                        className="w-full rounded-md text-sm min-h-12 border border-light-grey/40 outline-none pl-3 pr-10 py-3 bg-transparent font-bold text-dark-blue"
+                      />
+                      <Icon icon="externalLink" size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-light-grey" />
+                    </div>
                   </div>
-                  <div>
-                    <label className="block text-[10px] font-bold text-grey uppercase tracking-wider mb-1.5">Status Penghuni</label>
-                    <input type="text" readOnly value={data.profile.status} className="w-full bg-white border border-gray-100 rounded-md p-2.5 text-sm font-bold text-(--color-green) shadow-sm" />
+
+                  <div className="col-span-3 flex flex-col gap-2 tracking-widest">
+                    <label className="font-bold text-gray-500 pl-1 text-[10px] uppercase">Tarikh Masuk</label>
+                    <div className="relative flex items-center">
+                      <input
+                        type="text"
+                        readOnly
+                        value={data.profile.tarikhMasuk}
+                        className="w-full rounded-md text-sm min-h-12 border border-light-grey/40 outline-none pl-3 pr-3 py-3 bg-transparent font-bold text-dark-blue"
+                      />
+                    </div>
+                  </div>
+                  <div className="col-span-3 flex flex-col gap-2 tracking-widest">
+                    <label className="font-bold text-gray-500 pl-1 text-[10px] uppercase">Tarikh Keluar</label>
+                    <div className="relative flex items-center">
+                      <input
+                        type="text"
+                        readOnly
+                        value={data.profile.tarikhKeluar}
+                        className="w-full rounded-md text-sm min-h-12 border border-light-grey/40 outline-none pl-3 pr-3 py-3 bg-transparent font-bold text-light-grey"
+                      />
+                    </div>
+                  </div>
+                  <div className="col-span-6 flex flex-col gap-2 tracking-widest">
+                    <label className="font-bold text-gray-500 pl-1 text-[10px] uppercase">Status Penghuni</label>
+                    <div className="relative flex items-center">
+                      <input
+                        type="text"
+                        readOnly
+                        value={data.profile.status}
+                        className="w-full rounded-md text-sm min-h-12 border border-light-grey/40 outline-none pl-3 pr-3 py-3 bg-transparent font-bold text-green"
+                      />
+                    </div>
                   </div>
                 </div>
               </section>
 
-              <section>
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-1 h-4 bg-dark-blue rounded-full"></div>
-                  <h3 className="font-bold text-dark-blue text-xs uppercase tracking-wider">Maklumat Tunggakan</h3>
+              <section className="flex flex-col gap-4">
+                <span className="border-l-4 border-dark-blue pl-3 py-0.5 text-xs text-dark-blue font-bold tracking-widest">
+                  MAKLUMAT TUNGGAKAN
+                </span>
+
+                <div className="grid grid-cols-5 gap-5">
+                  <div className="flex flex-col gap-2 tracking-widest">
+                    <label className="font-bold text-gray-500 pl-1 text-[10px] uppercase">Sewa (RM)</label>
+                    <div className="relative flex items-center">
+                      <input
+                        type="text"
+                        readOnly
+                        value={formatRM(data.profile.charges.sewa)}
+                        className="w-full rounded-md text-sm min-h-12 border border-light-grey/40 outline-none pl-3 pr-3 py-3 bg-transparent font-bold text-red"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-2 tracking-widest">
+                    <label className="font-bold text-gray-500 pl-1 text-[10px] uppercase">Senggara (RM)</label>
+                    <div className="relative flex items-center">
+                      <input
+                        type="text"
+                        readOnly
+                        value={formatRM(data.profile.charges.senggara)}
+                        className="w-full rounded-md text-sm min-h-12 border border-light-grey/40 outline-none pl-3 pr-3 py-3 bg-transparent font-bold text-dark-blue"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-2 tracking-widest">
+                    <label className="font-bold text-gray-500 pl-1 text-[10px] uppercase">Penalti (RM)</label>
+                    <div className="relative flex items-center">
+                      <input
+                        type="text"
+                        readOnly
+                        value={formatRM(data.profile.charges.penalti)}
+                        className="w-full rounded-md text-sm min-h-12 border border-light-grey/40 outline-none pl-3 pr-3 py-3 bg-transparent font-bold text-red"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-2 tracking-widest">
+                    <label className="font-bold text-gray-500 pl-1 text-[10px] uppercase">Tambahan (RM)</label>
+                    <div className="relative flex items-center">
+                      <input
+                        type="text"
+                        readOnly
+                        value={formatRM(data.profile.charges.tambahan)}
+                        className="w-full rounded-md text-sm min-h-12 border border-light-grey/40 outline-none pl-3 pr-3 py-3 bg-transparent font-bold text-red"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-2 tracking-widest">
+                    <label className="font-bold text-gray-500 pl-1 text-[10px] uppercase">Rebat (RM)</label>
+                    <div className="relative flex items-center">
+                      <input
+                        type="text"
+                        readOnly
+                        value={formatRM(data.profile.charges.rebat)}
+                        className="w-full rounded-md text-sm min-h-12 border border-light-grey/40 outline-none pl-3 pr-3 py-3 bg-transparent font-bold text-green"
+                      />
+                    </div>
+                  </div>
                 </div>
 
-                <div className="grid grid-cols-5 gap-4 pl-4">
-                  <div>
-                    <label className="block text-[10px] font-bold text-grey uppercase tracking-wider mb-1.5">Sewa (RM)</label>
-                    <input type="text" readOnly value={formatRM(data.profile.charges.sewa)} className="w-full bg-white border border-gray-100 rounded-md p-2.5 text-sm font-bold text-(--color-red) shadow-sm" />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] font-bold text-grey uppercase tracking-wider mb-1.5">Senggara (RM)</label>
-                    <input type="text" readOnly value={formatRM(data.profile.charges.senggara)} className="w-full bg-white border border-gray-100 rounded-md p-2.5 text-sm font-medium text-dark-grey shadow-sm" />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] font-bold text-grey uppercase tracking-wider mb-1.5">Penalti (RM)</label>
-                    <input type="text" readOnly value={formatRM(data.profile.charges.penalti)} className="w-full bg-white border border-gray-100 rounded-md p-2.5 text-sm font-bold text-(--color-red) shadow-sm" />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] font-bold text-grey uppercase tracking-wider mb-1.5">Tambahan (RM)</label>
-                    <input type="text" readOnly value={formatRM(data.profile.charges.tambahan)} className="w-full bg-white border border-gray-100 rounded-md p-2.5 text-sm font-bold text-(--color-red) shadow-sm" />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] font-bold text-grey uppercase tracking-wider mb-1.5">Rebat (RM)</label>
-                    <input type="text" readOnly value={formatRM(data.profile.charges.rebat)} className="w-full bg-white border border-gray-100 rounded-md p-2.5 text-sm font-bold text-(--color-green) shadow-sm" />
-                  </div>
-                </div>
-
-                <div className="mt-6 ml-4 bg-dark-blue rounded-xl p-6 flex justify-between items-center text-white shadow-lg">
+                <div className="mt-6 bg-dark-blue rounded-xl p-6 flex justify-between items-center text-white shadow-lg">
                   <div>
                     <p className="text-[10px] font-bold text-blue-200 uppercase tracking-widest mb-1">Jumlah Tunggakan Terkumpul</p>
                     <h2 className="text-3xl font-bold">RM {formatRM(data.profile.charges.total)}</h2>
@@ -224,10 +308,9 @@ export default function ButiranTunggakanModal({ isOpen, onClose, residentId }: B
           {activeTab === "sejarah" && data?.history && (
             <div className={`transition-opacity duration-300 ${isLoading ? 'opacity-20' : 'opacity-100'}`}>
               <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-1 h-4 bg-dark-blue rounded-full"></div>
-                  <h3 className="font-bold text-dark-blue text-xs uppercase tracking-wider">Sejarah Tunggakan</h3>
-                </div>
+                <span className="border-l-4 border-dark-blue pl-3 py-0.5 text-xs text-dark-blue font-bold tracking-widest">
+                  SEJARAH TUNGGAKAN
+                </span>
                 <div className="flex gap-4">
                   <ToolbarButton
                     icon="download"
@@ -239,7 +322,7 @@ export default function ButiranTunggakanModal({ isOpen, onClose, residentId }: B
 
               <div className="bg-white border border-gray-100 rounded-xl shadow-sm overflow-hidden">
                 <table className="w-full text-left text-sm">
-                  <thead className="bg-[#F8FAFC] border-b border-gray-100 text-grey text-[10px] uppercase font-bold tracking-wider">
+                  <thead className="bg-light-blue border-b border-gray-100 text-grey text-[10px] uppercase font-bold tracking-wider">
                     <tr>
                       <th className="px-6 py-4">Tarikh</th>
                       <th className="px-6 py-4">ID Transaksi</th>
@@ -261,8 +344,8 @@ export default function ButiranTunggakanModal({ isOpen, onClose, residentId }: B
                           <td className="px-6 py-4 text-xs text-light-grey">{row.id}</td>
                           <td className="px-6 py-4 font-medium text-dark-grey">{row.kategori}</td>
                           <td className="px-6 py-4 text-dark-grey">{row.catatan}</td>
-                          <td className={`px-6 py-4 text-right font-bold ${row.debit > 0 ? "text-(--color-red)" : "text-dark-grey"}`}>{formatRM(row.debit)}</td>
-                          <td className={`px-6 py-4 text-right font-bold ${row.kredit > 0 ? "text-(--color-green)" : "text-dark-grey"}`}>{formatRM(row.kredit)}</td>
+                          <td className={`px-6 py-4 text-right font-bold ${row.debit > 0 ? "text-red" : "text-dark-grey"}`}>{formatRM(row.debit)}</td>
+                          <td className={`px-6 py-4 text-right font-bold ${row.kredit > 0 ? "text-green" : "text-dark-grey"}`}>{formatRM(row.kredit)}</td>
                         </tr>
                       ))
                     )}

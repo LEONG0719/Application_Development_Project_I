@@ -282,7 +282,7 @@ export default function TunggakanPageClient() {
     <div className="flex flex-col gap-8 pb-20 relative">
       {/* --- HEADER SECTION --- */}
       <div>
-        <h1 className="text-3xl font-bold text-dark-blue mb-2">
+        <h1 className="text-3xl font-bold mb-2">
           Tunggakan
         </h1>
         <p className="text-grey">
@@ -294,7 +294,7 @@ export default function TunggakanPageClient() {
       <div className="grid grid-cols-2 gap-6">
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
           <p className="text-sm text-grey font-medium mb-2">Jumlah Rekod</p>
-          <h2 className="text-3xl font-bold text-dark-blue mb-4">
+          <h2 className="text-3xl font-bold  mb-4">
             {isLoading ? "RM 0.00" : formatRM(summary.jumlahRekod)}
           </h2>
           <div className="flex items-center gap-2">
@@ -305,7 +305,7 @@ export default function TunggakanPageClient() {
 
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
           <p className="text-sm text-grey font-medium mb-2">Jumlah Tunggakan</p>
-          <h2 className="text-3xl font-bold text-dark-blue mb-4">
+          <h2 className="text-3xl font-bold mb-4">
             {isLoading ? "RM 0.00" : formatRM(summary.jumlahTunggakan)}
           </h2>
           <div className="flex items-center gap-2">
@@ -318,9 +318,9 @@ export default function TunggakanPageClient() {
       {/* --- DATA TABLE SECTION --- */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
         {/* Table Header Controls */}
-        <div className="p-6 flex justify-between items-start bg-[#F8FAFC]">
-          <div>
-            <h3 className="text-lg font-bold text-dark-blue">Senarai Tunggakan</h3>
+        <div className="p-6 flex justify-between items-start bg-light-blue">
+          <div className = "bg-light-blue">
+            <h3 className="text-lg font-bold ">Senarai Tunggakan</h3>
             <p className="text-sm text-grey mt-1">Klik pada ikon kemaskini untuk mengubah maklumat unit.</p>
           </div>
           
@@ -399,7 +399,7 @@ export default function TunggakanPageClient() {
         {/* Table */}
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
-            <thead className="bg-light-blue text-grey text-xs uppercase font-semibold">
+            <thead className="bg-sky-50 text-grey text-xs uppercase font-semibold">
               <tr>
                 <th className="px-6 py-4 w-12">
                   <input
