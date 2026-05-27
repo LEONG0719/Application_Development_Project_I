@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import Icon from "@/app/components/Icon/Icon";
 import ButiranTunggakanHistory from "./ButiranTunggakanHistory";
 
@@ -127,9 +128,14 @@ export default function ButiranTunggakanModal({ isOpen, onClose, residentId }: B
                   <span className="border-l-4 border-dark-blue pl-3 py-0.5 text-xs text-dark-blue font-bold tracking-widest">
                     MAKLUMAT PENGHUNI
                   </span>
-                  <button className="text-[10px] font-bold text-dark-blue flex items-center gap-1 hover:underline">
-                    PROFIL PENUH <Icon icon="chevronRight" size={16} />
-                  </button>
+                  {residentId && (
+                    <Link
+                      href={`/pages/6_penghuni?targetId=${residentId}`}
+                      className="text-[10px] font-bold text-dark-blue flex items-center gap-1 hover:underline uppercase tracking-wider"
+                    >
+                      PROFIL PENUH <Icon icon="chevronRight" size={16} />
+                    </Link>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-12 gap-5">

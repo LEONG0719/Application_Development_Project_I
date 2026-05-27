@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import Icon from "@/app/components/Icon/Icon";
 import TransaksiViewRelated from "./TransaksiViewRelated";
 
@@ -162,11 +163,14 @@ export default function TransaksiViewModal({ isOpen, onClose, transaction }: Tra
                       <span className="inline-block w-1 h-[18px] bg-dark-blue mr-3 rounded-sm"></span>
                       Maklumat Penghuni
                     </div>
-                    {(transaction?.residentId || transaction?.resident?.id) && (
-                      <a href={`/pages/6_penghuni/${transaction?.residentId || transaction?.resident?.id}`} className="text-[10px] font-bold text-dark-blue flex items-center gap-1 hover:underline uppercase tracking-wider">
-                        Profil Penuh <Icon icon="chevronRight" size={16} />
-                      </a>
-                    )}
+                     {(transaction?.residentId || transaction?.resident?.id) && (
+                       <Link
+                         href={`/pages/6_penghuni?targetId=${transaction?.residentId || transaction?.resident?.id}`}
+                         className="text-[10px] font-bold text-dark-blue flex items-center gap-1 hover:underline uppercase tracking-wider"
+                       >
+                         Profil Penuh <Icon icon="chevronRight" size={16} />
+                       </Link>
+                     )}
                   </div>
 
                   <div className="grid grid-cols-12 gap-5">
