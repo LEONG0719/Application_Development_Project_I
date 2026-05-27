@@ -22,6 +22,7 @@ export default function TransaksiPageClient() {
     endDate: "",
     categories: [],
     statuses: ["NORMAL", "DIBALIKAN", "DILARASKAN", "PEMBALIKAN", "PELARASAN"],
+    types: [],
   };
 
   const [isLoading, setIsLoading] = useState(true);
@@ -52,6 +53,9 @@ export default function TransaksiPageClient() {
       }
       if (filtersToApply.categories && filtersToApply.categories.length > 0) {
         queryParams.append("categories", filtersToApply.categories.join(","));
+      }
+      if (filtersToApply.types && filtersToApply.types.length === 1) {
+        queryParams.append("type", filtersToApply.types[0]);
       }
       
       // Tell the backend which page we want

@@ -9,6 +9,7 @@ export interface FilterState {
   endDate: string;
   categories: string[];
   statuses: string[];
+  types: string[];
 }
 
 interface TransaksiFilterPanelProps {
@@ -25,7 +26,12 @@ const STATUS_OPTIONS = [
 ];
 
 const CATEGORY_OPTIONS = [
-  "BAYARAN", "CAJ_SEWA", "CAJ_PENYELENGGARAAN", "CAJ_PENALTI", "CAJ_TAMBAHAN", "REBAT", "LAIN_LAIN"
+  "BAYARAN", "CAJ_SEWA", "CAJ_PENYELENGGARAAN", "CAJ_PENALTI", "CAJ_TAMBAHAN", "REBAT", "BAKI_AWAL", "LAIN_LAIN"
+];
+
+const TYPE_OPTIONS = [
+  { value: "DEBIT", label: "DEBIT", color: "bg-blue-100 text-blue-700" },
+  { value: "CREDIT", label: "KREDIT", color: "bg-green-100 text-green-700" },
 ];
 
 export default function TransaksiFilterPanel({ onSearch, isLoading }: TransaksiFilterPanelProps) {
@@ -37,6 +43,7 @@ export default function TransaksiFilterPanel({ onSearch, isLoading }: TransaksiF
     endDate: "",
     categories: [],
     statuses: ["NORMAL", "DIBALIKAN", "DILARASKAN", "PEMBALIKAN", "PELARASAN"], // Default all selected
+    types: [],
   });
 
   const handleStatusToggle = (status: string) => {
@@ -57,6 +64,15 @@ export default function TransaksiFilterPanel({ onSearch, isLoading }: TransaksiF
     }));
   };
 
+  const handleTypeToggle = (type: string) => {
+    setFilters(prev => ({
+      ...prev,
+      types: prev.types.includes(type)
+        ? prev.types.filter(t => t !== type)
+        : [...prev.types, type]
+    }));
+  };
+
   const handleReset = () => {
     const resetState = {
       search: "",
@@ -64,6 +80,7 @@ export default function TransaksiFilterPanel({ onSearch, isLoading }: TransaksiF
       endDate: "",
       categories: [],
       statuses: ["NORMAL", "DIBALIKAN", "DILARASKAN", "PEMBALIKAN", "PELARASAN"],
+      types: [],
     };
     setFilters(resetState);
     onSearch(resetState); // Instantly search with reset values
@@ -117,8 +134,8 @@ export default function TransaksiFilterPanel({ onSearch, isLoading }: TransaksiF
             </div>
           </div>
 
-          {/* Row 2: Status & Category Checkboxes */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+          {/* Row 2: Status, Category & Type Checkboxes */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2">
             
             {/* Status Filter */}
             <div>
@@ -163,6 +180,28 @@ export default function TransaksiFilterPanel({ onSearch, isLoading }: TransaksiF
                 })}
               </div>
             </div>
+
+            {/* Type Filter */}
+            <div>
+              <label className="block text-xs font-bold text-gray-500 uppercase mb-3">Jenis Transaksi</label>
+              <div className="flex flex-wrap gap-3">
+                {TYPE_OPTIONS.map(opt => {
+                  const isSelected = filters.types.includes(opt.value);
+                  return (
+                    <button
+                      key={opt.value}
+                      onClick={() => handleTypeToggle(opt.value)}
+                      className={`flex items-center gap-2 px-3 py-1.5 rounded text-xs font-bold transition-all ${isSelected ? opt.color : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
+                    >
+                      <div className={`w-3 h-3 rounded flex items-center justify-center border ${isSelected ? 'border-white/50' : 'border-gray-400'}`}>
+                        {isSelected && <Icon icon="check" size={10} className="text-current" />}
+                      </div>
+                      {opt.label}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
           </div>
 
           {/* Action Buttons */}
@@ -182,7 +221,6 @@ export default function TransaksiFilterPanel({ onSearch, isLoading }: TransaksiF
               <Icon icon="search" size={18} />
               {isLoading ? "Mencari..." : "Cari"}
             </button>
-
           </div>
         </div>
       )}
