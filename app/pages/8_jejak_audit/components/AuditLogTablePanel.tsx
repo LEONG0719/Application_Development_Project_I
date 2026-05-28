@@ -63,6 +63,8 @@ export default function AuditLogTablePanel({
   isBootstrapping?: boolean;
   bootstrapError?: string;
 }) {
+  void hasActiveFilters;
+
   const [pageData, setPageData] = useState<{
     dataKey: string;
     rows: AuditLogListItem[];

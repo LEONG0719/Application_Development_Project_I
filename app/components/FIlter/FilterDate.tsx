@@ -44,7 +44,6 @@ function calcCalendarPos(
 ) {
   if (!buttonRef.current) return { top: 0, left: 0 };
   const rect = buttonRef.current.getBoundingClientRect();
-  const pickerWidth = 320;
   const gap = 8;
 
   if (!useFixedPosition) {
