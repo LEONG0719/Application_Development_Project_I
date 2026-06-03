@@ -31,6 +31,7 @@ function loadRememberedLogin() {
     try {
         const parsedLogin = JSON.parse(savedLogin) as {
             email?: string;
+            password?: string;
             rememberMe?: boolean;
         };
 
@@ -40,7 +41,7 @@ function loadRememberedLogin() {
 
         return {
             email: parsedLogin.email ?? "",
-            password: "",
+            password: parsedLogin.password ?? "",
             rememberMe: true,
         };
     } catch {
@@ -131,6 +132,7 @@ export default function AuthLogin({ onSwitchToRegister, onForgotPassword }: Auth
                     STORAGE_KEY,
                     JSON.stringify({
                         email: trimmedEmail,
+                        password: loginPassword,
                         rememberMe: true,
                     })
                 );
