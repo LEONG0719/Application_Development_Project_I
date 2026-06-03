@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Icon from "@/app/components/Icon/Icon";
 
 interface LamanUtamaOccupancyGaugeProps {
@@ -12,8 +12,13 @@ export default function LamanUtamaOccupancyGauge({
   initialTotal = 1450,
   initialOccupied = 1087,
 }: LamanUtamaOccupancyGaugeProps) {
-  const [total] = useState(initialTotal);
+  const [total, setTotal] = useState(initialTotal);
   const [occupied, setOccupied] = useState(initialOccupied);
+
+  useEffect(() => {
+    setTotal(initialTotal);
+    setOccupied(initialOccupied);
+  }, [initialTotal, initialOccupied]);
 
   // Derive vacancy and percentages
   const vacant = Math.max(0, total - occupied);

@@ -1,18 +1,23 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import LamanUtamaHeader from "./components/LamanUtamaHeader";
 import LamanUtamaBanner from "./components/LamanUtamaBanner";
 import LamanUtamaOccupancyGauge from "./components/LamanUtamaOccupancyGauge";
 import LamanUtamaAlerts from "./components/LamanUtamaAlerts";
 import LamanUtamaAnalysis from "./components/LamanUtamaAnalysis";
+import Icon from "@/app/components/Icon/Icon";
 
-interface MonthlyMockData {
-  amount: string;
-  percentageChange: string;
-  currentPercentage: number;
+interface DashboardData {
+  monthlyAmount: string;
+  monthlyChange: string;
+  monthlyPercentage: number;
+  totalAmount: string;
+  totalChange: string;
+  totalPercentage: number;
   occupancyTotal: number;
   occupancyOccupied: number;
+  occupancyVacant: number;
   arrearsAmount: string;
   arrearsCount: number;
   pendingCount: number;
@@ -25,105 +30,95 @@ interface MonthlyMockData {
   }>;
 }
 
-// Structuring dynamic mock data per month for interactive demonstration
-const MONTHLY_MOCK_DATA: Record<string, MonthlyMockData> = {
-  "Julai 2024": {
-    amount: "RM 452,890.00",
-    percentageChange: "+4.5%",
-    currentPercentage: 75,
-    occupancyTotal: 1450,
-    occupancyOccupied: 1087,
-    arrearsAmount: "RM 24,150.00",
-    arrearsCount: 128,
-    pendingCount: 42,
-    pendingUploadsToday: 3,
-    analysis: [
-      { className: "Jalan Ariffin", amount: "RM 8,450.00", settlementRate: 15, opacity: 1.0 },
-      { className: "Taman Nusantara", amount: "RM 5,200.00", settlementRate: 40, opacity: 0.7 },
-      { className: "Persiaran Tanjung", amount: "RM 3,100.00", settlementRate: 65, opacity: 0.4 },
-    ],
-  },
-  "Jun 2024": {
-    amount: "RM 412,350.00",
-    percentageChange: "+3.2%",
-    currentPercentage: 68,
-    occupancyTotal: 1450,
-    occupancyOccupied: 1050,
-    arrearsAmount: "RM 28,900.00",
-    arrearsCount: 135,
-    pendingCount: 29,
-    pendingUploadsToday: 1,
-    analysis: [
-      { className: "Jalan Ariffin", amount: "RM 10,200.00", settlementRate: 10, opacity: 1.0 },
-      { className: "Taman Nusantara", amount: "RM 6,100.00", settlementRate: 35, opacity: 0.7 },
-      { className: "Persiaran Tanjung", amount: "RM 3,400.00", settlementRate: 60, opacity: 0.4 },
-    ],
-  },
-  "Mei 2024": {
-    amount: "RM 395,120.00",
-    percentageChange: "-1.8%",
-    currentPercentage: 65,
-    occupancyTotal: 1450,
-    occupancyOccupied: 1025,
-    arrearsAmount: "RM 31,450.00",
-    arrearsCount: 142,
-    pendingCount: 56,
-    pendingUploadsToday: 5,
-    analysis: [
-      { className: "Jalan Ariffin", amount: "RM 11,800.00", settlementRate: 8, opacity: 1.0 },
-      { className: "Taman Nusantara", amount: "RM 7,300.00", settlementRate: 30, opacity: 0.7 },
-      { className: "Persiaran Tanjung", amount: "RM 4,200.00", settlementRate: 55, opacity: 0.4 },
-    ],
-  },
-};
-
-// Fallback data generator for other months
-const getMockDataForMonth = (month: string): MonthlyMockData => {
-  if (MONTHLY_MOCK_DATA[month]) {
-    return MONTHLY_MOCK_DATA[month];
-  }
-  // Generate slightly randomized but consistent values for demonstration
-  const monthHash = month.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0);
-  const occupancyOccupied = 1000 + (monthHash % 150);
-  const currentPercentage = 60 + (monthHash % 25);
-  const collectionAmount = 350000 + (monthHash % 15) * 8000;
-  
-  return {
-    amount: `RM ${collectionAmount.toLocaleString("ms-MY", { minimumFractionDigits: 2 })}`,
-    percentageChange: (monthHash % 2 === 0 ? "+" : "-") + ((monthHash % 8) + 1.2).toFixed(1) + "%",
-    currentPercentage,
-    occupancyTotal: 1450,
-    occupancyOccupied,
-    arrearsAmount: `RM ${(20000 + (monthHash % 10) * 1200).toLocaleString("ms-MY", { minimumFractionDigits: 2 })}`,
-    arrearsCount: 110 + (monthHash % 40),
-    pendingCount: 20 + (monthHash % 30),
-    pendingUploadsToday: monthHash % 5,
-    analysis: [
-      { className: "Jalan Ariffin", amount: `RM ${(8000 + (monthHash % 5) * 400).toLocaleString("ms-MY", { minimumFractionDigits: 2 })}`, settlementRate: 10 + (monthHash % 15), opacity: 1.0 },
-      { className: "Taman Nusantara", amount: `RM ${(5000 + (monthHash % 5) * 300).toLocaleString("ms-MY", { minimumFractionDigits: 2 })}`, settlementRate: 30 + (monthHash % 20), opacity: 0.7 },
-      { className: "Persiaran Tanjung", amount: `RM ${(3000 + (monthHash % 5) * 200).toLocaleString("ms-MY", { minimumFractionDigits: 2 })}`, settlementRate: 50 + (monthHash % 20), opacity: 0.4 },
-    ],
-  };
-};
-
 export default function LamanUtamaPage() {
-  const [selectedMonth, setSelectedMonth] = useState("Julai 2024");
-  const data = getMockDataForMonth(selectedMonth);
+  const [data, setData] = useState<DashboardData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+    
+    async function fetchDashboard() {
+      try {
+        const response = await fetch("/api/dashboard");
+        if (!response.ok) {
+          throw new Error("Gagal mengambil data dari pelayan.");
+        }
+        const result = await response.json();
+        if (isMounted) {
+          if (result.success) {
+            setData(result.data);
+          } else {
+            setError(result.error || "Ralat berlaku semasa memproses data.");
+          }
+        }
+      } catch (err) {
+        if (isMounted) {
+          setError(err instanceof Error ? err.message : "Ralat sistem berlaku.");
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    }
+
+    fetchDashboard();
+    
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] w-full gap-4 select-none">
+        <div className="w-10 h-10 border-4 border-slate-200 border-t-dark-blue rounded-full animate-spin"></div>
+        <p className="text-sm font-semibold text-[#464651]">
+          Memuatkan data papan pemuka...
+        </p>
+      </div>
+    );
+  }
+
+  if (error || !data) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] w-full gap-4 text-center select-none p-6 bg-white border border-[#EFF4FF] rounded-xl shadow-sm">
+        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red/10 text-red">
+          <Icon icon="warning" size={24} />
+        </div>
+        <h3 className="text-lg font-bold text-dark-blue">Ralat Memuatkan Data</h3>
+        <p className="text-sm text-[#464651] max-w-md">
+          {error || "Tiada data yang diterima daripada pelayan."}
+        </p>
+        <button
+          onClick={() => {
+            setIsLoading(true);
+            setError(null);
+            // Quick trigger to refetch
+            window.location.reload();
+          }}
+          className="px-4 py-2 mt-2 bg-dark-blue text-white rounded-xl font-semibold text-sm hover:opacity-90 active:scale-[0.98] transition-all cursor-pointer"
+        >
+          Cuba Lagi
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-8 w-full pb-20 relative">
       {/* 1. Header Section */}
-      <LamanUtamaHeader
-        selectedMonth={selectedMonth}
-        onMonthChange={setSelectedMonth}
-      />
+      <LamanUtamaHeader />
 
-      {/* 2. Top Row Metric Card (Banner) */}
+      {/* 2. Top Row Metric Card (Banner with Carousel) */}
       <LamanUtamaBanner
-        amount={data.amount}
-        percentageChange={data.percentageChange}
-        targetPercentage={80}
-        currentPercentage={data.currentPercentage}
+        monthlyAmount={data.monthlyAmount}
+        monthlyChange={data.monthlyChange}
+        monthlyPercentage={data.monthlyPercentage}
+        totalAmount={data.totalAmount}
+        totalChange={data.totalChange}
+        totalPercentage={data.totalPercentage}
       />
 
       {/* 3. Middle Grid: Occupancy Gauge (Left) & Alerts (Right) */}
@@ -132,7 +127,6 @@ export default function LamanUtamaPage() {
         <LamanUtamaOccupancyGauge
           initialTotal={data.occupancyTotal}
           initialOccupied={data.occupancyOccupied}
-          key={`${selectedMonth}-${data.occupancyOccupied}`} // Remount component on month change to restart animations cleanly
         />
 
         {/* Warning & Alerts Card (Right) */}

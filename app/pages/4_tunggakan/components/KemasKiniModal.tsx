@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Icon from "../../../components/Icon/Icon";
 
 type RowItem = {
@@ -25,6 +25,17 @@ export default function KemasKiniModal({ isOpen, onClose, onSaved, chargeMonth, 
   const [rebat, setRebat] = useState<RowItem[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [feedback, setFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null);
+
+  // Reset form states when modal is closed or selection changes
+  useEffect(() => {
+    if (!isOpen) {
+      setCajSenggaraEnabled(false);
+      setCajTambahan([]);
+      setRebat([]);
+      setIsSaving(false);
+      setFeedback(null);
+    }
+  }, [isOpen, selectedIds]);
 
   if (!isOpen) return null;
 
