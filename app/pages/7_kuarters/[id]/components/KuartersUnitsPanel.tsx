@@ -12,6 +12,7 @@ import FilterOption, {
   normalizeSelectedValuesForOptions,
 } from "@/app/components/FIlter/FilterOption";
 import Icon, { commonIcons } from "@/app/components/Icon/Icon";
+import { loadingTableRows } from "@/app/components/Loading/LoadingTableRows";
 import { PaginationControls } from "@/app/components/Pagination/Pagination";
 import ToolbarButton from "@/app/components/ToolbarIconButton";
 import { downloadQuarterUnits } from "@/app/pages/7_kuarters/hooks/kuartersDownloads";
@@ -462,6 +463,7 @@ export default function KuartersUnitsPanel({
         <div className="flex items-center gap-4">
           <ToolbarButton
             icon={commonIcons.search}
+            disabled={isLoading}
             label="Cari unit kuarters"
             isActive={isSearchOpen}
             onClick={handleToggleSearch}
@@ -470,6 +472,7 @@ export default function KuartersUnitsPanel({
             <ToolbarButton
               icon={commonIcons.filter}
               label={`Tapis status unit: ${getStatusFilterLabel(statusFilter)}`}
+              disabled={isLoading}
 
               isActive={isFilterButtonActive}
               hasPopup="menu"
@@ -477,7 +480,7 @@ export default function KuartersUnitsPanel({
               onClick={handleToggleFilterMenu}
             />
 
-            {isFilterMenuOpen ? (
+            {isFilterMenuOpen && !isLoading ? (
               <FilterOption
                 ariaLabel="Tapisan status unit"
                 defaultLabel="Semua Status"
@@ -497,6 +500,7 @@ export default function KuartersUnitsPanel({
           </div>
           <ToolbarButton
             icon={commonIcons.download}
+            disabled={isLoading}
             label="Muat turun senarai unit"
             onClick={handleDownloadUnits}
           />
@@ -561,14 +565,11 @@ export default function KuartersUnitsPanel({
             </thead>
             <tbody className="bg-white">
               {isLoading ? (
-                <tr className="border-t border-light-grey/20">
-                  <td
-                    colSpan={6}
-                    className="px-3 py-4 text-center text-sm font-medium text-grey"
-                  >
-                    Sedang membaca data unit kuarters...
-                  </td>
-                </tr>
+                loadingTableRows({
+                  mode: "loading",
+                  columnCount: 6,
+                  rowCount: 10,
+                })
               ) : null}
 
               {!isLoading && isCreateRowVisible ? (

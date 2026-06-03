@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { loadingTableRows } from "@/app/components/Loading/LoadingTableRows";
 import { usePaginationLogic, PaginationControls } from "@/app/components/Pagination/Pagination";
 import { Topic } from "../../../../components/InputField";
 import PenghuniDetailHistoryDownload from "./PenghuniDetailHistoryDownload";
@@ -96,7 +97,7 @@ export default function PenghuniDetailHistory({ residentId }: { residentId?: str
     const historyWithBaki = calculateRunningBalances(history);
 
     // Apply date range filter via extracted hook.
-    const { filteredHistory, FilterButton } = usePenghuniDetailHistoryFilter(historyWithBaki);
+    const { filteredHistory, FilterButton } = usePenghuniDetailHistoryFilter(historyWithBaki, isLoading);
 
     const { currentPage, totalPages, startIndex, endIndex, handlePageChange, paginationItems } = usePaginationLogic(filteredHistory.length, itemsPerPage);
     const currentHistory = filteredHistory.slice(startIndex, endIndex);
@@ -112,6 +113,7 @@ export default function PenghuniDetailHistory({ residentId }: { residentId?: str
                 <div className="flex flex-row gap-4 items-center">
                     {FilterButton}
                     <PenghuniDetailHistoryDownload
+                        disabled={isLoading}
                         records={filteredHistory}
                         residentId={residentId}
                     />
@@ -134,17 +136,25 @@ export default function PenghuniDetailHistory({ residentId }: { residentId?: str
                     </thead>
                     <tbody className="bg-white">
                         {isLoading ? (
-                            <tr className="text-sm">
-                                <td className="px-4 py-4 text-center text-grey" colSpan={7}>Sedang membaca sejarah transaksi...</td>
-                            </tr>
+                            loadingTableRows({
+                                mode: "loading",
+                                columnCount: 7,
+                                rowCount: 10,
+                            })
                         ) : errorMessage ? (
-                            <tr className="text-sm">
-                                <td className="px-4 py-4 text-center text-red" colSpan={7}>{errorMessage}</td>
-                            </tr>
+                            loadingTableRows({
+                                mode: "message",
+                                columnCount: 7,
+                                rowCount: 1,
+                                message: errorMessage,
+                            })
                         ) : currentHistory.length === 0 ? (
-                            <tr className="text-sm">
-                                <td className="px-4 py-4 text-center text-grey" colSpan={7}>Tiada sejarah transaksi ditemui.</td>
-                            </tr>
+                            loadingTableRows({
+                                mode: "message",
+                                columnCount: 7,
+                                rowCount: 1,
+                                message: "Tiada sejarah transaksi ditemui.",
+                            })
                         ) : (
                             currentHistory.map((row) => (
                                 <tr key={row.id} className="text-sm border-b border-b-light-grey/20 transition-colors">

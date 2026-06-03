@@ -83,11 +83,13 @@ function getStatusFilterLabel(statuses: PenghuniStatusFilter[]) {
 
 type PenghuniFilterProps = {
   selectedValues: PenghuniStatusFilter[];
+  disabled?: boolean;
   onSelect: (values: PenghuniStatusFilter[]) => void;
 };
 
 export default function PenghuniFilter({
   selectedValues,
+  disabled = false,
   onSelect,
 }: PenghuniFilterProps) {
   const menuRef = useRef<HTMLDivElement | null>(null);
@@ -100,6 +102,11 @@ export default function PenghuniFilter({
   const isActive = isOpen || isStatusFilterActive;
 
   useEffect(() => {
+    if (disabled) {
+      setIsOpen(false);
+      return;
+    }
+
     if (!isOpen) {
       return;
     }
@@ -123,20 +130,21 @@ export default function PenghuniFilter({
     return () => {
       document.removeEventListener("pointerdown", handlePointerDown);
     };
-  }, [isOpen]);
+  }, [disabled, isOpen]);
 
   return (
     <div ref={menuRef} className="relative">
       <ToolbarIconButton
         icon={commonIcons.filter}
         label={`Tapis status penghuni: ${getStatusFilterLabel(selectedValues)}`}
+        disabled={disabled}
         isActive={isActive}
         hasPopup="menu"
         isExpanded={isOpen}
         onClick={() => setIsOpen((currentState) => !currentState)}
       />
 
-      {isOpen ? (
+      {isOpen && !disabled ? (
         <FilterOption<PenghuniStatusFilter>
           ariaLabel="Tapisan status penghuni"
           defaultLabel="Semua Status"

@@ -18,6 +18,7 @@ type AuditFilterSet = {
 
 type AuditFilterProps = {
   filters: AuditLogFilters;
+  disabled?: boolean;
   options: {
     actionTypes: {
       value: string;
@@ -30,7 +31,7 @@ type AuditFilterProps = {
   };
 };
 
-export default function AuditFilter({ filters, options }: AuditFilterProps) {
+export default function AuditFilter({ filters, disabled = false, options }: AuditFilterProps) {
   const router = useRouter();
   const panelRef = useRef<HTMLDivElement | null>(null);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -88,6 +89,11 @@ export default function AuditFilter({ filters, options }: AuditFilterProps) {
 
   // Close the filter panel when clicking outside of its container.
   useEffect(() => {
+    if (disabled) {
+      setIsFilterOpen(false);
+      return;
+    }
+
     if (!isFilterOpen) {
       return;
     }
@@ -111,7 +117,7 @@ export default function AuditFilter({ filters, options }: AuditFilterProps) {
     return () => {
       document.removeEventListener("pointerdown", handlePointerDown);
     };
-  }, [isFilterOpen]);
+  }, [disabled, isFilterOpen]);
 
   // Write filters into URL query params and reset to first page.
   function pushFilters(nextFilters: AuditLogFilters) {
@@ -135,13 +141,14 @@ export default function AuditFilter({ filters, options }: AuditFilterProps) {
       <ToolbarIconButton
         icon="filter"
         label="Tapis rekod audit"
+        disabled={disabled}
         isActive={isFilterActive}
         onClick={() => {
           setIsFilterOpen((currentState) => !currentState);
         }}
       />
 
-      {isFilterOpen ? (
+      {isFilterOpen && !disabled ? (
         <FilterOption
           ariaLabel="Tapisan rekod audit"
           defaultLabel="Semua"
