@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import { useSearchParams } from "next/navigation";
+
 import TunggakanFilterPanel from "./TunggakanFilterPanel";
 import { defaultFilter, type TunggakanFilter } from "@/lib/arrears/arrears";
 import Icon from "@/app/components/Icon/Icon";
@@ -42,7 +44,12 @@ export default function TunggakanPageClient() {
   const [targetBillingMonthLabel, setTargetBillingMonthLabel] = useState<string | null>(null);
   const [isBillingRunning, setIsBillingRunning] = useState(false);
   
+  const searchParams = useSearchParams();
+  const autoSelect = searchParams.get("autoSelect") === "true";
+  const [hasAutoSelected, setHasAutoSelected] = useState(false);
+
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+
   const [isKemasKiniModalOpen, setIsKemasKiniModalOpen] = useState(false);
   const [viewResidentId, setViewResidentId] = useState<string | null>(null);
   const [filters, setFilters] = useState<TunggakanFilter>(defaultFilter);
@@ -82,6 +89,14 @@ export default function TunggakanPageClient() {
       if (result.ok) {
         setData(result.data);
         setSummary(result.summary);
+        
+        if (autoSelect && !hasAutoSelected) {
+          const idsWithArrears = (result.data as TunggakanListItem[])
+            .filter((item) => item.jumlahTunggakan > 0)
+            .map((item) => item.id);
+          setSelectedIds(idsWithArrears);
+          setHasAutoSelected(true);
+        }
       } else {
         console.error("API Error:", result.message);
       }
@@ -303,13 +318,13 @@ export default function TunggakanPageClient() {
       </div>
 
       {/* --- FLOATING 'KEMAS KINI' BUTTON --- */}
-      <div className={`fixed bottom-8 right-8 transition-opacity duration-200 ${selectedIds.length > 0 ? 'opacity-100 z-40' : 'opacity-0 pointer-events-none'}`}>
+      <div className="fixed bottom-8 right-8 z-40">
         <button 
           onClick={() => setIsKemasKiniModalOpen(true)}
           className="flex items-center gap-2 bg-dark-blue text-white px-6 py-3 rounded-lg shadow-lg font-bold hover:bg-opacity-90 transition-all cursor-pointer"
         >
           <Icon icon="edit" size={20} />
-          KEMAS KINI {selectedIds.length > 0 && `(${selectedIds.length})`}
+          KEMAS KINI {selectedIds.length > 0 ? `(${selectedIds.length})` : ""}
         </button>
       </div>
 
