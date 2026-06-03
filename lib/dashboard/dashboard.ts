@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { getMonthStartInAppTimeZone, getTodayDateInAppTimeZone, getAppTimeZoneDateParts } from "@/lib/date-time";
 
 export interface DashboardSummaryData {
   monthlyAmount: string;
@@ -35,11 +36,15 @@ export async function getDashboardSummary(): Promise<DashboardSummaryData> {
     orderBy: { billingMonth: "desc" },
   });
 
-  const targetMonth = latestCycle?.billingMonth || new Date(Date.UTC(today.getFullYear(), today.getMonth() - 1, 1));
+  const { year: curYear, month: curMonth } = getAppTimeZoneDateParts(today);
+  const targetMonth = latestCycle?.billingMonth || new Date(Date.UTC(curYear, curMonth - 2, 1));
 
   // 2. Calculate Current Month's Collections (Jumlah Kutipan Bulan Ini) using the Payment table
-  const startOfCalendarMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-  const startOfPrevCalendarMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+  const startOfCalendarMonth = getMonthStartInAppTimeZone(today);
+  
+  const prevMonthDate = new Date(today);
+  prevMonthDate.setMonth(prevMonthDate.getMonth() - 1);
+  const startOfPrevCalendarMonth = getMonthStartInAppTimeZone(prevMonthDate);
 
   const currentMonthCollections = await prisma.payment.aggregate({
     where: {
@@ -77,9 +82,10 @@ export async function getDashboardSummary(): Promise<DashboardSummaryData> {
 
   const totalKutipanVal = Number(allTimeCollections._sum.amount || 0);
 
-  const startOfThisYear = new Date(today.getFullYear(), 0, 1);
-  const startOfLastYear = new Date(today.getFullYear() - 1, 0, 1);
-  const samePeriodLastYear = new Date(today.getFullYear() - 1, today.getMonth(), today.getDate(), today.getHours(), today.getMinutes());
+  const startOfThisYear = new Date(Date.UTC(curYear, 0, 1, 0, 0, 0, 0));
+  const startOfLastYear = new Date(Date.UTC(curYear - 1, 0, 1, 0, 0, 0, 0));
+  const samePeriodLastYear = new Date(today);
+  samePeriodLastYear.setFullYear(samePeriodLastYear.getFullYear() - 1);
 
   const thisYearCollections = await prisma.payment.aggregate({
     where: {
@@ -164,7 +170,7 @@ export async function getDashboardSummary(): Promise<DashboardSummaryData> {
     },
   });
 
-  const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const startOfToday = getTodayDateInAppTimeZone();
   const pendingUploadsToday = await prisma.uploadedDocument.count({
     where: {
       uploadedAt: { gte: startOfToday },
@@ -176,10 +182,19 @@ export async function getDashboardSummary(): Promise<DashboardSummaryData> {
     include: {
       units: {
         include: {
+          occupancies: {
+            where: { status: "CURRENT" },
+            include: {
+              resident: {
+                include: {
+                  arrearsSummary: true,
+                },
+              },
+            },
+          },
           monthlyCharges: {
             where: { chargeMonth: targetMonth },
             select: {
-              balanceForMonth: true,
               totalMonthlyCharge: true,
               paymentReceived: true,
             },
@@ -195,8 +210,17 @@ export async function getDashboardSummary(): Promise<DashboardSummaryData> {
     let catPaid = 0;
 
     cat.units.forEach((unit) => {
+      // 1. Accumulate total positive arrears from the current occupant
+      const currentOccupancy = unit.occupancies[0];
+      if (currentOccupancy?.resident?.arrearsSummary) {
+        const arrVal = Number(currentOccupancy.resident.arrearsSummary.totalArrearsAmount || 0);
+        if (arrVal > 0) {
+          totalOutstanding += arrVal;
+        }
+      }
+
+      // 2. Accumulate monthly charge statistics for settlement rate calculation
       unit.monthlyCharges.forEach((charge) => {
-        totalOutstanding += Number(charge.balanceForMonth || 0);
         catBilled += Number(charge.totalMonthlyCharge || 0);
         catPaid += Number(charge.paymentReceived || 0);
       });

@@ -12,10 +12,10 @@ interface LamanUtamaAlertsProps {
 }
 
 export default function LamanUtamaAlerts({
-  arrearsAmount = "RM 24,150.00",
-  arrearsCount = 128,
-  pendingCount = 42,
-  pendingUploadsToday = 3,
+  arrearsAmount = "RM 0",
+  arrearsCount = 0,
+  pendingCount = 0,
+  pendingUploadsToday = 0,
 }: LamanUtamaAlertsProps) {
   return (
     <div className="flex flex-col gap-6 w-full h-[332px]">

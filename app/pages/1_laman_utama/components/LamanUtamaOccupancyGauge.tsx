@@ -47,48 +47,15 @@ export default function LamanUtamaOccupancyGauge({
     return new Intl.NumberFormat("ms-MY").format(num);
   };
 
-  const handleIncrease = () => {
-    if (occupied < total) {
-      setOccupied((prev) => prev + 10);
-    }
-  };
-
-  const handleDecrease = () => {
-    if (occupied > 0) {
-      setOccupied((prev) => Math.max(0, prev - 10));
-    }
-  };
-
   return (
     <div className="relative flex flex-col items-start p-8 w-full h-[332px] bg-light-blue rounded-xl select-none">
-      {/* Header section with interactive adjustment controls */}
+      {/* Header section */}
       <div className="flex flex-row justify-between items-center w-full mb-6">
         <div className="flex flex-row items-center gap-2">
           <Icon icon="apartment" size={18} className="text-dark-blue" />
           <h4 className="text-lg font-bold text-[#0B1C30]">
             Status Penghunian Kuarters
           </h4>
-        </div>
-
-        {/* Small test buttons to increase/decrease occupancy */}
-        <div className="flex items-center gap-1.5 bg-white/60 p-1.5 rounded-lg border border-slate-200">
-          <button
-            onClick={handleDecrease}
-            className="flex items-center justify-center w-6 h-6 rounded-md bg-white border border-slate-200 hover:bg-slate-50 active:scale-95 text-slate-600 transition-all cursor-pointer"
-            title="Kurangkan Dihuni (10)"
-          >
-            <Icon icon="chevron_left" size={16} />
-          </button>
-          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider px-1">
-            Uji
-          </span>
-          <button
-            onClick={handleIncrease}
-            className="flex items-center justify-center w-6 h-6 rounded-md bg-white border border-slate-200 hover:bg-slate-50 active:scale-95 text-slate-600 transition-all cursor-pointer"
-            title="Tambah Dihuni (10)"
-          >
-            <Icon icon="chevron_right" size={16} />
-          </button>
         </div>
       </div>
 
