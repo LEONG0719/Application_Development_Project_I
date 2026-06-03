@@ -318,13 +318,13 @@ export default function TunggakanPageClient() {
       </div>
 
       {/* --- FLOATING 'KEMAS KINI' BUTTON --- */}
-      <div className={`fixed bottom-8 right-8 transition-opacity duration-200 ${selectedIds.length > 0 ? 'opacity-100 z-40' : 'opacity-0 pointer-events-none'}`}>
+      <div className="fixed bottom-8 right-8 z-40">
         <button 
           onClick={() => setIsKemasKiniModalOpen(true)}
           className="flex items-center gap-2 bg-dark-blue text-white px-6 py-3 rounded-lg shadow-lg font-bold hover:bg-opacity-90 transition-all cursor-pointer"
         >
           <Icon icon="edit" size={20} />
-          KEMAS KINI {selectedIds.length > 0 && `(${selectedIds.length})`}
+          KEMAS KINI {selectedIds.length > 0 ? `(${selectedIds.length})` : ""}
         </button>
       </div>
 
