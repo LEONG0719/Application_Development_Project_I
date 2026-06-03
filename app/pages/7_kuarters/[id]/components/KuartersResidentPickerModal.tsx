@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 
 import Icon, { commonIcons } from "@/app/components/Icon/Icon";
+import { loadingTableRows } from "@/app/components/Loading/LoadingTableRows";
 import {
   PaginationControls,
   usePaginationLogic,
@@ -166,25 +167,21 @@ export default function KuartersResidentPickerModal({
                 </thead>
                 <tbody className="bg-white">
                   {isLoading ? (
-                    <tr className="text-sm">
-                      <td
-                        colSpan={4}
-                        className="px-4 py-4 text-center text-grey"
-                      >
-                        Memuatkan senarai penghuni...
-                      </td>
-                    </tr>
+                    loadingTableRows({
+                      mode: "loading",
+                      columnCount: 4,
+                      rowCount: 10,
+                    })
                   ) : null}
 
                   {!isLoading && residents.length === 0 ? (
-                    <tr className="text-sm">
-                      <td
-                        colSpan={4}
-                        className="px-4 py-4 text-center text-grey"
-                      >
-                        Tiada penghuni tersedia yang sepadan dengan carian semasa.
-                      </td>
-                    </tr>
+                    loadingTableRows({
+                      mode: "message",
+                      columnCount: 4,
+                      rowCount: 1,
+                      message:
+                        "Tiada penghuni tersedia yang sepadan dengan carian semasa.",
+                    })
                   ) : null}
 
                   {!isLoading

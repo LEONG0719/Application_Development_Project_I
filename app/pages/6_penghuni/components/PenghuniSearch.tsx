@@ -91,17 +91,20 @@ export function usePenghuniSearchLogic({
 
 type PenghuniSearchButtonProps = {
   isOpen: boolean;
+  disabled?: boolean;
   onToggle: () => void;
 };
 
 export default function PenghuniSearchButton({
   isOpen,
+  disabled = false,
   onToggle,
 }: PenghuniSearchButtonProps) {
   return (
     <ToolbarIconButton
       icon={commonIcons.search}
       label="Cari penghuni"
+      disabled={disabled}
       isActive={isOpen}
       onClick={onToggle}
     />

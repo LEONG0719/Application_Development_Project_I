@@ -42,11 +42,18 @@ type UsePenghuniDetailHistoryFilterResult = {
 
 export function usePenghuniDetailHistoryFilter(
     records: Array<TransactionRecord & { baki: number }>,
+    disabled: boolean = false,
 ): UsePenghuniDetailHistoryFilterResult {
     const [dateFilter, setDateFilter] = useState<DateFilter>({ startDate: "", endDate: "" });
     const [isOpen, setIsOpen] = useState(false);
     const [anchorStyle, setAnchorStyle] = useState<CSSProperties>({});
     const buttonRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        if (disabled) {
+            setIsOpen(false);
+        }
+    }, [disabled]);
 
     // Close panel on outside click (button ref + portal panel both checked via data attr).
     useEffect(() => {
@@ -65,6 +72,10 @@ export function usePenghuniDetailHistoryFilter(
     }, []);
 
     function handleToggle() {
+        if (disabled) {
+            return;
+        }
+
         if (!isOpen && buttonRef.current) {
             const rect = buttonRef.current.getBoundingClientRect();
             // Anchor fixed div at the bottom-right of the button.
@@ -141,6 +152,7 @@ export function usePenghuniDetailHistoryFilter(
                 <ToolbarIconButton
                     icon={commonIcons.calendar}
                     label="Tapis mengikut tarikh"
+                    disabled={disabled}
                     isActive={isButtonActive}
                     onClick={handleToggle}
                 />

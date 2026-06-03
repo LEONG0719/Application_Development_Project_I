@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 
 import Icon from "@/app/components/Icon/Icon";
 import { InputField as SharedInputField } from "@/app/components/InputField";
+import { loadingTableRows } from "@/app/components/Loading/LoadingTableRows";
 import SearchingDataOverlay from "@/app/components/Loading/SearchingDataOverlay";
 import { usePaginationLogic, PaginationControls } from "@/app/components/Pagination/Pagination";
 import PenghuniDetail from "./PenghuniDetail/PenghuniDetail";
@@ -138,14 +139,16 @@ export default function PenghuniTable({ residents, isLoading, errorMessage, setR
                 </div>
                 <div className="flex flex-row gap-4 items-center">
                     <PenghuniSearchButton
+                        disabled={isLoading}
                         isOpen={isSearchOpen}
                         onToggle={handleToggleSearch}
                     />
                     <PenghuniFilter
+                        disabled={isLoading}
                         selectedValues={selectedStatuses}
                         onSelect={handleStatusFilterChange}
                     />
-                    <PenghuniDownload residents={filteredResidents} />
+                    <PenghuniDownload disabled={isLoading} residents={filteredResidents} />
                 </div>
             </div>
 
@@ -209,21 +212,32 @@ export default function PenghuniTable({ residents, isLoading, errorMessage, setR
                     {/* Table Body */}
                     <tbody className="bg-white">
                         {isLoading ? (
-                            <tr className="text-sm">
-                                <td className="px-3 py-4 text-center text-grey" colSpan={7}>Sedang membaca data penghuni...</td>
-                            </tr>
+                            loadingTableRows({
+                                mode: "loading",
+                                columnCount: 7,
+                                rowCount: 10,
+                            })
                         ) : errorMessage ? (
-                            <tr className="text-sm">
-                                <td className="px-3 py-4 text-center text-red" colSpan={7}>{errorMessage}</td>
-                            </tr>
+                            loadingTableRows({
+                                mode: "message",
+                                columnCount: 7,
+                                rowCount: 1,
+                                message: errorMessage,
+                            })
                         ) : residents.length === 0 ? (
-                            <tr className="text-sm">
-                                <td className="px-3 py-4 text-center text-grey" colSpan={7}>Tiada data penghuni ditemui.</td>
-                            </tr>
+                            loadingTableRows({
+                                mode: "message",
+                                columnCount: 7,
+                                rowCount: 1,
+                                message: "Tiada data penghuni ditemui.",
+                            })
                         ) : filteredResidents.length === 0 ? (
-                            <tr className="text-sm">
-                                <td className="px-3 py-4 text-center text-grey" colSpan={7}>Tiada hasil mencari dengan penapis yang dipilih.</td>
-                            </tr>
+                            loadingTableRows({
+                                mode: "message",
+                                columnCount: 7,
+                                rowCount: 1,
+                                message: "Tiada hasil mencari dengan penapis yang dipilih.",
+                            })
                         ) : (
                             currentResidents.map((resident) => (
                                 <tr key={resident.id} className={`text-sm border-l-4 ${getStatusBadgeColor(resident.status)} border-b border-b-light-grey/20`}>

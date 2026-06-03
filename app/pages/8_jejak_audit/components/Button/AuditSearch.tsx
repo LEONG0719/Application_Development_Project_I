@@ -102,14 +102,16 @@ export function useAuditSearchController({
 type AuditSearchProps = {
   filters: AuditLogFilters;
   isOpen: boolean;
+  disabled?: boolean;
   onToggle: () => void;
 };
 
-export default function AuditSearch({ filters, isOpen, onToggle }: AuditSearchProps) {
+export default function AuditSearch({ filters, isOpen, disabled = false, onToggle }: AuditSearchProps) {
   return (
     <ToolbarIconButton
       icon={commonIcons.search}
       label="Cari rekod audit"
+      disabled={disabled}
       isActive={Boolean(filters.search?.trim()) || isOpen}
       onClick={onToggle}
     />
