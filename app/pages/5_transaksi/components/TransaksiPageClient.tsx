@@ -30,6 +30,7 @@ export default function TransaksiPageClient() {
   const [transactions, setTransactions] = useState<any[]>([]);
   const [summary, setSummary] = useState<SummaryData>({ totalCount: 0, totalDebit: 0, totalCredit: 0 });
   const [totalItems, setTotalItems] = useState(0);
+  const [isFetching, setIsFetching] = useState(false);
   const [selectedReverseTx, setSelectedReverseTx] = useState<any>(null);
   const [selectedAdjustTx, setSelectedAdjustTx] = useState<any>(null);
   const [activeFilters, setActiveFilters] = useState<FilterState>(defaultFilters);
@@ -199,6 +200,8 @@ export default function TransaksiPageClient() {
   const fetchTransactions = useCallback(async (filtersToApply: FilterState, page: number = 1) => {
     if (transactions.length === 0) {
       setIsLoading(true);
+    } else {
+      setIsFetching(true);
     }
     try {
       const queryParams = new URLSearchParams();
@@ -234,6 +237,7 @@ export default function TransaksiPageClient() {
       console.error("Failed to fetch transactions:", error);
     } finally {
       setIsLoading(false);
+      setIsFetching(false);
     }
   }, [transactions]);
 
@@ -307,6 +311,7 @@ export default function TransaksiPageClient() {
         <TransaksiTable 
           transactions={currentTransactions}
           isLoading={isLoading}
+          isFetching={isFetching}
           onView={handleViewDetails}
           onReverse={(tx) => setSelectedReverseTx(tx)}
           onAdjust={(tx) => setSelectedAdjustTx(tx)}

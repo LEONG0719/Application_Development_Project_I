@@ -25,12 +25,13 @@ type TransactionRow = {
 interface TransaksiTableProps {
   transactions: TransactionRow[];
   isLoading: boolean;
+  isFetching?: boolean;
   onView: (tx: TransactionRow) => void;
   onReverse: (tx: TransactionRow) => void;
   onAdjust: (tx: TransactionRow) => void;
 }
 
-export default function TransaksiTable({ transactions, isLoading, onView, onReverse, onAdjust }: TransaksiTableProps) {
+export default function TransaksiTable({ transactions, isLoading, isFetching, onView, onReverse, onAdjust }: TransaksiTableProps) {
   
   const formatRM = (amount: number | string) => {
     return Number(amount).toLocaleString("ms-MY", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -94,7 +95,7 @@ export default function TransaksiTable({ transactions, isLoading, onView, onReve
   }
 
   return (
-    <div className="overflow-x-auto">
+    <div className={`overflow-x-auto transition-opacity duration-200 ${isFetching ? "opacity-50 pointer-events-none" : ""}`}>
       <table className="w-full text-sm text-left">
         <thead className="text-[10px] text-gray-500 uppercase bg-gray-50 border-y border-gray-100">
           <tr>
