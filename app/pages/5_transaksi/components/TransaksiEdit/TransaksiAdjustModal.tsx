@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Icon from "../../../../components/Icon";
+import Icon, { commonIcons } from "@/app/components/Icon/Icon";
+import { InputField, Topic } from "@/app/components/InputField";
 
 interface TransaksiAdjustModalProps {
   isOpen: boolean;
@@ -27,6 +28,20 @@ export default function TransaksiAdjustModal({ isOpen, onClose, transaction, onS
   if (!isOpen || !transaction) return null;
 
   const formatRM = (amount: number) => amount.toLocaleString("ms-MY", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+  const formatIcNumber = (value?: string | null) => {
+    if (!value) {
+      return "Tiada";
+    }
+
+    const digits = value.replace(/\D/g, "");
+
+    if (digits.length !== 12) {
+      return value;
+    }
+
+    return `${digits.slice(0, 6)}-${digits.slice(6, 8)}-${digits.slice(8)}`;
+  };
 
   // 1. Core Variables & History
   const isDebitOriginal = Number(transaction.debitAmount) > 0;
@@ -96,143 +111,183 @@ export default function TransaksiAdjustModal({ isOpen, onClose, transaction, onS
   };
 
   return (
-    <div className="fixed bottom-0 left-55 right-0 top-0 z-50 flex items-start justify-center bg-black/45 p-12 backdrop-blur-sm">
-      <div className="flex max-h-full w-full max-w-4xl flex-col overflow-hidden rounded-lg bg-light-blue shadow-2xl">
+    <div className="fixed bottom-0 left-55 right-0 top-0 z-50 flex items-start justify-center bg-black/45 p-8 backdrop-blur-sm lg:p-12">
+      <div
+        className="flex max-h-full w-full flex-col overflow-hidden rounded-lg bg-light-blue shadow-2xl"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Pelarasan Transaksi"
+      >
         
-        {/* Header (Dark Blue) */}
+        {/* Header */}
         <div className="flex items-center justify-between bg-dark-blue p-6 text-white">
           <div>
-            <h2 className="font-bold text-lg uppercase tracking-wide">Pelarasan Transaksi</h2>
-            <p className="text-xs text-gray-300">SILA KEMASKINI BUTIRAN PELARASAN DI BAWAH</p>
+            <h2 className="text-lg font-bold uppercase tracking-wide">PELARASAN TRANSAKSI</h2>
+            <p className="text-xs font-extralight text-light-grey">SILA KEMASKINI BUTIRAN PELARASAN DI BAWAH</p>
           </div>
           <button onClick={onClose} className="text-white transition-colors hover:opacity-80">
             <Icon icon="close" size={20} />
           </button>
         </div>
 
-        <div className="p-6 overflow-y-auto custom-scrollbar space-y-8">
+        <div className="custom-scrollbar space-y-8 overflow-y-auto p-6">
           
           {/* Section 1: Maklumat Transaksi */}
-          <div className="space-y-4">
-            <h3 className="border-l-4 border-dark-blue pl-2 font-bold text-sm uppercase text-dark-blue">Maklumat Transaksi</h3>
+          <div className="flex flex-col gap-4">
+            <Topic content="MAKLUMAT TRANSAKSI" />
             
             <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Nama Penghuni</label>
-                <input type="text" readOnly value={transaction.resident?.fullName || 'Tiada'} className="w-full bg-gray-50 border border-gray-200 rounded p-2.5 text-sm font-semibold text-gray-700 outline-none" />
-              </div>
-              <div>
-                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">No. Kad Pengenalan</label>
-                <input type="text" readOnly value={transaction.resident?.icNumber || 'Tiada'} className="w-full bg-gray-50 border border-gray-200 rounded p-2.5 text-sm font-semibold text-gray-700 outline-none" />
-              </div>
+              <InputField
+                label="NAMA PENGHUNI"
+                value={transaction.resident?.fullName || "Tiada"}
+                state="inactive"
+                inactiveBackgroundClass="bg-[#EEF4FF]"
+              />
+              <InputField
+                label="NO. KAD PENGENALAN"
+                value={formatIcNumber(transaction.resident?.icNumber)}
+                state="inactive"
+                inactiveBackgroundClass="bg-[#EEF4FF]"
+              />
             </div>
 
             <div className="grid grid-cols-[1fr_auto_1fr] gap-4 items-center">
-              <div>
-                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">{isDebitOriginal ? 'Debit' : 'Kredit'} Asal / Semasa (RM)</label>
-                <input type="text" readOnly value={formatRM(currentNet)} className="w-full bg-gray-50 border border-gray-200 rounded p-2.5 text-sm font-bold text-dark-blue outline-none" />
-              </div>
+              <InputField
+                label={`${isDebitOriginal ? "DEBIT" : "KREDIT"} ASAL / SEMASA (RM)`}
+                value={formatRM(currentNet)}
+                state="inactive"
+                inputTextClassName={isDebitOriginal ? "text-red font-bold" : "text-green font-bold"}
+                inactiveBackgroundClass="bg-[#EEF4FF]"
+              />
               <Icon icon="arrow_forward" size={20} className="text-gray-400 mt-5" />
-              <div>
-                <label className="block text-xs font-bold text-dark-blue uppercase mb-1">{isDebitOriginal ? 'Debit' : 'Kredit'} Baru (RM)</label>
-                <input 
-                  type="number" step="0.01" min="0" 
-                  value={newAmount} 
-                  onChange={(e) => setNewAmount(e.target.value)} 
-                  placeholder={currentNet.toString()}
-                  className="w-full bg-white border-2 border-blue-200 focus:border-dark-blue focus:ring-0 rounded p-2.5 text-sm font-bold text-dark-blue outline-none transition-all" 
-                />
-              </div>
+              <InputField
+                label={`${isDebitOriginal ? "DEBIT" : "KREDIT"} BARU (RM)`}
+                value={newAmount}
+                state="active"
+                type="number"
+                placeholder={currentNet.toString()}
+                onChange={setNewAmount}
+                inputTextClassName={isDebitOriginal ? "text-red font-bold" : "text-green font-bold"}
+                activeBackgroundClass="bg-white"
+              />
             </div>
 
-            <div>
-              <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Catatan Baru</label>
-              <input type="text" value={remarks} onChange={(e) => setRemarks(e.target.value)} className="w-full bg-white border border-gray-300 focus:border-dark-blue focus:ring-1 focus:ring-dark-blue rounded p-2.5 text-sm outline-none transition-all" />
-              {error && <p className="text-red-500 text-xs mt-1 font-medium">{error}</p>}
-            </div>
+            <InputField
+              label="CATATAN BARU"
+              value={remarks}
+              state="active"
+              onChange={setRemarks}
+              error={Boolean(error)}
+              errorMessage={error}
+              activeBackgroundClass="bg-white"
+            />
           </div>
 
           {/* Section 2: Pratonton (Preview) */}
-          <div className="space-y-4">
-            <h3 className="border-l-4 border-dark-blue pl-2 font-bold text-sm uppercase text-dark-blue">Pratonton Transaksi Berkaitan</h3>
+          <div className="flex flex-col gap-4">
+            <Topic content="PRATONTON TRANSAKSI BERKAITAN" />
             
-            <div className="border border-gray-200 rounded-lg overflow-hidden">
-              <table className="w-full text-xs text-left">
-                <thead className="bg-gray-50 text-gray-500 font-bold uppercase border-b border-gray-200">
+            <div className="overflow-x-auto overflow-y-auto rounded-lg border border-light-grey/20 bg-white">
+              <table className="w-full min-w-220 text-left">
+                <thead className="bg-background text-xs font-bold text-grey">
                   <tr>
-                    <th className="px-4 py-3">Tarikh</th>
-                    <th className="px-4 py-3">ID</th>
-                    <th className="px-4 py-3">Status</th>
-                    <th className="px-4 py-3">Catatan</th>
-                    <th className="px-4 py-3 text-right">Debit (RM)</th>
-                    <th className="px-4 py-3 text-right">Kredit (RM)</th>
+                    <th className="w-min whitespace-nowrap p-3 text-left">Tarikh</th>
+                    <th className="w-min whitespace-nowrap p-3 text-left">ID Transaksi</th>
+                    <th className="w-min whitespace-nowrap p-3 text-left">Status</th>
+                    <th className="w-full p-3 text-left">Catatan</th>
+                    <th className="w-min whitespace-nowrap p-3 text-right">Debit (RM)</th>
+                    <th className="w-min whitespace-nowrap p-3 text-right">Kredit (RM)</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100 bg-white">
+                <tbody className="bg-white">
                   
                   {/* Original Row */}
-                  <tr>
-                    <td className="px-4 py-3">{new Date(transaction.transactionDate).toLocaleDateString("en-GB")}</td>
-                    <td className="px-4 py-3 font-bold">{transaction.transactionNo}</td>
-                    <td className="px-4 py-3"><span className="bg-yellow-50 text-yellow-700 px-2 py-0.5 rounded text-[10px] font-bold uppercase border border-yellow-100">DILARASKAN</span></td>
-                    <td className="px-4 py-3">{transaction.description}</td>
-                    <td className="px-4 py-3 text-right font-bold text-gray-500">{Number(transaction.debitAmount) > 0 ? formatRM(Number(transaction.debitAmount)) : '0.00'}</td>
-                    <td className="px-4 py-3 text-right font-bold text-(--color-green)">{Number(transaction.creditAmount) > 0 ? formatRM(Number(transaction.creditAmount)) : '0.00'}</td>
+                  <tr className="border-b border-light-grey/20 text-sm transition-colors">
+                    <td className="w-min whitespace-nowrap p-3 text-dark-grey">{new Date(transaction.transactionDate).toLocaleDateString("en-GB")}</td>
+                    <td className="w-min whitespace-nowrap p-3 font-bold">{transaction.transactionNo}</td>
+                    <td className="w-min whitespace-nowrap p-3"><span className="rounded-[5px] bg-[#FEF3C7] px-2 py-0.5 text-[10px] font-bold uppercase text-[#92400E]">Dilaraskan</span></td>
+                    <td className="max-w-80 truncate p-3 text-grey">{transaction.description || "-"}</td>
+                    <td className={`w-min whitespace-nowrap p-3 text-right ${Number(transaction.debitAmount) > 0 ? "font-bold text-red" : "font-normal"}`}>
+                      {Number(transaction.debitAmount) > 0 ? formatRM(Number(transaction.debitAmount)) : "-"}
+                    </td>
+                    <td className={`w-min whitespace-nowrap p-3 text-right ${Number(transaction.creditAmount) > 0 ? "font-bold text-green" : "font-normal"}`}>
+                      {Number(transaction.creditAmount) > 0 ? formatRM(Number(transaction.creditAmount)) : "-"}
+                    </td>
                   </tr>
 
                   {/* Past Adjustments (If Any) */}
                   {pastPelarasans.map((p: any) => (
-                     <tr key={p.id}>
-                        <td className="px-4 py-3">{new Date(p.transactionDate).toLocaleDateString("en-GB")}</td>
-                        <td className="px-4 py-3 font-bold">{p.transactionNo}</td>
-                        <td className="px-4 py-3"><span className="bg-yellow-500 text-white px-2 py-0.5 rounded text-[10px] font-bold uppercase">PELARASAN</span></td>
-                        <td className="px-4 py-3">{p.description}</td>
-                        <td className="px-4 py-3 text-right font-bold text-(--color-red)">{Number(p.debitAmount) > 0 ? formatRM(Number(p.debitAmount)) : '0.00'}</td>
-                        <td className="px-4 py-3 text-right font-bold text-gray-500">{Number(p.creditAmount) > 0 ? formatRM(Number(p.creditAmount)) : '0.00'}</td>
+                     <tr key={p.id} className="border-b border-light-grey/20 text-sm transition-colors">
+                        <td className="w-min whitespace-nowrap p-3 text-dark-grey">{new Date(p.transactionDate).toLocaleDateString("en-GB")}</td>
+                        <td className="w-min whitespace-nowrap p-3 font-bold">{p.transactionNo}</td>
+                        <td className="w-min whitespace-nowrap p-3"><span className="rounded-[5px] bg-[#FEF3C7] px-2 py-0.5 text-[10px] font-bold uppercase text-[#92400E]">Pelarasan</span></td>
+                        <td className="max-w-80 truncate p-3 text-grey">{p.description || "-"}</td>
+                        <td className={`w-min whitespace-nowrap p-3 text-right ${Number(p.debitAmount) > 0 ? "font-bold text-red" : "font-normal"}`}>
+                          {Number(p.debitAmount) > 0 ? formatRM(Number(p.debitAmount)) : "-"}
+                        </td>
+                        <td className={`w-min whitespace-nowrap p-3 text-right ${Number(p.creditAmount) > 0 ? "font-bold text-green" : "font-normal"}`}>
+                          {Number(p.creditAmount) > 0 ? formatRM(Number(p.creditAmount)) : "-"}
+                        </td>
                      </tr>
                   ))}
 
                   {/* New Adjustment Row (Hari Ini) */}
                   {newAmount !== "" && delta !== 0 && (
-                    <tr className="bg-yellow-50/30">
-                        <td className="px-4 py-3 font-bold">Hari Ini</td>
-                        <td className="px-4 py-3 italic text-gray-400">Diberikan Nanti</td>
-                        <td className="px-4 py-3"><span className="bg-yellow-500 text-white px-2 py-0.5 rounded text-[10px] font-bold uppercase">PELARASAN</span></td>
-                        <td className="px-4 py-3">{remarks}</td>
-                        <td className="px-4 py-3 text-right font-bold text-(--color-red)">{newDebit > 0 ? formatRM(newDebit) : '0.00'}</td>
-                        <td className="px-4 py-3 text-right font-bold text-gray-500">{newCredit > 0 ? formatRM(newCredit) : '0.00'}</td>
+                    <tr className="border-b border-light-grey/20 text-sm transition-colors">
+                        <td className="w-min whitespace-nowrap border-l-4 border-dark-blue p-3 text-dark-grey">Hari Ini</td>
+                        <td className="w-min whitespace-nowrap p-3 italic text-light-grey">Diberikan Nanti</td>
+                        <td className="w-min whitespace-nowrap p-3"><span className="rounded-[5px] bg-[#FEF3C7] px-2 py-0.5 text-[10px] font-bold uppercase text-[#92400E]">Pelarasan</span></td>
+                        <td className="max-w-80 truncate p-3 text-grey">{remarks || "-"}</td>
+                        <td className={`w-min whitespace-nowrap p-3 text-right ${newDebit > 0 ? "font-bold text-red" : "font-normal"}`}>
+                          {newDebit > 0 ? formatRM(newDebit) : "-"}
+                        </td>
+                        <td className={`w-min whitespace-nowrap p-3 text-right ${newCredit > 0 ? "font-bold text-green" : "font-normal"}`}>
+                          {newCredit > 0 ? formatRM(newCredit) : "-"}
+                        </td>
                     </tr>
                   )}
 
                   {/* Summary Row */}
-                  <tr className="bg-blue-50/50 font-bold text-dark-blue border-t-2 border-gray-200">
-                    <td colSpan={4} className="px-4 py-3 uppercase">Jumlah</td>
-                    <td className="px-4 py-3 text-right text-(--color-red)">{formatRM(finalTotalDebit)}</td>
-                    <td className="px-4 py-3 text-right text-(--color-green)">{formatRM(finalTotalCredit)}</td>
+                  <tr className="border-b border-light-grey/20 bg-background text-sm font-bold">
+                    <td colSpan={4} className="p-3 text-left text-dark-blue">JUMLAH</td>
+                    <td className="p-3 text-right text-red">{formatRM(finalTotalDebit)}</td>
+                    <td className="p-3 text-right text-green">{formatRM(finalTotalCredit)}</td>
                   </tr>
                 </tbody>
               </table>
-              <div className="bg-dark-blue p-3 text-sm font-bold uppercase text-white flex justify-between items-center">
-                <span>Amaun Bersih</span>
-                <span>RM {formatRM(targetAmount)}</span>
+              <div className="flex items-center justify-between bg-dark-blue px-4 py-3 text-white">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-light-grey">Amaun Bersih</span>
+                <span className="text-sm font-bold">RM {formatRM(targetAmount)}</span>
               </div>
             </div>
           </div>
-        </div>
 
-        {/* Footer */}
-        <div className="bg-gray-50 p-4 border-t border-gray-200 flex justify-between items-center">
-          <div className="text-xs text-gray-500 italic flex items-center gap-2">
-            {isSubmitting && <><div className="w-3 h-3 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div> Sedang memproses rekod ini...</>}
-          </div>
-          <div className="flex gap-3">
-            <button onClick={onClose} disabled={isSubmitting} className="flex items-center gap-2 px-6 py-2 bg-red-500 hover:bg-red-600 text-white text-sm font-bold rounded shadow transition-colors">
-              <Icon icon="close" size={18} /> Batal
-            </button>
-            <button onClick={handleSubmit} disabled={isSubmitting} className="flex items-center gap-2 px-6 py-2 bg-(--color-green) hover:bg-green-700 text-white text-sm font-bold rounded shadow transition-colors disabled:opacity-50">
-              <Icon icon="save" size={18} /> Simpan Pelarasan
-            </button>
-          </div>
+          <footer className="flex items-center justify-between">
+            <div className="flex flex-row items-center justify-center gap-1 text-grey/80">
+              <Icon icon="edit" size={13} />
+              <div className="text-xs">
+                {isSubmitting ? "Sedang memproses rekod ini..." : "Sedia untuk simpan pelarasan rekod..."}
+              </div>
+            </div>
+            <div className="flex w-xs gap-3">
+              <button
+                onClick={onClose}
+                disabled={isSubmitting}
+                className="flex flex-1 items-center justify-center gap-1 whitespace-nowrap rounded-md bg-red px-5 py-3 text-xs font-bold text-white hover:bg-red/90 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <Icon icon={commonIcons.close} size={16} />
+                Batal
+              </button>
+              <button
+                onClick={handleSubmit}
+                disabled={isSubmitting}
+                className="flex flex-1 items-center justify-center gap-1 whitespace-nowrap rounded-md bg-green px-5 py-3 text-xs font-bold text-white hover:bg-green/90 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <Icon icon={commonIcons.save} size={16} />
+                {isSubmitting ? "Sedang Simpan..." : "Simpan Rekod"}
+              </button>
+            </div>
+          </footer>
         </div>
 
       </div>

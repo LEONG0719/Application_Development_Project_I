@@ -86,13 +86,13 @@ export default function ButiranTunggakanHistory({
         <table className="w-full overflow-x-auto">
           <thead>
             <tr className="bg-background text-xs font-bold text-grey">
-              <th className="px-4 py-3 text-left">Tarikh</th>
-              <th className="px-4 py-3 text-left">ID Transaksi</th>
-              <th className="px-4 py-3 text-left">Kategori</th>
-              <th className="px-4 py-3 text-left">Catatan</th>
-              <th className="px-4 py-3 text-right text-red">Debit (RM)</th>
-              <th className="px-4 py-3 text-right text-green">Kredit (RM)</th>
-              <th className="px-4 py-3 text-right">Baki (RM)</th>
+              <th className="px-4 py-3 text-left whitespace-nowrap">Tarikh</th>
+              <th className="px-4 py-3 text-left whitespace-nowrap">ID Transaksi</th>
+              <th className="px-4 py-3 text-left whitespace-nowrap">Kategori</th>
+              <th className="px-4 py-3 w-full text-left">Catatan</th>
+              <th className="px-4 py-3 text-right whitespace-nowrap">Debit (RM)</th>
+              <th className="px-4 py-3 text-right whitespace-nowrap">Kredit (RM)</th>
+              <th className="px-4 py-3 text-right whitespace-nowrap">Baki (RM)</th>
             </tr>
           </thead>
           <tbody className="bg-white">
@@ -114,17 +114,17 @@ export default function ButiranTunggakanHistory({
                   key={`${row.id}-${row.tarikh}`}
                   className="text-sm border-b border-b-light-grey/20 transition-colors hover:bg-background/60"
                 >
-                  <td className="px-4 py-3 text-left font-medium">{row.tarikh}</td>
-                  <td className="px-4 py-3 text-left">{row.id}</td>
-                  <td className="px-4 py-3 text-left">{row.kategori}</td>
-                  <td className="px-4 py-3 text-left">{row.catatan}</td>
-                  <td className="px-4 py-3 text-right text-red">
+                  <td className="px-4 py-3 text-left font-medium whitespace-nowrap">{row.tarikh}</td>
+                  <td className="px-4 py-3 text-left whitespace-nowrap">{row.id}</td>
+                  <td className="px-4 py-3 text-left whitespace-nowrap">{row.kategori}</td>
+                  <td className="px-4 py-3 text-left whitespace-nowrap">{row.catatan}</td>
+                  <td className="px-4 py-3 text-right whitespace-nowrap text-red">
                     {row.debit > 0 ? formatCurrency(row.debit) : "-"}
                   </td>
-                  <td className="px-4 py-3 text-right text-green">
+                  <td className="px-4 py-3 text-right whitespace-nowrap text-green">
                     {row.kredit > 0 ? formatCurrency(row.kredit) : "-"}
                   </td>
-                  <td className={`px-4 py-3 text-right font-bold ${getBakiColorClass(row.baki)}`}>
+                  <td className={`px-4 py-3 text-right font-bold whitespace-nowrap ${getBakiColorClass(row.baki)}`}>
                     {formatCurrency(row.baki)}
                   </td>
                 </tr>

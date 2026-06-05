@@ -128,13 +128,13 @@ export default function PenghuniDetailHistory({ residentId }: { residentId?: str
                 <table className="w-full overflow-x-auto">
                     <thead>
                         <tr className="font-bold text-xs text-grey bg-background">
-                            <th className="text-left p-3">Tarikh</th>
-                            <th className="text-left p-3">ID</th>
-                            <th className="text-left p-3">Kategori</th>
-                            <th className="text-left p-3">Catatan</th>
-                            <th className="text-right p-3">Debit (RM)</th>
-                            <th className="text-right p-3">Kredit (RM)</th>
-                            <th className="text-right p-3">Baki (RM)</th>
+                            <th className="w-min text-left p-3 whitespace-nowrap">Tarikh</th>
+                            <th className="w-min text-left p-3 whitespace-nowrap">ID</th>
+                            <th className="w-min text-left p-3 whitespace-nowrap">Kategori</th>
+                            <th className="w-full text-left p-3 whitespace-nowrap">Catatan</th>
+                            <th className="w-min text-right p-3 whitespace-nowrap">Debit (RM)</th>
+                            <th className="w-min text-right p-3 whitespace-nowrap">Kredit (RM)</th>
+                            <th className="w-min text-right p-3 whitespace-nowrap">Baki (RM)</th>
                         </tr>
                     </thead>
                     <tbody className="bg-white">
@@ -161,13 +161,13 @@ export default function PenghuniDetailHistory({ residentId }: { residentId?: str
                         ) : (
                             currentHistory.map((row) => (
                                 <tr key={row.id} className="text-sm border-b border-b-light-grey/20 transition-colors">
-                                    <td className="px-3 py-2 text-left font-medium">{row.tarikh}</td>
-                                    <td className="px-3 py-2 text-left">{row.transactionNo || row.id}</td>
-                                    <td className="px-3 py-2 text-left">{row.kategori}</td>
-                                    <td className="px-3 py-2 text-left">{row.catatan}</td>
-                                    <td className="px-3 py-2 text-right text-red">{row.debit > 0 ? formatCurrency(row.debit) : "-"}</td>
-                                    <td className="px-3 py-2 text-right text-green">{row.kredit > 0 ? formatCurrency(row.kredit) : "-"}</td>
-                                    <td className={`px-3 py-2 text-right font-bold ${getBakiColorClass(row.baki)}`}>{formatCurrency(row.baki)}</td>
+                                    <td className="px-3 py-2 text-left font-medium whitespace-nowrap">{row.tarikh}</td>
+                                    <td className="px-3 py-2 text-left whitespace-nowrap">{row.transactionNo || row.id}</td>
+                                    <td className="px-3 py-2 text-left whitespace-nowrap">{row.kategori}</td>
+                                    <td className="px-3 py-2 text-left whitespace-nowrap">{row.catatan}</td>
+                                    <td className="px-3 py-2 text-right text-red whitespace-nowrap">{row.debit > 0 ? formatCurrency(row.debit) : "-"}</td>
+                                    <td className="px-3 py-2 text-right text-green whitespace-nowrap">{row.kredit > 0 ? formatCurrency(row.kredit) : "-"}</td>
+                                    <td className={`px-3 py-2 text-right font-bold whitespace-nowrap ${getBakiColorClass(row.baki)}`}>{formatCurrency(row.baki)}</td>
                                 </tr>
                             ))
                         )}

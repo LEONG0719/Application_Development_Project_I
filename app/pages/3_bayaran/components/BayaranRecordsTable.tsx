@@ -58,8 +58,8 @@ export default function BayaranRecordsTable({
       {/* Table Header */}
       <thead className="bg-background">
         <tr className="bg-background text-xs font-bold text-grey">
-          <th className="w-min whitespace-nowrap p-3  text-left">Penghuni</th>
-          <th className="w-min whitespace-nowrap p-3  text-left">Kuarters</th>
+          <th className="w-min whitespace-nowrap p-3 text-left">Penghuni</th>
+          <th className="w-min whitespace-nowrap p-3 text-left">Kuarters</th>
           <th className="w-min whitespace-nowrap p-3 text-right">Tunggakan (RM)</th>
 
           {/* Amaun Bayar & Time Picker */}
