@@ -102,7 +102,9 @@ export default function TunggakanPageClient() {
   // --- DATA FETCHING ---
   const fetchTunggakanData = async () => {
     try {
-      setIsLoading(true);
+      if (data.length === 0) {
+        setIsLoading(true);
+      }
       const params = new URLSearchParams({
         t: String(Date.now()),
         chargeMonth: selectedChargeMonth,
@@ -140,6 +142,7 @@ export default function TunggakanPageClient() {
 
   // Fetch on page load.
   useEffect(() => {
+    setData([]);
     fetchTunggakanData();
     fetchBillingStatus();
   }, [selectedChargeMonth]);
@@ -410,20 +413,19 @@ export default function TunggakanPageClient() {
         </div>
 
         {/* Table list and pagination */}
-        <div className="mt-3 overflow-hidden rounded-lg bg-white shadow">
-          <TunggakanTable
-            isLoading={isLoading}
-            data={data}
-            filteredData={filteredData}
-            selectedIds={selectedIds}
-            onSelectAll={handleSelectAll}
-            onSelectRow={handleSelectRow}
-            onViewResident={setViewResidentId}
-            selectedChargeMonthLabel={selectedChargeMonthLabel}
-            activeFilterCount={activeFilterCount}
-          />
-        </div>
-      </section>
+        <TunggakanTable
+          isLoading={isLoading}
+          data={data}
+          filteredData={filteredData}
+          selectedIds={selectedIds}
+          onSelectAll={handleSelectAll}
+          onSelectRow={handleSelectRow}
+          onViewResident={setViewResidentId}
+          selectedChargeMonthLabel={selectedChargeMonthLabel}
+          activeFilterCount={activeFilterCount}
+          filters={filters}
+        />
+      </div>
 
       {/* --- FLOATING 'KEMAS KINI' BUTTON --- */}
       <button 

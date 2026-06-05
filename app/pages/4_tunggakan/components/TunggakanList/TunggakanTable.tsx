@@ -8,6 +8,7 @@ import {
   PaginationControls,
 } from "@/app/components/Pagination/Pagination";
 import type { TunggakanListItem } from "@/lib/arrears/arrears";
+import type { TunggakanListItem, TunggakanFilter } from "@/lib/arrears/arrears";
 
 type TunggakanTableProps = {
   isLoading: boolean;
@@ -19,6 +20,7 @@ type TunggakanTableProps = {
   onViewResident: (id: string) => void;
   selectedChargeMonthLabel: string;
   activeFilterCount: number;
+  filters: TunggakanFilter;
 };
 
 // Text size constants for table display
@@ -39,15 +41,16 @@ export default function TunggakanTable({
   onViewResident,
   selectedChargeMonthLabel,
   activeFilterCount,
+  filters,
 }: TunggakanTableProps) {
   // Pagination Logic State
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 10;
 
-  // Reset page when filter changes
+  // Reset page when filter options change
   useEffect(() => {
     setCurrentPage(1);
-  }, [filteredData]);
+  }, [filters, selectedChargeMonthLabel]);
 
   // Pagination calculations
   const totalPages = Math.max(1, Math.ceil(filteredData.length / ITEMS_PER_PAGE));
