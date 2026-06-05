@@ -9,13 +9,11 @@ type ArrearsSearchProps = {
 };
 
 export default function ArrearsSearch({ value, isOpen, setIsOpen }: ArrearsSearchProps) {
-  const isSearchActive = value.trim().length > 0;
-
   return (
     <ToolbarIconButton
       icon="search"
       label="Cari penghuni tunggakan"
-      isActive={isOpen || isSearchActive}
+      isActive={isOpen}
       isExpanded={isOpen}
       onClick={() => setIsOpen((currentState) => !currentState)}
     />

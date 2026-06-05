@@ -68,6 +68,13 @@ export default function TunggakanPageClient() {
   const isSearchActive = searchQuery.trim().length > 0;
   const [isSearchOpen, setIsSearchOpen] = useState(isSearchActive);
 
+  // Synchronize searchQuery with panel open state
+  useEffect(() => {
+    if (!isSearchOpen) {
+      setSearchQuery("");
+    }
+  }, [isSearchOpen]);
+
   const normalizeSearchValue = (value: string) => {
     return value
       .trim()
@@ -149,21 +156,23 @@ export default function TunggakanPageClient() {
   const filteredData = useMemo(() => {
     let result = data;
 
-    const normalizedQuery = normalizeSearchValue(searchQuery);
-    if (normalizedQuery.length > 0) {
-      result = result.filter((row) => {
-        const searchableFields = [
-          row.fullName,
-          row.icNumber,
-          row.quarterClass,
-          row.unitCode,
-          row.quarterAddress,
-        ].filter(Boolean) as string[];
+    if (isSearchOpen) {
+      const normalizedQuery = normalizeSearchValue(searchQuery);
+      if (normalizedQuery.length > 0) {
+        result = result.filter((row) => {
+          const searchableFields = [
+            row.fullName,
+            row.icNumber,
+            row.quarterClass,
+            row.unitCode,
+            row.quarterAddress,
+          ].filter(Boolean) as string[];
 
-        return searchableFields.some((field) =>
-          normalizeSearchValue(field).includes(normalizedQuery)
-        );
-      });
+          return searchableFields.some((field) =>
+            normalizeSearchValue(field).includes(normalizedQuery)
+          );
+        });
+      }
     }
 
     if (filters.kelasKuarters.length > 0)
@@ -198,11 +207,11 @@ export default function TunggakanPageClient() {
       });
 
     return result;
-  }, [data, filters, searchQuery]);
+  }, [data, filters, searchQuery, isSearchOpen]);
 
   const activeFilterCount = useMemo(() => {
     let count = 0;
-    if (searchQuery.trim() !== "") count++;
+    if (isSearchOpen && searchQuery.trim() !== "") count++;
     if (filters.kelasKuarters.length > 0) count++;
     if (filters.blok.length > 0) count++;
     if (filters.julatMin !== "") count++;
@@ -216,7 +225,7 @@ export default function TunggakanPageClient() {
     if (!isAllStatusSelected) count += filters.statusBayaranSelections.length;
 
     return count;
-  }, [filters, searchQuery]);
+  }, [filters, searchQuery, isSearchOpen]);
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {

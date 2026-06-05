@@ -43,8 +43,7 @@ export default function BayaranFilterShell({
   const isSearchFilterActive = filterQuery.trim().length > 0;
   const isSearchPanelOpen = isSearchOpen || isSearchFilterActive;
   const isStatusFilterActive = statusFilter.length !== statusFilterOptions.length;
-  const isFilterButtonActive =
-    isFilterMenuOpen || isSearchFilterActive || isStatusFilterActive;
+  const isFilterButtonActive = isFilterMenuOpen || isStatusFilterActive;
 
   useEffect(() => {
     if (isSearchPanelOpen) {
