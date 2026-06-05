@@ -20,6 +20,7 @@ type BaseFieldStyleProps = {
     labelFontSize?: number | string;
     inputFontSize?: number | string;
     inputMinHeight?: number | string;
+    inputTextClassName?: string;
     activeBackgroundClass?: string;
     inactiveBackgroundClass?: string;
 };
@@ -158,6 +159,7 @@ export function InputField({
     labelFontSize = 10,
     inputFontSize,
     inputMinHeight,
+    inputTextClassName,
     activeBackgroundClass = "bg-white",
     inactiveBackgroundClass = "bg-transparent", 
 }: {
@@ -191,7 +193,9 @@ export function InputField({
                     className={`w-full rounded-md text-sm min-h-12 border outline-none
                         ${leadingIcon ? 'pl-9' : 'pl-3'} ${trailingIcon ? 'pr-9' : 'pr-3'} py-3
                         ${error ? 'border-red focus-within:border-red' : 'border border-light-grey/40'}
-                        ${state === "active" ? activeBackgroundClass : inactiveBackgroundClass}`}
+                        ${state === "active" ? activeBackgroundClass : inactiveBackgroundClass}
+                        ${inputTextClassName || ""}
+                        placeholder:font-normal placeholder:text-light-grey`}
                     style={{ textAlign: textAlign, fontSize: inputFontSize, minHeight: inputMinHeight }}
                 />
                 {trailingIcon && (
