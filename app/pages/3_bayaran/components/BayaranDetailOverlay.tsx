@@ -422,11 +422,11 @@ function PaymentHistoryTab({
         <table className="w-full overflow-x-auto">
             <thead>
               <tr className="bg-background text-xs font-bold text-grey">
-                <th className="px-4 py-3 text-left">Tarikh</th>
-                <th className="px-4 py-3 text-left">ID</th>
-                <th className="px-4 py-3 text-left">No. Resit</th>
-                <th className="px-4 py-3 text-left">Catatan</th>
-                <th className="px-4 py-3 text-right">Amaun (RM)</th>
+                <th className="w-min px-4 py-3 text-left whitespace-nowrap">Tarikh</th>
+                <th className="w-min px-4 py-3 text-left whitespace-nowrap">ID</th>
+                <th className="w-min px-4 py-3 text-left whitespace-nowrap">No. Resit</th>
+                <th className="w-full px-4 py-3 text-left whitespace-nowrap">Catatan</th>
+                <th className="w-min px-4 py-3 text-right whitespace-nowrap">Amaun (RM)</th>
               </tr>
             </thead>
             <tbody className="bg-white">
@@ -451,19 +451,19 @@ function PaymentHistoryTab({
                     key={`${history.id}-${history.date}`}
                     className="text-sm border-b border-b-light-grey/20 transition-colors"
                   >
-                    <td className="px-4 py-3 text-left font-medium">
+                    <td className="px-4 py-3 text-left font-medium whitespace-nowrap">
                       {formatDate(history.date)}
                     </td>
-                    <td className="px-4 py-3 text-left">
+                    <td className="px-4 py-3 text-left whitespace-nowrap">
                       {history.id}
                     </td>
-                    <td className="px-4 py-3 text-left">
+                    <td className="px-4 py-3 text-left whitespace-nowrap">
                       {history.receiptNo ?? "N/A"}
                     </td>
-                    <td className="px-4 py-3 text-left">
+                    <td className="px-4 py-3 text-left whitespace-nowrap">
                       {history.description ?? "Bayaran Diterima"}
                     </td>
-                    <td className="px-4 py-3 text-right font-bold text-green">
+                    <td className="px-4 py-3 text-right font-bold text-green whitespace-nowrap">
                       {formatMoney(history.amount)}
                     </td>
                   </tr>
