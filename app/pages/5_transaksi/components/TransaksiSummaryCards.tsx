@@ -34,7 +34,7 @@ export default function TransaksiSummaryCards({ totalCount, totalDebit, totalCre
       <article className="flex flex-col gap-1 rounded-lg border-l-4 border-l-red bg-white p-4 shadow">
         <p className="text-xs font-semibold text-grey/70">AMAUN DEBIT</p>
         <p className="text-3xl font-bold text-dark-grey">
-          {isLoading ? "RM 0.00" : formatRM(totalDebit).replace("RM", "RM ")}
+          {isLoading ? "RM 0.00" : formatRM(totalDebit).replace("RM", "RM")}
         </p>
         <div className="flex items-center gap-1">
           <Icon icon="trending_down" size={16} className="text-red" />
@@ -45,7 +45,7 @@ export default function TransaksiSummaryCards({ totalCount, totalDebit, totalCre
       <article className="flex flex-col gap-1 rounded-lg border-l-4 border-l-green bg-white p-4 shadow">
         <p className="text-xs font-semibold text-grey/70">AMAUN KREDIT</p>
         <p className="text-3xl font-bold text-dark-grey">
-          {isLoading ? "RM 0.00" : formatRM(totalCredit).replace("RM", "RM ")}
+          {isLoading ? "RM 0.00" : formatRM(totalCredit).replace("RM", "RM")}
         </p>
         <div className="flex items-center gap-1">
           <Icon icon="trending_up" size={16} className="text-green" />

@@ -1,85 +1,49 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Icon from "../../../components/Icon";
+import Icon from "../../../../components/Icon";
 
-interface TransaksiAdjustModalProps {
+interface TransaksiReverseModalProps {
   isOpen: boolean;
   onClose: () => void;
   transaction: any;
   onSuccess: () => void;
 }
 
-export default function TransaksiAdjustModal({ isOpen, onClose, transaction, onSuccess }: TransaksiAdjustModalProps) {
-  const [newAmount, setNewAmount] = useState("");
+export default function TransaksiReverseModal({ isOpen, onClose, transaction, onSuccess }: TransaksiReverseModalProps) {
   const [remarks, setRemarks] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
     if (isOpen && transaction) {
-      setNewAmount("");
-      setRemarks(`${transaction.description} (Pelarasan)`);
+      setRemarks(`${transaction.description} (Pembalikan)`);
       setError("");
     }
   }, [isOpen, transaction]);
 
   if (!isOpen || !transaction) return null;
 
-  const formatRM = (amount: number) => amount.toLocaleString("ms-MY", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const isDebit = Number(transaction.debitAmount) > 0;
+  const originalAmount = isDebit ? Number(transaction.debitAmount) : Number(transaction.creditAmount);
 
-  // 1. Core Variables & History
-  const isDebitOriginal = Number(transaction.debitAmount) > 0;
-  const originalAmount = isDebitOriginal ? Number(transaction.debitAmount) : Number(transaction.creditAmount);
-  const pastPelarasans = transaction.childTransactions?.filter((c: any) => c.status === "PELARASAN") || [];
-
-  // 2. Calculate Past Deltas
-  const totalPastDebit = pastPelarasans.reduce((sum: number, c: any) => sum + Number(c.debitAmount), 0);
-  const totalPastCredit = pastPelarasans.reduce((sum: number, c: any) => sum + Number(c.creditAmount), 0);
-
-  // 3. Calculate Current Net Balance Before New Input
-  let currentNet = originalAmount;
-  if (isDebitOriginal) {
-      currentNet = currentNet + totalPastDebit - totalPastCredit;
-  } else {
-      currentNet = currentNet + totalPastCredit - totalPastDebit;
-  }
-
-  // 4. Calculate New Input Logic
-  const targetAmount = newAmount === "" ? currentNet : Number(newAmount);
-  const delta = targetAmount - currentNet;
-  
-  let newDebit = 0;
-  let newCredit = 0;
-  if (isDebitOriginal) {
-      if (delta > 0) newDebit = delta;
-      if (delta < 0) newCredit = Math.abs(delta);
-  } else {
-      if (delta > 0) newCredit = delta;
-      if (delta < 0) newDebit = Math.abs(delta);
-  }
-
-  // 5. Calculate Final Table Totals
-  const finalTotalDebit = Number(transaction.debitAmount) + totalPastDebit + newDebit;
-  const finalTotalCredit = Number(transaction.creditAmount) + totalPastCredit + newCredit;
+  const formatRM = (amount: number) => {
+    return amount.toLocaleString("ms-MY", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  };
 
   const handleSubmit = async () => {
-    if (newAmount === "" || isNaN(Number(newAmount)) || Number(newAmount) < 0) {
-      setError("Sila masukkan amaun baru yang sah.");
-      return;
-    }
     if (!remarks.trim()) {
-      setError("Sila masukkan catatan pelarasan.");
+      setError("Sila masukkan catatan untuk pembalikan ini.");
       return;
     }
     setIsSubmitting(true);
     setError("");
 
     try {
-      const response = await fetch("/api/transactions/adjust", {
+      const response = await fetch("/api/transactions/reverse", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ originalTxId: transaction.id, newAmount: Number(newAmount), remarks }),
+        body: JSON.stringify({ originalTxId: transaction.id, remarks }),
       });
       const result = await response.json();
       if (result.ok) {
@@ -102,8 +66,8 @@ export default function TransaksiAdjustModal({ isOpen, onClose, transaction, onS
         {/* Header (Dark Blue) */}
         <div className="flex items-center justify-between bg-dark-blue p-6 text-white">
           <div>
-            <h2 className="font-bold text-lg uppercase tracking-wide">Pelarasan Transaksi</h2>
-            <p className="text-xs text-gray-300">SILA KEMASKINI BUTIRAN PELARASAN DI BAWAH</p>
+            <h2 className="font-bold text-lg uppercase tracking-wide">Pembalikan Transaksi</h2>
+            <p className="text-xs text-gray-300">SILA KEMASKINI BUTIRAN PEMBALIKAN DI BAWAH</p>
           </div>
           <button onClick={onClose} className="text-white transition-colors hover:opacity-80">
             <Icon icon="close" size={20} />
@@ -129,19 +93,13 @@ export default function TransaksiAdjustModal({ isOpen, onClose, transaction, onS
 
             <div className="grid grid-cols-[1fr_auto_1fr] gap-4 items-center">
               <div>
-                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">{isDebitOriginal ? 'Debit' : 'Kredit'} Asal / Semasa (RM)</label>
-                <input type="text" readOnly value={formatRM(currentNet)} className="w-full bg-gray-50 border border-gray-200 rounded p-2.5 text-sm font-bold text-dark-blue outline-none" />
+                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">{isDebit ? 'Debit' : 'Kredit'} Asal (RM)</label>
+                <input type="text" readOnly value={formatRM(originalAmount)} className="w-full bg-gray-50 border border-gray-200 rounded p-2.5 text-sm font-bold text-dark-blue outline-none" />
               </div>
               <Icon icon="arrow_forward" size={20} className="text-gray-400 mt-5" />
               <div>
-                <label className="block text-xs font-bold text-dark-blue uppercase mb-1">{isDebitOriginal ? 'Debit' : 'Kredit'} Baru (RM)</label>
-                <input 
-                  type="number" step="0.01" min="0" 
-                  value={newAmount} 
-                  onChange={(e) => setNewAmount(e.target.value)} 
-                  placeholder={currentNet.toString()}
-                  className="w-full bg-white border-2 border-blue-200 focus:border-dark-blue focus:ring-0 rounded p-2.5 text-sm font-bold text-dark-blue outline-none transition-all" 
-                />
+                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">{isDebit ? 'Debit' : 'Kredit'} Baru (RM)</label>
+                <input type="text" readOnly value="0.00" className="w-full bg-gray-50 border border-gray-200 rounded p-2.5 text-sm font-bold text-dark-blue outline-none" />
               </div>
             </div>
 
@@ -169,52 +127,35 @@ export default function TransaksiAdjustModal({ isOpen, onClose, transaction, onS
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 bg-white">
-                  
                   {/* Original Row */}
                   <tr>
                     <td className="px-4 py-3">{new Date(transaction.transactionDate).toLocaleDateString("en-GB")}</td>
                     <td className="px-4 py-3 font-bold">{transaction.transactionNo}</td>
-                    <td className="px-4 py-3"><span className="bg-yellow-50 text-yellow-700 px-2 py-0.5 rounded text-[10px] font-bold uppercase border border-yellow-100">DILARASKAN</span></td>
+                    <td className="px-4 py-3"><span className="bg-red-50 text-red-700 px-2 py-0.5 rounded text-[10px] font-bold uppercase border border-red-100">DIBALIKAN</span></td>
                     <td className="px-4 py-3">{transaction.description}</td>
-                    <td className="px-4 py-3 text-right font-bold text-gray-500">{Number(transaction.debitAmount) > 0 ? formatRM(Number(transaction.debitAmount)) : '0.00'}</td>
-                    <td className="px-4 py-3 text-right font-bold text-(--color-green)">{Number(transaction.creditAmount) > 0 ? formatRM(Number(transaction.creditAmount)) : '0.00'}</td>
+                    <td className="px-4 py-3 text-right font-bold text-gray-500">{isDebit ? formatRM(originalAmount) : '0.00'}</td>
+                    <td className="px-4 py-3 text-right font-bold text-(--color-green)">{!isDebit ? formatRM(originalAmount) : '0.00'}</td>
                   </tr>
-
-                  {/* Past Adjustments (If Any) */}
-                  {pastPelarasans.map((p: any) => (
-                     <tr key={p.id}>
-                        <td className="px-4 py-3">{new Date(p.transactionDate).toLocaleDateString("en-GB")}</td>
-                        <td className="px-4 py-3 font-bold">{p.transactionNo}</td>
-                        <td className="px-4 py-3"><span className="bg-yellow-500 text-white px-2 py-0.5 rounded text-[10px] font-bold uppercase">PELARASAN</span></td>
-                        <td className="px-4 py-3">{p.description}</td>
-                        <td className="px-4 py-3 text-right font-bold text-(--color-red)">{Number(p.debitAmount) > 0 ? formatRM(Number(p.debitAmount)) : '0.00'}</td>
-                        <td className="px-4 py-3 text-right font-bold text-gray-500">{Number(p.creditAmount) > 0 ? formatRM(Number(p.creditAmount)) : '0.00'}</td>
-                     </tr>
-                  ))}
-
-                  {/* New Adjustment Row (Hari Ini) */}
-                  {newAmount !== "" && delta !== 0 && (
-                    <tr className="bg-yellow-50/30">
-                        <td className="px-4 py-3 font-bold">Hari Ini</td>
-                        <td className="px-4 py-3 italic text-gray-400">Diberikan Nanti</td>
-                        <td className="px-4 py-3"><span className="bg-yellow-500 text-white px-2 py-0.5 rounded text-[10px] font-bold uppercase">PELARASAN</span></td>
-                        <td className="px-4 py-3">{remarks}</td>
-                        <td className="px-4 py-3 text-right font-bold text-(--color-red)">{newDebit > 0 ? formatRM(newDebit) : '0.00'}</td>
-                        <td className="px-4 py-3 text-right font-bold text-gray-500">{newCredit > 0 ? formatRM(newCredit) : '0.00'}</td>
-                    </tr>
-                  )}
-
+                  {/* Balancing Row */}
+                  <tr>
+                    <td className="px-4 py-3 font-bold">Hari Ini</td>
+                    <td className="px-4 py-3 italic text-gray-400">Diberikan Nanti</td>
+                    <td className="px-4 py-3"><span className="bg-red-600 text-white px-2 py-0.5 rounded text-[10px] font-bold uppercase">PEMBALIKAN</span></td>
+                    <td className="px-4 py-3">{remarks}</td>
+                    <td className="px-4 py-3 text-right font-bold text-(--color-red)">{!isDebit ? formatRM(originalAmount) : '0.00'}</td>
+                    <td className="px-4 py-3 text-right font-bold text-gray-500">{isDebit ? formatRM(originalAmount) : '0.00'}</td>
+                  </tr>
                   {/* Summary Row */}
                   <tr className="bg-blue-50/50 font-bold text-dark-blue border-t-2 border-gray-200">
                     <td colSpan={4} className="px-4 py-3 uppercase">Jumlah</td>
-                    <td className="px-4 py-3 text-right text-(--color-red)">{formatRM(finalTotalDebit)}</td>
-                    <td className="px-4 py-3 text-right text-(--color-green)">{formatRM(finalTotalCredit)}</td>
+                    <td className="px-4 py-3 text-right text-(--color-red)">{formatRM(originalAmount)}</td>
+                    <td className="px-4 py-3 text-right text-(--color-green)">{formatRM(originalAmount)}</td>
                   </tr>
                 </tbody>
               </table>
               <div className="bg-dark-blue p-3 text-sm font-bold uppercase text-white flex justify-between items-center">
                 <span>Amaun Bersih</span>
-                <span>RM {formatRM(targetAmount)}</span>
+                <span>RM 0.00</span>
               </div>
             </div>
           </div>
@@ -230,7 +171,7 @@ export default function TransaksiAdjustModal({ isOpen, onClose, transaction, onS
               <Icon icon="close" size={18} /> Batal
             </button>
             <button onClick={handleSubmit} disabled={isSubmitting} className="flex items-center gap-2 px-6 py-2 bg-(--color-green) hover:bg-green-700 text-white text-sm font-bold rounded shadow transition-colors disabled:opacity-50">
-              <Icon icon="save" size={18} /> Simpan Pelarasan
+              <Icon icon="save" size={18} /> Simpan Pembalikan
             </button>
           </div>
         </div>

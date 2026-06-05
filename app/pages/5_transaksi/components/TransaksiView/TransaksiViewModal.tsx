@@ -100,8 +100,21 @@ function formatRM(value: number | string) {
   });
 }
 
-function getStatusLabel(status: string) {
-  return status === "DIBALIKAN" ? "DIBALIKKAN" : status;
+function getStatusBadge(status: string) {
+  switch (status) {
+    case "NORMAL":
+      return <span className="bg-normal px-2 py-0.5 text-[10px] font-bold uppercase text-[#0E7490]">Normal</span>;
+    case "DIBALIKAN":
+      return <span className="rounded-[5px] bg-red px-2 py-0.5 text-[10px] font-bold uppercase text-white">Dibalikkan</span>;
+    case "DILARASKAN":
+      return <span className="rounded-[5px] bg-[#FEF3C7] px-2 py-0.5 text-[10px] font-bold uppercase text-[#92400E]">Dilaraskan</span>;
+    case "PEMBALIKAN":
+      return <span className="rounded-[5px] bg-red px-2 py-0.5 text-[10px] font-bold uppercase text-white">Pembalikan</span>;
+    case "PELARASAN":
+      return <span className="rounded-[5px] bg-[#FEF3C7] px-2 py-0.5 text-[10px] font-bold uppercase text-[#92400E]">Pelarasan</span>;
+    default:
+      return <span className="rounded-[5px] bg-light-blue px-2 py-0.5 text-[10px] font-bold uppercase text-grey">{status}</span>;
+  }
 }
 
 export default function TransaksiViewModal({ isOpen, onClose, transaction }: TransaksiViewModalProps) {
@@ -333,9 +346,7 @@ export default function TransaksiViewModal({ isOpen, onClose, transaction }: Tra
                 <section className="flex flex-col gap-4">
                   <div className="flex items-center justify-between">
                     <Topic content="MAKLUMAT TRANSAKSI" />
-                    <span className="rounded-[5px] bg-dark-blue px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-white">
-                      {getStatusLabel(transaction.status)}
-                    </span>
+                    {getStatusBadge(transaction.status)}
                   </div>
 
                   <div className="grid items-start gap-4 md:grid-cols-2">
@@ -359,7 +370,7 @@ export default function TransaksiViewModal({ isOpen, onClose, transaction }: Tra
                     />
                     <InputField
                       label="NO. RESIT"
-                      value={transaction.receiptNo || "Tiada"}
+                      value={transaction.receiptNo || "N/A"}
                       state="inactive"
                       inactiveBackgroundClass="bg-[#EEF4FF]"
                     />
@@ -379,7 +390,7 @@ export default function TransaksiViewModal({ isOpen, onClose, transaction }: Tra
 
                   <InputBox
                     label="CATATAN"
-                    value={transaction.description || "Tiada catatan"}
+                    value={transaction.description || "N/A"}
                     state="inactive"
                     inactiveBackgroundClass="bg-[#EEF4FF]"
                     inputMinHeight={110}
@@ -396,16 +407,6 @@ export default function TransaksiViewModal({ isOpen, onClose, transaction }: Tra
             />
           </div>
         )}
-
-        <footer className="flex items-center justify-end border-t border-light-grey/20 bg-white px-6 py-4">
-          <button
-            type="button"
-            className="inline-flex min-h-10 items-center rounded-xl border border-light-grey/25 bg-white px-4 py-2 text-sm font-semibold text-grey transition-colors hover:border-dark-blue hover:text-dark-blue"
-            onClick={onClose}
-          >
-            Tutup
-          </button>
-        </footer>
       </section>
     </div>
   );

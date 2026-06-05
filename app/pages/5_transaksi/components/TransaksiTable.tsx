@@ -39,6 +39,14 @@ function formatRM(amount: number | string) {
   });
 }
 
+function formatShortTransactionId(value?: string | null) {
+  if (!value) {
+    return "N/A";
+  }
+
+  return value.includes("-") ? `${value.split("-")[0]}...` : value;
+}
+
 function getStatusBadge(status: string) {
   switch (status) {
     case "NORMAL":
@@ -48,9 +56,9 @@ function getStatusBadge(status: string) {
     case "DILARASKAN":
       return <span className="rounded-[5px] bg-[#FEF3C7] px-2 py-0.5 text-[10px] font-bold uppercase text-[#92400E]">Dilaraskan</span>;
     case "PEMBALIKAN":
-      return <span className="rounded-[5px] bg-red px-2 py-0.5 text-[10px] font-bold uppercase text-white">Pembalikan</span>;
+      return <span className="rounded-[5px] bg-red/50 px-2 py-0.5 text-[10px] font-bold uppercase text-white/80">Pembalikan</span>;
     case "PELARASAN":
-      return <span className="rounded-[5px] bg-[#FEF3C7] px-2 py-0.5 text-[10px] font-bold uppercase text-[#92400E]">Pelarasan</span>;
+      return <span className="rounded-[5px] bg-[#FEF3C7]/50 px-2 py-0.5 text-[10px] font-bold uppercase text-[#92400E]/50">Pelarasan</span>;
     default:
       return <span className="rounded-[5px] bg-light-blue px-2 py-0.5 text-[10px] font-bold uppercase text-grey">{status}</span>;
   }
@@ -59,11 +67,12 @@ function getStatusBadge(status: string) {
 export default function TransaksiTable({
   transactions,
   isLoading,
+  isFetching = false,
   onView,
   onReverse,
   onAdjust,
 }: TransaksiTableProps) {
-  const sortedTransactions = [...transactions].sort((a, b) => {
+  const displayTransactions = [...transactions].sort((a, b) => {
     const timeA = new Date(a.createdAt || a.transactionDate).getTime();
     const timeB = new Date(b.createdAt || b.transactionDate).getTime();
 
@@ -71,8 +80,6 @@ export default function TransaksiTable({
 
     return (b.transactionNo || b.id).localeCompare(a.transactionNo || a.id);
   });
-
-  const displayTransactions = sortedTransactions;
 
   const getRelatedChildren = (tx: TransactionRow) => {
     return (tx.relatedTransaction?.childTransactions || tx.childTransactions || [])
@@ -87,35 +94,8 @@ export default function TransaksiTable({
       });
   };
 
-  const newestRelatedChildByParentId = new Map<string, string>();
-
-  sortedTransactions.forEach((tx) => {
-    const isRelatedChild = ["PELARASAN", "PEMBALIKAN"].includes(tx.status) && tx.relatedTransactionId;
-    if (!isRelatedChild || !tx.relatedTransactionId) return;
-
-    if (!newestRelatedChildByParentId.has(tx.relatedTransactionId)) {
-      newestRelatedChildByParentId.set(tx.relatedTransactionId, tx.id);
-    }
-  });
-
-  const displayTransactions = sortedTransactions.filter((tx) => {
-    const isRelatedChild = ["PELARASAN", "PEMBALIKAN"].includes(tx.status) && tx.relatedTransactionId;
-    if (!isRelatedChild) return true;
-
-    const relatedChildren = getRelatedChildren(tx);
-    if (relatedChildren.length > 0) {
-      return relatedChildren[0].id === tx.id;
-    }
-
-    return !!tx.relatedTransactionId && newestRelatedChildByParentId.get(tx.relatedTransactionId) === tx.id;
-  });
-
-  if (displayTransactions.length === 0) {
-    return <div className="p-12 text-center text-gray-500 font-medium">Tiada rekod transaksi dijumpai.</div>;
-  }
-
   return (
-    <div className="overflow-x-auto overflow-y-auto" aria-busy={isLoading}>
+    <div className="overflow-x-auto overflow-y-auto" aria-busy={isLoading || isFetching}>
       <table className="w-full min-w-290 text-left">
         <thead className="bg-background text-xs font-bold text-grey">
           <tr>
@@ -134,7 +114,7 @@ export default function TransaksiTable({
         </thead>
 
         <tbody className="bg-white">
-          {isLoading ? (
+          {isLoading || isFetching ? (
             loadingTableRows({
               mode: "loading",
               columnCount: 11,
@@ -149,9 +129,12 @@ export default function TransaksiTable({
             })
           ) : (
             displayTransactions.map((tx) => {
-              const isMuted = ["DIBALIKAN", "PEMBALIKAN", "PELARASAN"].includes(tx.status);
+              const isMuted = ["PEMBALIKAN", "PELARASAN"].includes(tx.status);
               const isDilaraskan = tx.status === "DILARASKAN";
+              const isDibalikan = tx.status === "DIBALIKAN";
+              const isNormal = tx.status === "NORMAL";
               const canAction = ["NORMAL", "DILARASKAN"].includes(tx.status);
+              const keepStrongColor = isNormal || isDilaraskan || isDibalikan;
 
               let finalDebit = Number(tx.debitAmount);
               let finalCredit = Number(tx.creditAmount);
@@ -168,58 +151,67 @@ export default function TransaksiTable({
               let displayRelatedId = "N/A";
               let extraRelatedCount = 0;
 
-              if (isDilaraskan || tx.status === "DIBALIKAN") {
+              if (isDilaraskan || isDibalikan) {
                 const fixes = getRelatedChildren(tx);
 
                 if (fixes.length > 0) {
-                  displayRelatedId = fixes[0].transactionNo || `${fixes[0].id.split("-")[0]}...`;
+                  displayRelatedId = fixes[0].transactionNo || formatShortTransactionId(fixes[0].id);
                   extraRelatedCount = fixes.length - 1;
                 }
               } else if (tx.relatedTransaction) {
-                displayRelatedId = tx.relatedTransaction.transactionNo || `${tx.relatedTransaction.id.split("-")[0]}...`;
+                displayRelatedId = tx.relatedTransaction.transactionNo || formatShortTransactionId(tx.relatedTransaction.id);
               }
 
               return (
-                <tr
-                  key={tx.id}
-                  className="border-b border-light-grey/20 text-sm transition-colors hover:bg-background/60"
-                >
+                <tr key={tx.id} className="border-b border-light-grey/20 text-sm transition-colors hover:bg-background/60">
+                  {/* Date */}
                   <td className={`w-min whitespace-nowrap p-3 text-dark-grey ${isMuted ? "opacity-50" : ""}`}>
                     {new Date(tx.transactionDate).toLocaleDateString("en-GB")}
                   </td>
 
-                  <td className={`w-min whitespace-nowrap p-3 font-bold text-dark-blue ${isMuted ? "opacity-50" : ""}`}>
-                    {tx.transactionNo || `${tx.id.split("-")[0]}...`}
+                  {/* Transaction ID */}
+                  <td className={`w-min whitespace-nowrap p-3 font-bold ${isMuted ? "opacity-50" : ""}`}>
+                    {tx.transactionNo || formatShortTransactionId(tx.id)}
                   </td>
 
+                  {/* Category */}
                   <td className={`w-min whitespace-nowrap p-3 capitalize text-dark-grey ${isMuted ? "opacity-50" : ""}`}>
                     {tx.category.replace(/_/g, " ")}
                   </td>
 
+                  {/* Status */}
                   <td className={`w-min whitespace-nowrap p-3 ${isMuted ? "opacity-70" : ""}`}>
                     {getStatusBadge(tx.status)}
                   </td>
 
+                  {/* Related Transaction ID */}
                   <td className="w-min whitespace-nowrap p-3 text-xs font-medium text-grey">
                     <div className="flex flex-col">
                       <span>{displayRelatedId}</span>
                       {extraRelatedCount > 0 ? (
                         <span className="mt-0.5 text-[10px] italic text-light-grey">
-                          {extraRelatedCount} ID lagi berkaitan
+                          {extraRelatedCount} ID Lagi Berkaitan
                         </span>
                       ) : null}
                     </div>
                   </td>
 
+                  {/* Resident */}
                   <td className={`w-min whitespace-nowrap p-3 ${isMuted ? "opacity-50" : ""}`}>
                     <p className="max-w-50 truncate font-bold text-dark-grey">{tx.resident?.fullName || "Tiada"}</p>
-                    <p className="text-xs text-grey">{tx.resident?.icNumber || "-"}</p>
+                    <p className="text-xs text-grey">
+                      {tx.resident?.icNumber && tx.resident.icNumber.length === 12
+                      ? tx.resident.icNumber.replace(/(\d{6})(\d{2})(\d{4})/, "$1-$2-$3")
+                      : tx.resident?.icNumber || "-"}
+                    </p>
                   </td>
 
+                  {/* Receipt No */}
                   <td className={`w-min whitespace-nowrap p-3 text-grey ${isMuted ? "opacity-50" : ""}`}>
                     {tx.receiptNo || "N/A"}
                   </td>
 
+                  {/* Description */}
                   <td
                     className={`w-min max-w-55 truncate whitespace-nowrap p-3 text-grey ${isMuted ? "opacity-50 line-through" : ""}`}
                     title={tx.description ?? undefined}
@@ -227,6 +219,7 @@ export default function TransaksiTable({
                     {tx.description || "-"}
                   </td>
 
+                  {/* Debit Amount */}
                   <td className="w-min whitespace-nowrap p-3 text-right font-bold">
                     {Number(tx.debitAmount) > 0 ? (
                       isDilaraskan ? (
@@ -242,10 +235,11 @@ export default function TransaksiTable({
                         </span>
                       )
                     ) : (
-                      <span className="font-normal text-light-grey">0.00</span>
+                      <span className={keepStrongColor ? "text-dark-grey font-normal" : "font-normal text-light-grey"}>-</span>
                     )}
                   </td>
 
+                  {/* Credit Amount */}
                   <td className="w-min whitespace-nowrap p-3 text-right font-bold">
                     {Number(tx.creditAmount) > 0 ? (
                       isDilaraskan ? (
@@ -261,12 +255,14 @@ export default function TransaksiTable({
                         </span>
                       )
                     ) : (
-                      <span className="font-normal text-light-grey">0.00</span>
+                      <span className={keepStrongColor ? "text-dark-grey font-normal" : "font-normal text-light-grey"}>-</span>
                     )}
                   </td>
 
+                  {/* Actions */}
                   <td className="w-min whitespace-nowrap p-3 text-center">
                     <div className="flex items-center justify-center gap-1">
+                      {/* View Button - Always Enabled */}
                       <button
                         type="button"
                         onClick={() => onView(tx)}
@@ -277,6 +273,7 @@ export default function TransaksiTable({
                         <Icon icon="eye" size={18} />
                       </button>
 
+                      {/* Reverse Button - Enabled for NORMAL and DILARASKAN statuses */}
                       <button
                         type="button"
                         onClick={() => canAction && onReverse(tx)}
@@ -292,6 +289,7 @@ export default function TransaksiTable({
                         <Icon icon="undo" size={18} />
                       </button>
 
+                      {/* Adjust Button - Enabled for NORMAL and DILARASKAN statuses */}
                       <button
                         type="button"
                         onClick={() => canAction && onAdjust(tx)}
@@ -304,7 +302,7 @@ export default function TransaksiTable({
                         disabled={!canAction}
                         aria-label="Pelarasan"
                       >
-                        <Icon icon="edit" size={18} />
+                        <Icon icon="tune" size={18} />
                       </button>
                     </div>
                   </td>

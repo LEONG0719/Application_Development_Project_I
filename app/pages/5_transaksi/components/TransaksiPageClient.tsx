@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   buildPaginationItems,
   PaginationControls,
@@ -10,8 +10,8 @@ import TransaksiPageHeader from "./TransaksiPageHeader";
 import TransaksiSummaryCards from "./TransaksiSummaryCards";
 import TransaksiFilterPanel, { FilterState } from "./TransaksiFilterPanel";
 import TransaksiTable from "./TransaksiTable";
-import TransaksiReverseModal from "./TransaksiReverseModal";
-import TransaksiAdjustModal from "./TransaksiAdjustModal";
+import TransaksiReverseModal from "./TransaksiEdit/TransaksiReverseModal";
+import TransaksiAdjustModal from "./TransaksiEdit/TransaksiAdjustModal";
 import TransaksiViewModal from "./TransaksiView/TransaksiViewModal";
 import { downloadXlsxFile } from "@/lib/download/xlsx-export";
 
@@ -21,6 +21,7 @@ interface SummaryData {
   totalCredit: number;
 }
 
+// Global master filter static enums for comparison and dynamic querying
 const ALL_STATUS_FILTERS = ["NORMAL", "DIBALIKAN", "DILARASKAN", "PEMBALIKAN", "PELARASAN"];
 const ALL_CATEGORY_FILTERS = [
   "BAYARAN",
@@ -46,18 +47,41 @@ const DEFAULT_FILTERS: FilterState = {
 const ITEMS_PER_PAGE = 10;
 
 export default function TransaksiPageClient() {
+  // -------------------------------------------------------------------------
+  // STATE MANAGEMENT
+  // -------------------------------------------------------------------------
   const [isLoading, setIsLoading] = useState(true);
-  const [transactions, setTransactions] = useState<any[]>([]);
-  const [summary, setSummary] = useState<SummaryData>({ totalCount: 0, totalDebit: 0, totalCredit: 0 });
-  const [totalItems, setTotalItems] = useState(0);
   const [isFetching, setIsFetching] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+  
+  const [transactions, setTransactions] = useState<any[]>([]);
+  const [totalItems, setTotalItems] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [summary, setSummary] = useState<SummaryData>({ totalCount: 0, totalDebit: 0, totalCredit: 0 });
+  const [activeFilters, setActiveFilters] = useState<FilterState>(DEFAULT_FILTERS);
+
+  // Modal Context State Anchors
   const [selectedReverseTx, setSelectedReverseTx] = useState<any>(null);
   const [selectedAdjustTx, setSelectedAdjustTx] = useState<any>(null);
-  const [activeFilters, setActiveFilters] = useState<FilterState>(DEFAULT_FILTERS);
   const [selectedViewTx, setSelectedViewTx] = useState<any>(null);
-  const [isExporting, setIsExporting] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
 
+  // -------------------------------------------------------------------------
+  // CONCURRENCY & PERFORMANCE CONTROLLERS (REFS)
+  // -------------------------------------------------------------------------
+  /** Tracks whether the dashboard total numbers have been populated to skip heavy db recalculations */
+  const hasLoadedSummaryRef = useRef(false);
+  const lastSummaryFilterKeyRef = useRef<string>("");
+  /** Tracks if there is an active row set to toggle background fetching indicators vs full page spinners */
+  const hasLoadedRowsRef = useRef(false);
+  /** Monotonically increasing ID to reject stale API requests when users click rapid filters */
+  const fetchRequestIdRef = useRef(0);
+  /** AbortController reference to physically kill pending browser HTTP requests in-flight */
+  const fetchAbortRef = useRef<AbortController | null>(null);
+
+  // -------------------------------------------------------------------------
+  // VALIDATION & UTILS
+  // -------------------------------------------------------------------------
+  /** Guard function checking if any parameter checklist has been completely unselected */
   function hasEmptyOptionSet(filters: FilterState) {
     return (
       filters.categories.length === 0 ||
@@ -66,6 +90,7 @@ export default function TransaksiPageClient() {
     );
   }
 
+  /** Performs structural equality check to minimize redundant data fetching over identical conditions */
   function areFiltersEqual(left: FilterState, right: FilterState) {
     return (
       left.search === right.search &&
@@ -77,6 +102,21 @@ export default function TransaksiPageClient() {
     );
   }
 
+  // Builds a unique string key representing the current filter set for summary caching purposes */
+  function buildFilterKey(filters: FilterState) {
+    return [
+      filters.search,
+      filters.startDate,
+      filters.endDate,
+      filters.categories.join("|"),
+      filters.statuses.join("|"),
+      filters.types.join("|"),
+    ].join("::");
+  }
+
+  // -------------------------------------------------------------------------
+  // EXPORT ENGINE (CLIENT-SIDE DATA TRANSFORMATION)
+  // -------------------------------------------------------------------------
   const handleExport = async () => {
     setIsExporting(true);
     try {
@@ -86,7 +126,6 @@ export default function TransaksiPageClient() {
       }
 
       const queryParams = new URLSearchParams();
-      
       if (activeFilters.search) queryParams.append("search", activeFilters.search);
       if (activeFilters.startDate) queryParams.append("startDate", activeFilters.startDate);
       if (activeFilters.endDate) queryParams.append("endDate", activeFilters.endDate);
@@ -100,7 +139,7 @@ export default function TransaksiPageClient() {
         queryParams.append("type", activeFilters.types[0]);
       }
       
-      // Fetch all transactions matching filters
+      // Override limits to fetch complete dataset safely for the spreadsheet export
       queryParams.append("page", "1");
       queryParams.append("limit", "100000"); 
       
@@ -114,7 +153,7 @@ export default function TransaksiPageClient() {
 
       const allTx = result.data || [];
 
-      // Sort logic identical to TransaksiTable
+      // Sort client dataset mirroring server configuration criteria
       const sorted = [...allTx].sort((a: any, b: any) => {
         const timeA = new Date(a.createdAt || a.transactionDate).getTime();
         const timeB = new Date(b.createdAt || b.transactionDate).getTime();
@@ -133,19 +172,7 @@ export default function TransaksiPageClient() {
           });
       };
 
-      const newestRelatedChildByParentId = new Map<string, string>();
-      sorted.forEach((tx: any) => {
-        const isRelatedChild = ["PELARASAN", "PEMBALIKAN"].includes(tx.status) && tx.relatedTransactionId;
-        if (!isRelatedChild || !tx.relatedTransactionId) return;
-
-        if (!newestRelatedChildByParentId.has(tx.relatedTransactionId)) {
-          newestRelatedChildByParentId.set(tx.relatedTransactionId, tx.id);
-        }
-      });
-
-      const displayTxs = sorted;
-
-      // Prepare Excel rows
+      // Construct and execute presentation-ready spreadsheet output
       const headers = [
         { value: "Tarikh", style: "header" as const, align: "left" as const },
         { value: "ID Transaksi", style: "header" as const, align: "left" as const },
@@ -162,7 +189,7 @@ export default function TransaksiPageClient() {
 
       const rows = [
         headers,
-        ...displayTxs.map((tx: any) => {
+        ...sorted.map((tx: any) => {
           const isDilaraskan = tx.status === "DILARASKAN";
           let finalDebit = Number(tx.debitAmount);
           let finalCredit = Number(tx.creditAmount);
@@ -203,30 +230,20 @@ export default function TransaksiPageClient() {
         })
       ];
 
-      // Download the Excel file
       downloadXlsxFile({
         filename: `Senarai_Transaksi_${new Date().toISOString().slice(0, 10)}`,
         sheets: [
           {
             name: "Transaksi",
             columns: [
-              { width: 12 }, // Tarikh
-              { width: 20 }, // ID Transaksi
-              { width: 22 }, // Kategori
-              { width: 15 }, // Status
-              { width: 20 }, // ID Berkaitan
-              { width: 25 }, // Penghuni
-              { width: 20 }, // No. Kad Pengenalan
-              { width: 20 }, // No. Resit
-              { width: 30 }, // Catatan
-              { width: 15 }, // Debit
-              { width: 15 }  // Kredit
+              { width: 12 }, { width: 20 }, { width: 22 }, { width: 15 },
+              { width: 20 }, { width: 25 }, { width: 20 }, { width: 20 },
+              { width: 30 }, { width: 15 }, { width: 15 }
             ],
             rows
           }
         ]
       });
-
     } catch (error) {
       console.error("Export failed:", error);
       alert("Ralat berlaku semasa mengeksport data.");
@@ -235,19 +252,43 @@ export default function TransaksiPageClient() {
     }
   };
 
-  // We now pass "page" to the API.
+  // -------------------------------------------------------------------------
+  // CORE NETWORK FLOW (FETCH TRANSACTION REVENUE GENERATOR)
+  // -------------------------------------------------------------------------
   const fetchTransactions = useCallback(async (filtersToApply: FilterState, page: number = 1) => {
+    // 1. Increment current request ticket and pull native cancellation references
+    fetchRequestIdRef.current += 1;
+    const currentRequestId = fetchRequestIdRef.current;
+
+    if (fetchAbortRef.current) {
+      fetchAbortRef.current.abort(); // Physically drop active browser networking in-flight
+    }
+
+    const abortController = new AbortController();
+    fetchAbortRef.current = abortController;
+
+    // Fast-exit if nothing is queried to save engine runtimes
     if (hasEmptyOptionSet(filtersToApply)) {
       setTransactions([]);
       setSummary({ totalCount: 0, totalDebit: 0, totalCredit: 0 });
+      setTotalItems(0);
+      hasLoadedRowsRef.current = false;
+      if (fetchAbortRef.current === abortController) fetchAbortRef.current = null;
       setIsLoading(false);
+      setIsFetching(false);
       return;
     }
 
-    setIsLoading(true);
+    // Determine loading UI presentation patterns based on current visibility status
+    const shouldKeepCurrentRows = hasLoadedRowsRef.current;
+    if (shouldKeepCurrentRows) {
+      setIsFetching(true);
+    } else {
+      setIsLoading(true);
+    }
+
     try {
       const queryParams = new URLSearchParams();
-      
       if (filtersToApply.search) queryParams.append("search", filtersToApply.search);
       if (filtersToApply.startDate) queryParams.append("startDate", filtersToApply.startDate);
       if (filtersToApply.endDate) queryParams.append("endDate", filtersToApply.endDate);
@@ -261,65 +302,81 @@ export default function TransaksiPageClient() {
         queryParams.append("type", filtersToApply.types[0]);
       }
       
-      // Tell the backend which page we want
       queryParams.append("page", page.toString());
       queryParams.append("limit", ITEMS_PER_PAGE.toString());
+
+      const currentFilterKey = buildFilterKey(filtersToApply);
+      const shouldIncludeSummary =
+        !hasLoadedSummaryRef.current ||
+        lastSummaryFilterKeyRef.current !== currentFilterKey;
+
+      // Only recompute summary when filter set changes; skip for pure pagination changes
+      queryParams.append("includeSummary", shouldIncludeSummary ? "true" : "false");
       
-      const response = await fetch(`/api/transactions?${queryParams.toString()}`);
+      const response = await fetch(`/api/transactions?${queryParams.toString()}`, {
+        signal: abortController.signal,
+      });
       const result = await response.json();
+
+      // Drop update callbacks entirely if a newer request signature has been emitted asynchronously
+      if (currentRequestId !== fetchRequestIdRef.current) return;
 
       if (result.ok) {
         setTransactions(result.data);
-        setSummary(result.meta.summary);
+        hasLoadedRowsRef.current = result.data.length > 0;
+        
+        // Populate and lock down summary totals state exclusively when calculated by backend
+        if (result.meta.summary) {
+          setSummary(result.meta.summary);
+          hasLoadedSummaryRef.current = true;
+          lastSummaryFilterKeyRef.current = currentFilterKey;
+        }
         setTotalItems(result.meta.total);
       } else {
         alert(result.message); 
       }
-    } catch (error) {
+    } catch (error: any) {
+      if (error?.name === "AbortError") return; // Ignore expected browser request termination drops safely
       console.error("Failed to fetch transactions:", error);
     } finally {
-      setIsLoading(false);
-      setIsFetching(false);
+      // Safely close connection indicators only if context hasn't updated or detached natively
+      if (currentRequestId === fetchRequestIdRef.current) {
+        setIsLoading(false);
+        setIsFetching(false);
+      }
+      if (fetchAbortRef.current === abortController) {
+        fetchAbortRef.current = null;
+      }
     }
-  }, [transactions]);
+  }, []);
 
-  // Fetch whenever page number or active filters change.
+  // Sync execution anchor on state dependencies transformations
   useEffect(() => {
     fetchTransactions(activeFilters, currentPage);
   }, [activeFilters, currentPage, fetchTransactions]);
 
+  // -------------------------------------------------------------------------
+  // INTERACTION HANDLERS
+  // -------------------------------------------------------------------------
   const handleFiltersChange = (nextFilters: FilterState) => {
-    if (areFiltersEqual(nextFilters, activeFilters)) {
-      return;
-    }
-
+    if (areFiltersEqual(nextFilters, activeFilters)) return;
     setActiveFilters(nextFilters);
-    setCurrentPage(1);
+    setCurrentPage(1); // Force return to page 1 on every dynamic search/filter alteration
   };
 
-  const handleSuccess = useCallback(() => {
-    setCurrentPage(1);
-    fetchTransactions(activeFilters, 1);
-  }, [activeFilters, fetchTransactions]);
+  const handleReloadTransactions = () => {
+    fetchTransactions(activeFilters, currentPage);
+  };
 
-  // Pagination logic (server-side).
-  const totalItems = summary.totalCount || 0; 
+  // Derive structural boundaries for view layout presentation properties safely
   const totalPages = Math.max(1, Math.ceil(totalItems / ITEMS_PER_PAGE));
-  const safeCurrentPage = Math.min(currentPage, totalPages);
-  const startIndex = (safeCurrentPage - 1) * ITEMS_PER_PAGE;
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const endIndex = startIndex + transactions.length;
-  const paginationItems = buildPaginationItems(safeCurrentPage, totalPages);
-  
-  // The backend already paginates data.
-  const currentTransactions = transactions;
+  const paginationItems = buildPaginationItems(currentPage, totalPages);
 
   const handleViewDetails = (tx: any) => {
     setSelectedViewTx(tx);
   };
-
-  function handleReloadTransactions() {
-    fetchTransactions(activeFilters, safeCurrentPage);
-  }
 
   return (
     <main className="relative flex flex-col gap-4 pb-4 text-[#0B1C30]">
@@ -339,7 +396,7 @@ export default function TransaksiPageClient() {
         onExport={handleExport}
       >
         <TransaksiTable 
-          transactions={currentTransactions}
+          transactions={transactions}
           isLoading={isLoading}
           isFetching={isFetching}
           onView={handleViewDetails}
@@ -349,7 +406,7 @@ export default function TransaksiPageClient() {
 
         <div className="border-t border-light-grey/20 bg-white px-4 py-4 sm:px-5">
           <PaginationControls
-            currentPage={safeCurrentPage}
+            currentPage={currentPage}
             totalPages={totalPages}
             startIndex={startIndex}
             endIndex={Math.min(endIndex, totalItems)}
@@ -358,15 +415,12 @@ export default function TransaksiPageClient() {
             onPageChange={(action, pageNum) => {
               const nextPage =
                 action === "prev"
-                  ? Math.max(1, safeCurrentPage - 1)
+                  ? Math.max(1, currentPage - 1)
                   : action === "next"
-                    ? Math.min(totalPages, safeCurrentPage + 1)
+                    ? Math.min(totalPages, currentPage + 1)
                     : pageNum;
 
-              if (!nextPage || nextPage === safeCurrentPage) {
-                return;
-              }
-
+              if (!nextPage || nextPage === currentPage) return;
               setCurrentPage(nextPage);
             }}
           />
@@ -392,7 +446,6 @@ export default function TransaksiPageClient() {
         onClose={() => setSelectedViewTx(null)} 
         transaction={selectedViewTx}
       />
-
     </main>
   );
 }
