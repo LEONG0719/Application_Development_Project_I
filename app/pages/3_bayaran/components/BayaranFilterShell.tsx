@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 
-import FilterOption from "@/app/components/FIlter/FilterOption";
+import FilterOption from "@/app/components/Filter/FilterOption";
 import { InputField as SharedInputField } from "@/app/components/InputField";
 import Icon, { commonIcons } from "@/app/components/Icon/Icon";
 import ToolbarIconButton from "@/app/components/ToolbarIconButton";
@@ -43,8 +43,7 @@ export default function BayaranFilterShell({
   const isSearchFilterActive = filterQuery.trim().length > 0;
   const isSearchPanelOpen = isSearchOpen || isSearchFilterActive;
   const isStatusFilterActive = statusFilter.length !== statusFilterOptions.length;
-  const isFilterButtonActive =
-    isFilterMenuOpen || isSearchFilterActive || isStatusFilterActive;
+  const isFilterButtonActive = isFilterMenuOpen || isStatusFilterActive;
 
   useEffect(() => {
     if (isSearchPanelOpen) {
