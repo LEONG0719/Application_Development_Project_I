@@ -29,31 +29,17 @@ export function usePaginationLogic(totalItems: number, itemsPerPage: number) {
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = Math.min(currentPage * itemsPerPage, totalItems);
 
-    // Adjust page if out of range.
-    useEffect(() => {
-        if (currentPage > totalPages && totalPages > 0) {
-            setCurrentPage(totalPages);
-        }
-    }, [totalItems, currentPage, totalPages]);
-
-    const handlePageChange = (action: "prev" | "next" | "goto", pageNum?: number) => {
+    const handlePageChange = (action: "first" | "prev" | "next" | "last" | "goto", pageNum?: number) => {
         switch (action) {
-            case "prev": setCurrentPage(prev => Math.max(prev - 1, 1)); break;
-            case "next": setCurrentPage(prev => Math.min(prev + 1, totalPages)); break;
-            case "goto": if (pageNum !== undefined && pageNum >= 1 && pageNum <= totalPages)
-                            setCurrentPage(pageNum);
-                         break;
+            case "first": setCurrentPage(1); break;
+            case "prev": setCurrentPage(p => Math.max(p - 1, 1)); break;
+            case "next": setCurrentPage(p => Math.min(p + 1, totalPages)); break;
+            case "last": setCurrentPage(totalPages); break;
+            case "goto": if (pageNum) setCurrentPage(Math.max(1, Math.min(pageNum, totalPages))); break;
         }
     };
 
-    return {
-        currentPage,
-        totalPages,
-        startIndex,
-        endIndex,
-        handlePageChange,
-        paginationItems: buildPaginationItems(currentPage, totalPages),
-    };
+    return { currentPage, totalPages, startIndex, endIndex, handlePageChange, setCurrentPage };
 }
 
 // PaginationControls component.
@@ -63,7 +49,6 @@ export function PaginationControls({
     startIndex,
     endIndex,
     totalRecords,
-    paginationItems,
     onPageChange,
 }: {
     currentPage: number;
@@ -71,74 +56,60 @@ export function PaginationControls({
     startIndex: number;
     endIndex: number;
     totalRecords: number;
-    paginationItems: (number | "ellipsis")[];
-    onPageChange: (action: "prev" | "next" | "goto", pageNum?: number) => void;
+    onPageChange: (action: "first" | "prev" | "next" | "last" | "goto", pageNum?: number) => void;
 }) {
-    const displayStart = totalRecords === 0 ? 0 : startIndex + 1;
+    // 处理输入框逻辑，移除浏览器默认的上下箭头样式
+    const [inputValue, setInputValue] = useState(currentPage.toString());
 
-    const PageButtonComponent = ({ item, currentPage, onPageChange }: { item: number | "ellipsis"; currentPage: number; onPageChange: (action: "prev" | "next" | "goto", pageNum?: number) => void }) => {
-        if (item === "ellipsis") {
-            // Pagination component for ellipsis (non-clickable).
-            return (
-                <span className="px-1 text-sm font-semibold text-grey" aria-hidden="true">...</span>
-            );
-        }
+    useEffect(() => { setInputValue(currentPage.toString()); }, [currentPage]);
 
-        const isActive = item === currentPage;
-
-        // Pagination component for individual page buttons.
-        return (
-            <button
-                type="button"
-                className={`min-h-8 min-w-8 rounded-md border px-2 text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
-                    isActive
-                        ? "border-dark-blue bg-dark-blue font-bold text-white"
-                        : "border-light-grey/30 bg-white text-grey hover:border-dark-blue hover:text-dark-blue"
-                }`}
-                aria-current={isActive ? "page" : undefined}
-                onClick={() => onPageChange("goto", item)}
-            >
-                {item}
-            </button>
-        );
+    const handleBlur = () => {
+        const val = parseInt(inputValue);
+        if (!isNaN(val) && val !== currentPage) onPageChange("goto", val);
+        else setInputValue(currentPage.toString());
     };
 
-    // Pagination component that includes Previous/Next buttons, page number buttons and record range info.
+    // 辅助样式：普通按钮
+    const btnClass = "flex h-8 w-8 items-center justify-center rounded-md border border-light-grey/30 bg-white text-grey hover:border-dark-blue hover:text-dark-blue disabled:opacity-30 disabled:pointer-events-none";
+
     return (
-        <div className="flex flex-row items-center justify-between w-full">
-            {/* Pagination Buttons */}
-            <div className="flex flex-row items-center gap-2">
-                {/* Previous Button */}
-                <button
-                    type="button"
-                    onClick={() => onPageChange("prev")}
-                    disabled={currentPage === 1}
-                    className="inline-flex min-h-8 min-w-8 items-center justify-center rounded-md border border-light-grey/30 bg-white text-grey transition-colors hover:border-dark-blue hover:text-dark-blue disabled:pointer-events-none disabled:opacity-40"
-                    aria-label="Halaman sebelumnya"
+        <div className="flex flex-row items-center justify-between w-full gap-4">
+            <div className="flex flex-row items-center gap-1.5">
+                <button className={btnClass} onClick={() => onPageChange("first")} disabled={currentPage === 1}>«</button>
+                <button className={btnClass} onClick={() => onPageChange("prev")} disabled={currentPage === 1}>‹</button>
+
+                <button 
+                    className={btnClass} 
+                    onClick={() => onPageChange("goto", currentPage - 1)}
+                    disabled={currentPage <= 1}
                 >
-                    <Icon icon="chevronLeft" size={18} />
+                    {currentPage > 1 ? currentPage - 1 : ""}
                 </button>
 
-                {/* Page Buttons */}
-                {paginationItems.map((item, index) => (
-                    <PageButtonComponent key={`${item}-${index}`} item={item} currentPage={currentPage} onPageChange={onPageChange} />
-                ))}
+                <input
+                    type="text"
+                    inputMode="numeric"
+                    value={inputValue}
+                    onChange={(e) => setInputValue(e.target.value.replace(/[^0-9]/g, ''))}
+                    onBlur={handleBlur}
+                    onKeyDown={(e) => e.key === 'Enter' && handleBlur()}
+                    className="h-8 w-10 rounded-md border-2 bg-dark-blue border-dark-blue text-white text-center font-bold outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                />
 
-                {/* Next Button */}
-                <button
-                    type="button"
-                    onClick={() => onPageChange("next")}
-                    disabled={currentPage === totalPages}
-                    className="inline-flex min-h-8 min-w-8 items-center justify-center rounded-md border border-light-grey/30 bg-white text-grey transition-colors hover:border-dark-blue hover:text-dark-blue disabled:pointer-events-none disabled:opacity-40"
-                    aria-label="Halaman seterusnya"
+                <button 
+                    className={btnClass} 
+                    onClick={() => onPageChange("goto", currentPage + 1)}
+                    disabled={currentPage >= totalPages}
                 >
-                    <Icon icon="chevronRight" size={18} />
+                    {currentPage < totalPages ? currentPage + 1 : ""}
                 </button>
+
+                <button className={btnClass} onClick={() => onPageChange("next")} disabled={currentPage === totalPages}>›</button>
+                <button className={btnClass} onClick={() => onPageChange("last")} disabled={currentPage === totalPages}>»</button>
             </div>
 
-            {/* Displaying Record Range Info */}
             <div className="text-xs text-grey">
-                Memaparkan <span className="font-bold">{displayStart}</span> - <span className="font-bold">{endIndex}</span> Daripada <span className="font-bold">{totalRecords}</span> Rekod
+                Memaparkan <span className="font-bold">{startIndex + 1}</span> - <span className="font-bold">{endIndex}</span> Daripada <span className="font-bold">{totalRecords}</span> Rekod
             </div>
         </div>
     );
