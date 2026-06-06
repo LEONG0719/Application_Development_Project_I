@@ -44,7 +44,6 @@ export default function KuartersResidentPickerModal({
     startIndex,
     endIndex,
     handlePageChange,
-    paginationItems,
   } = usePaginationLogic(residents.length, itemsPerPage);
   const paginatedResidents = residents.slice(startIndex, endIndex);
 
@@ -67,7 +66,7 @@ export default function KuartersResidentPickerModal({
   }, [isOpen, onClose]);
 
   useEffect(() => {
-    handlePageChange("goto", 1);
+    handlePageChange(1);
   }, [searchQuery]);
 
   if (!isOpen) {
@@ -247,7 +246,6 @@ export default function KuartersResidentPickerModal({
                         startIndex={startIndex}
                         endIndex={endIndex}
                         totalRecords={residents.length}
-                        paginationItems={paginationItems}
                         onPageChange={handlePageChange}
                       />
                     </td>

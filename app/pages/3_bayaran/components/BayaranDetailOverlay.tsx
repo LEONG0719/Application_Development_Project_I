@@ -326,7 +326,6 @@ function PaymentHistoryTab({
     startIndex,
     endIndex,
     handlePageChange,
-    paginationItems,
   } = usePaginationLogic(filteredHistory.length, HISTORY_PAGE_SIZE);
   const currentHistory = filteredHistory.slice(startIndex, endIndex);
 
@@ -482,7 +481,6 @@ function PaymentHistoryTab({
                     startIndex={startIndex}
                     endIndex={endIndex}
                     totalRecords={filteredHistory.length}
-                    paginationItems={paginationItems}
                     onPageChange={handlePageChange}
                   />
                 </td>
