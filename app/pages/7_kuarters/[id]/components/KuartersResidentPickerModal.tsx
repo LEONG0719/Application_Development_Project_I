@@ -75,7 +75,7 @@ export default function KuartersResidentPickerModal({
 
   return (
     <div
-      className="fixed top-0 left-55 right-0 bottom-0 z-50 bg-black/40 backdrop-blur-sm p-12 flex items-center justify-center"
+      className="fixed top-0 left-55 right-0 bottom-0 z-50 bg-black/40 p-12 backdrop-blur-md flex items-center justify-center"
       role="dialog"
       aria-modal="true"
       aria-labelledby="resident-picker-title"
