@@ -97,7 +97,7 @@ export async function createPaymentRecords(
         transactionNo: transactionNos[index],
         residentId: entry.residentId,
         paymentId: paymentRows[index].id,
-        transactionDate: entry.paymentDate,
+        transactionDate: new Date(),
         chargeMonth,
         creditAmount: normalizePaymentAmount(entry.amount),
         receiptNo: normalizeReceiptNo(entry.receiptNo),

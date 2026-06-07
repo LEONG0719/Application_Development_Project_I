@@ -34,6 +34,11 @@ function getChargeMonthFromMonthValue(monthValue: unknown) {
   return getMonthStartInAppTimeZone();
 }
 
+function getFormattedMonthSuffix(date: Date): string {
+  const rawMonthName = new Intl.DateTimeFormat("ms-MY", { month: "long", year: "numeric" }).format(date);
+  return rawMonthName.charAt(0).toUpperCase() + rawMonthName.slice(1);
+}
+
 export async function GET(request: Request) {
   try {
     const selectedChargeMonth = getChargeMonthFromRequest(request);
@@ -171,6 +176,7 @@ export async function POST(request: Request) {
                 
                 // Log Transaction for Senggara
                 const txNoSenggara = await generateTransactionNo(tx); // 1. ADD THIS
+                const monthSuffix = getFormattedMonthSuffix(chargeMonth);
 
                 await tx.transaction.create({
                     data: {
@@ -179,6 +185,7 @@ export async function POST(request: Request) {
                         transactionDate: new Date(), // Actual date of creation
                         chargeMonth: chargeMonth,    // Target billing period
                         category: "CAJ_PENYELENGGARAAN",
+                        description: `Caj Penyelenggaraan (${monthSuffix})`,
                         debitAmount: maintenanceRate,
                     }
                 });
@@ -221,6 +228,7 @@ export async function POST(request: Request) {
 
             // 2. Log Transaction (Debit)
             const txNoTambahan = await generateTransactionNo(tx);
+            const monthSuffix = getFormattedMonthSuffix(itemChargeMonth);
 
             await tx.transaction.create({
                 data: {
@@ -229,7 +237,7 @@ export async function POST(request: Request) {
                     transactionDate: new Date(), // Actual date of creation (today)
                     chargeMonth: itemChargeMonth, // Target billing period
                     category: "CAJ_TAMBAHAN",
-                    description: item.catatan,
+                    description: item.catatan ? `${item.catatan} (${monthSuffix})` : `Caj Tambahan (${monthSuffix})`,
                     debitAmount: item.amaun,
                 }
             });
@@ -281,6 +289,7 @@ export async function POST(request: Request) {
 
             // 2. Log Transaction (Credit)
             const txNoRebat = await generateTransactionNo(tx);
+            const monthSuffix = getFormattedMonthSuffix(itemChargeMonth);
 
             await tx.transaction.create({
                 data: {
@@ -289,7 +298,7 @@ export async function POST(request: Request) {
                     transactionDate: new Date(), // Actual date of creation (today)
                     chargeMonth: itemChargeMonth, // Target billing period
                     category: "REBAT",
-                    description: item.catatan,
+                    description: item.catatan ? `${item.catatan} (${monthSuffix})` : `Rebat (${monthSuffix})`,
                     creditAmount: item.amaun,
                 }
             });
