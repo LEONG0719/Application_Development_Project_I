@@ -1,4 +1,5 @@
 import Icon from "../../../../../../components/Icon/Icon";
+import { TableInputField, TableInputFieldFormat } from "@/app/components/InputField";
 import type { BayaranReviewRowModel } from "./types";
 
 type BayaranReviewRowProps = {
@@ -63,106 +64,148 @@ export default function BayaranReviewRow({
       data-bayaran-editor={isEditing ? "true" : undefined}
       className={[
         "border-t border-light-grey/20 transition-colors",
-        row.isExisted ? "bg-amber-50" : "hover:bg-background/60",
+        row.isExisted
+          ? "bg-amber-50"
+          : isEditing
+            ? "bg-dark-blue/3"
+            : "hover:bg-background/60",
       ].join(" ")}
     >
-      <td className="w-10 whitespace-nowrap px-3 py-3.5 text-left">
-        <input
-          type="checkbox"
-          checked={isSelected}
-          onChange={(event) => onSelectionChange(event.target.checked)}
-          className="h-4 w-4 accent-dark-blue"
-        />
+      {/* Checkbox Column */}
+      <td className="w-10 whitespace-nowrap px-3 text-center">
+        <div className="flex items-center justify-center">
+          <input
+            type="checkbox"
+            checked={isSelected}
+            disabled={row.isExisted}
+            className="h-4 w-4 accent-dark-blue disabled:cursor-not-allowed disabled:opacity-40"
+            onChange={(event) => onSelectionChange(event.target.checked)}
+          />
+        </div>
       </td>
-      <td className="overflow-hidden px-3 py-3.5 text-xs font-medium text-dark-grey">
+
+      {/* Nama Penghuni */}
+      <td className={`overflow-hidden text-sm font-semibold text-dark-grey w-min whitespace-nowrap ${isEditing ? "px-3 py-4" : "px-3 py-2"}`}>
         {isEditing ? (
-          <EditInput
+          <TableInputField
             value={draft.nama}
+            placeholder="Masukkan Nama Penghuni"
+            align="start"
             onChange={(value) => onDraftChange("nama", value)}
           />
         ) : (
-          <span className="block truncate font-medium text-dark-grey" title={displayValue(row.nama)}>
-            {displayValue(row.nama)}
+          <span className="block truncate font-semibold text-dark-grey" title={row.nama}>
+            {row.nama || "-"}
           </span>
         )}
+        {row.isExisted && !isEditing ? (
+          <p className="mt-1 text-[10px] font-semibold text-[#B54708]" title="Rekod bayaran ini telah wujud dalam sistem.">
+            Rekod bayaran ini telah wujud dalam sistem.
+          </p>
+        ) : null}
       </td>
-      <td className="overflow-hidden px-3 py-3.5 text-xs font-medium text-dark-grey">
+
+      {/* No. Kad Pengenalan */}
+      <td className={`overflow-hidden text-sm font-semibold text-dark-grey w-min whitespace-nowrap ${isEditing ? "px-3 py-4" : "px-3 py-2"}`}>
         {isEditing ? (
-          <EditInput
+          <TableInputFieldFormat
             value={draft.noGajiNoKp}
+            placeholder="Masukkan No. Kad Pengenalan"
+            align="start"
+            format="######-##-####"
             onChange={(value) => onDraftChange("noGajiNoKp", value)}
           />
         ) : (
           <span
-            className="block truncate font-medium text-dark-grey"
-            title={displayValue(row.noGajiNoKp)}
+            className="block truncate font-semibold text-dark-grey"
+            title={row.noGajiNoKp || "-"}
           >
-            {displayValue(row.noGajiNoKp)}
+            {row.noGajiNoKp && row.noGajiNoKp.length === 12
+              ? row.noGajiNoKp.replace(/(\d{6})(\d{2})(\d{4})/, "$1-$2-$3")
+              : row.noGajiNoKp || "-"}
           </span>
         )}
       </td>
-      <td className="overflow-hidden px-3 py-3.5 text-xs font-medium text-dark-grey">
+
+      {/* Nama Jabatan */}
+      <td className={`overflow-hidden text-sm font-semibold text-dark-grey w-min whitespace-nowrap ${isEditing ? "px-3 py-4" : "px-3 py-2"}`}>
         {isEditing ? (
-          <EditInput
+          <TableInputField
             value={draft.jabatanName}
+            placeholder="Masukkan Nama Jabatan"
+            align="start"
             onChange={(value) => onDraftChange("jabatanName", value)}
           />
         ) : (
           <span
-            className="block truncate font-medium text-dark-grey"
-            title={displayValue(row.jabatanName)}
+            className="block truncate font-semibold text-dark-grey"
+            title={row.jabatanName || "-"}
           >
-            {displayValue(row.jabatanName)}
+            {row.jabatanName || "-"}
           </span>
         )}
       </td>
-      <td className="overflow-hidden px-3 py-3.5 text-xs font-medium text-dark-grey">
+
+      {/* No. Rujukan */}
+      <td className={`overflow-hidden text-sm font-semibold text-dark-grey w-min whitespace-nowrap ${isEditing ? "px-3 py-4" : "px-3 py-2"}`}>
         {isEditing ? (
-          <EditInput
+          <TableInputField
             value={draft.noRujukan}
+            placeholder="Masukkan No. Rujukan"
+            align="start"
             onChange={(value) => onDraftChange("noRujukan", value)}
           />
         ) : (
           <span
-            className="block truncate font-medium text-dark-grey"
-            title={displayValue(row.noRujukan)}
+            className="block truncate font-semibold text-dark-grey"
+            title={row.noRujukan || "-"}
           >
-            {displayValue(row.noRujukan)}
+            {row.noRujukan || "-"}
           </span>
         )}
       </td>
-      <td className="overflow-hidden px-3 py-3.5 text-xs font-medium text-dark-grey">
+
+      {/* Catatan */}
+      <td className={`overflow-hidden text-sm font-semibold text-dark-grey w-min whitespace-nowrap ${isEditing ? "px-3 py-4" : "px-3 py-2"}`}>
         {isEditing ? (
-          <input
-            className="min-h-9 w-full min-w-32 rounded-xl border border-light-grey/35 bg-white px-4 py-2 text-xs font-medium text-dark-blue outline-none transition-colors placeholder:text-light-grey focus:border-dark-blue"
-            placeholder="Tambah catatan..."
+          <TableInputField
             value={draft.catatan}
-            onChange={(event) => onDraftChange("catatan", event.target.value)}
+            placeholder="Tambah catatan..."
+            align="start"
+            onChange={(value) => onDraftChange("catatan", value)}
           />
         ) : (
           <span
-            className="block truncate font-medium text-dark-grey"
-            title={displayValue(row.catatan)}
+            className="block truncate font-semibold text-dark-grey"
+            title={row.catatan || "-"}
           >
-            {displayValue(row.catatan)}
+            {row.catatan || "-"}
           </span>
         )}
       </td>
-      <td className="px-3 py-3.5 text-right text-xs font-medium text-dark-grey">
+
+      {/* Amaun Bayar (RM) */}
+      <td className={`overflow-hidden text-sm font-semibold text-dark-grey w-min whitespace-nowrap ${isEditing ? "px-3 py-4" : "px-3 py-2"}`}>
         {isEditing ? (
-          <input
-            className="min-h-9 w-full min-w-24 rounded-xl border border-light-grey/35 bg-white px-4 py-2 text-right text-xs font-medium text-dark-blue outline-none transition-colors placeholder:text-light-grey focus:border-dark-blue"
+          <TableInputField
             value={draft.amaunRm}
-            onChange={(event) => onDraftChange("amaunRm", event.target.value)}
+            placeholder="0.00"
+            align="end"
+            inputMode="decimal"
+            onChange={(value) => onDraftChange("amaunRm", value)}
           />
         ) : (
-          <span className="font-medium text-dark-grey">{displayValue(row.amaunRm)}</span>
+          <span className="block text-right font-semibold text-dark-grey">
+            {formatBayaranAmount(row.amaunRm)}
+          </span>
         )}
       </td>
-      <td className="px-3 py-3.5">
+
+      {/* Action Buttons */}
+      <td className={`w-[0%] px-3 w-min whitespace-nowrap ${isEditing ? "py-4" : "py-2"}`}>
         <div className="flex items-center justify-center gap-1">
           {isEditing ? (
-            <>
+            <div className="flex items-center justify-center gap-1">
               <ActionButton
                 icon="save"
                 label="Simpan perubahan bayaran"
@@ -175,14 +218,16 @@ export default function BayaranReviewRow({
                 textClass="text-red"
                 onClick={onDelete}
               />
-            </>
+            </div>
           ) : (
-            <ActionButton
-              icon="edit"
-              label="Edit bayaran"
-              textClass="text-dark-blue"
-              onClick={onEdit}
-            />
+            <div className="flex items-center justify-center gap-1">
+              <ActionButton
+                icon="edit"
+                label="Edit bayaran"
+                textClass="text-dark-blue"
+                onClick={onEdit}
+              />
+            </div>
           )}
         </div>
       </td>
@@ -190,24 +235,33 @@ export default function BayaranReviewRow({
   );
 }
 
-function EditInput({
-  value,
-  onChange,
-}: {
-  value: string;
-  onChange: (value: string) => void;
-}) {
-  return (
-    <input
-      className="min-h-9 w-full min-w-32 rounded-xl border border-light-grey/35 bg-white px-4 py-2 text-xs font-medium text-dark-blue outline-none transition-colors placeholder:text-light-grey focus:border-dark-blue"
-      value={value}
-      onChange={(event) => onChange(event.target.value)}
-    />
-  );
-}
-
-function displayValue(value: string | number | null | undefined) {
+function formatBayaranAmount(value: string) {
   const normalizedValue = String(value ?? "").trim();
 
-  return normalizedValue || "N/A";
+  if (!normalizedValue) {
+    return "0.00";
+  }
+
+  const normalizedSign = normalizedValue.replace(/[−–—]/g, "-");
+  const isParenthesizedNegative = /^\(.*\)$/.test(normalizedSign);
+  const isNegative = normalizedSign.includes("-") || isParenthesizedNegative;
+  const numericValue = Number(
+    normalizedSign
+      .replace(/RM/gi, "")
+      .replace(/,/g, "")
+      .replace(/\s+/g, "")
+      .replace(/[()]/g, "")
+      .replace(/-/g, ""),
+  );
+
+  if (!Number.isFinite(numericValue)) {
+    return normalizedValue;
+  }
+
+  const formattedValue = numericValue.toLocaleString("ms-MY", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+
+  return isNegative && numericValue > 0 ? `-${formattedValue}` : formattedValue;
 }

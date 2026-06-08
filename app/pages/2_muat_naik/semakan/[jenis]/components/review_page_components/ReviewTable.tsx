@@ -13,6 +13,7 @@ import type { GlobalFixedNotice } from "@/app/components/Message/GlobalFixedMess
 
 type ReviewTableProps = {
   kind: ReviewKind;
+  isLoading?: boolean;
   bayaranRecords: ExtractedBayaranRecord[];
   onBayaranTotalAmountChange?: (totalAmount: string) => void;
   onBayaranRecordsChange?: (
@@ -45,6 +46,7 @@ type ReviewTableProps = {
     unitId: string;
   }) => Promise<void>;
   tunggakanRecords: ExtractedTunggakanRecord[];
+  tunggakanParsingMode?: "strict" | "assisted";
   onTunggakanRecordsChange?: (
     records: ExtractedTunggakanRecord[],
     totalAmount: string,
@@ -56,6 +58,7 @@ type ReviewTableProps = {
 
 export default function ReviewTable({
   kind,
+  isLoading,
   bayaranRecords,
   onBayaranTotalAmountChange,
   onBayaranRecordsChange,
@@ -69,6 +72,7 @@ export default function ReviewTable({
   onKuartersCategoryDelete,
   onKuartersUnitDelete,
   tunggakanRecords,
+  tunggakanParsingMode,
   onTunggakanRecordsChange,
   selectedKeys,
   onSelectedKeysChange,
@@ -89,6 +93,7 @@ export default function ReviewTable({
         onRecordsChange={onBayaranRecordsChange}
         selectedKeys={selectedKeys}
         onSelectedKeysChange={onSelectedKeysChange}
+        isLoading={isLoading}
       />
     );
   }
@@ -103,6 +108,8 @@ export default function ReviewTable({
         onRecordsChange={onTunggakanRecordsChange}
         selectedKeys={selectedKeys}
         onSelectedKeysChange={onSelectedKeysChange}
+        parsingMode={tunggakanParsingMode}
+        isLoading={isLoading}
       />
     );
   }
@@ -116,6 +123,7 @@ export default function ReviewTable({
         selectedKeys={selectedKeys}
         onSelectedKeysChange={onSelectedKeysChange}
         onNotice={onNotice}
+        isLoading={isLoading}
       />
     );
   }

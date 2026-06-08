@@ -776,10 +776,19 @@ export default function ExtractReviewPage({
 
   return (
     <section className="min-h-full bg-background">
-      <div className="flex w-full flex-col gap-8">
+      <div className="flex w-full flex-col gap-4">
         <ReviewHeader
           fileName={isLoadingDraft ? "Memuatkan draf..." : content.fileName}
           onReviewLater={handleReviewLater}
+          parsingMode={
+            kind === "bayaran"
+              ? bayaranExtract?.parsingMode
+              : kind === "kuarters"
+              ? kuartersExtract?.parsingMode
+              : kind === "penghuni"
+              ? penghuniExtract?.parsingMode
+              : tunggakanExtract?.parsingMode
+          }
         />
 
         <StatCards stats={content.stats} isLoading={isLoadingDraft} />

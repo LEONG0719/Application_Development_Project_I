@@ -4,6 +4,7 @@ import { useState } from "react";
 
 import Icon from "@/app/components/Icon/Icon";
 import {
+  DateField,
   InputBox,
   InputField,
   InputFieldFormat,
@@ -104,7 +105,7 @@ export default function PenghuniReviewDetail({
 
   return (
     <div>
-      <div className="fixed top-0 left-55 right-0 bottom-0 z-50 bg-black/40 backdrop-blur-sm p-12 flex items-start justify-center">
+      <div className="fixed top-0 left-55 right-0 bottom-0 z-50 bg-black/40 backdrop-blur-md p-12 flex items-start justify-center">
         <div className="relative w-full rounded-lg shadow-2xl overflow-hidden flex flex-col max-h-full">
           <div className="bg-dark-blue p-6 flex items-center justify-between">
             <div>
@@ -232,37 +233,20 @@ export default function PenghuniReviewDetail({
                     onChange={(value) => updateField("alamatKuarters", value)}
                     className="col-span-2"
                   />
-                  {kemasKini ? (
-                    <>
-                      <DatePickerField
-                        label="TARIKH MASUK"
-                        value={formData.tarikhMasuk ?? ""}
-                        onChange={(value) => updateField("tarikhMasuk", value)}
-                        className="col-span-1"
-                      />
-                      <DatePickerField
-                        label="TARIKH KELUAR"
-                        value={formData.tarikhKeluar ?? ""}
-                        onChange={(value) => updateField("tarikhKeluar", value)}
-                        className="col-span-1"
-                      />
-                    </>
-                  ) : (
-                    <>
-                      <InputField
-                        label="TARIKH MASUK"
-                        value={displayValue(formatDateLabel(formData.tarikhMasuk ?? ""))}
-                        state="inactive"
-                        className="col-span-1"
-                      />
-                      <InputField
-                        label="TARIKH KELUAR"
-                        value={displayValue(formatDateLabel(formData.tarikhKeluar ?? ""))}
-                        state="inactive"
-                        className="col-span-1"
-                      />
-                    </>
-                  )}
+                  <DateField
+                    label="TARIKH MASUK"
+                    value={formData.tarikhMasuk ?? ""}
+                    state={inputState}
+                    onChange={(value) => updateField("tarikhMasuk", value)}
+                    className="col-span-1"
+                  />
+                  <DateField
+                    label="TARIKH KELUAR"
+                    value={formData.tarikhKeluar ?? ""}
+                    state={inputState}
+                    onChange={(value) => updateField("tarikhKeluar", value)}
+                    className="col-span-1"
+                  />
                 </div>
               </section>
 
@@ -314,20 +298,11 @@ export default function PenghuniReviewDetail({
                     <Icon icon="edit" size={13} />
                     <div className="text-xs">Sedang menyunting rekod ini...</div>
                   </div>
-                  <div className="flex gap-3 w-md">
+                  <div className="flex gap-3 w-xs">
                     <button
-                      className="flex flex-1 items-center justify-center gap-1 whitespace-nowrap font-bold text-xs text-white bg-red px-5 py-3 rounded-md hover:bg-red/90 disabled:cursor-not-allowed disabled:opacity-60"
+                      className="flex flex-1 items-center justify-center gap-1 whitespace-nowrap font-bold text-xs text-white bg-red px-5 py-3 rounded-md hover:bg-red/90 disabled:opacity-50 disabled:cursor-not-allowed"
                       type="button"
-                      disabled={isSaving || isDeleting}
-                      onClick={handleDelete}
-                    >
-                      <Icon icon="delete" size={16} />
-                      {isDeleting ? "Sedang Padam..." : "Padam Rekod"}
-                    </button>
-                    <button
-                      className="flex flex-1 items-center justify-center gap-1 whitespace-nowrap font-bold text-xs text-white bg-red px-5 py-3 rounded-md hover:bg-red/90"
-                      type="button"
-                      disabled={isSaving || isDeleting}
+                      disabled={isSaving}
                       onClick={() => {
                         setFormData(originalData);
                         setKemasKini(false);
@@ -337,9 +312,9 @@ export default function PenghuniReviewDetail({
                       Batal
                     </button>
                     <button
-                      className="flex flex-1 items-center justify-center gap-1 whitespace-nowrap font-bold text-xs text-white bg-green px-5 py-3 rounded-md hover:bg-dark-blue/90 disabled:cursor-not-allowed disabled:opacity-60"
+                      className="flex flex-1 items-center justify-center gap-1 whitespace-nowrap font-bold text-xs text-white bg-green px-5 py-3 rounded-md hover:bg-green/90 disabled:opacity-50 disabled:cursor-not-allowed"
                       type="button"
-                      disabled={isSaving || isDeleting}
+                      disabled={isSaving}
                       onClick={handleSave}
                     >
                       <Icon icon={isSaving ? "progress_activity" : "save"} size={16} />

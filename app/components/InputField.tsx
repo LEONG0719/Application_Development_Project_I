@@ -104,6 +104,40 @@ export function TableInputField({
     );
 }
 
+// Compact formatted input field used in editable table cells.
+export function TableInputFieldFormat({
+    value,
+    placeholder = "",
+    align = "center",
+    format,
+    disabled = false,
+    onChange,
+}: {
+    value: string;
+    placeholder?: string;
+    align?: TableInputFieldAlign;
+    format: string;
+    disabled?: boolean;
+    onChange: (value: string) => void;
+}) {
+    return (
+        <PatternFormat
+            format={format}
+            value={value}
+            disabled={disabled}
+            onValueChange={(values) => onChange(values.value)}
+            placeholder={placeholder}
+            className={`min-h-9 rounded-xl border border-light-grey/35 bg-white px-4 py-2 text-sm font-semibold text-dark-blue outline-none transition-colors placeholder:text-light-grey focus:border-dark-blue ${
+                align === "start"
+                    ? "w-full min-w-35 text-left"
+                    : align === "end"
+                        ? "w-full min-w-32 text-right"
+                        : "w-full min-w-32 text-center"
+            } disabled:cursor-not-allowed disabled:bg-background`}
+        />
+    );
+}
+
 // Compact picker-like field used in editable table cells. (Will open a dialog or popover on click, but that logic is handled by the parent component.)
 export function TablePickerField({
     value,

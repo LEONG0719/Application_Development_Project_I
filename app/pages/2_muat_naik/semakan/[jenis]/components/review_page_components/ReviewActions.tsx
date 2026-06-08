@@ -10,19 +10,16 @@ export default function ReviewActions({
   verifyingMode,
   onVerify,
 }: ReviewActionsProps) {
+  // Sahkan Data Button
   return (
-    <div className="fixed bottom-6 right-6 z-40 flex max-w-[calc(100vw-3rem)] flex-col items-end gap-2 sm:bottom-8 sm:right-8">
-      <div className="flex flex-wrap items-center justify-end gap-3">
-        <button
-          type="button"
-          className="inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-dark-blue px-5 py-3 text-sm font-extrabold text-white shadow-[0_18px_45px_rgba(13,47,86,0.28)] transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
-          onClick={() => onVerify("selected")}
-          disabled={verifyingMode === "selected"}
-        >
-          <Icon icon="settings_backup_restore" size={18} weight={700} />
-          {verifyingMode === "selected" ? "Mengesahkan..." : "Sahkan Data"}
-        </button>
-      </div>
-    </div>
+    <button
+      type="button"
+      className="fixed bottom-8 right-8 z-40 flex gap-2 p-4 items-center justify-center rounded-lg bg-dark-blue text-white shadow-[0_4px_10px_rgba(0,0,0,0.3)] transition-transform hover:scale-105 active:scale-95"
+      onClick={() => onVerify("selected")}
+      disabled={verifyingMode === "selected"}
+    >
+      <Icon icon="settings_backup_restore" size={15} weight={400} />
+      <span className="font-bold text-xs">{verifyingMode === "selected" ? "Mengesahkan..." : "Sahkan Data"}</span>
+    </button>
   );
 }

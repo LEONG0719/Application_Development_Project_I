@@ -1,5 +1,6 @@
 import Icon from "../../../../../../components/Icon/Icon";
 import type { ExtractedTunggakanRecord } from "../../../../components/extract-review-shared";
+import { TableInputField, TableInputFieldFormat } from "@/app/components/InputField";
 
 type TunggakanReviewRowProps = {
   row: ExtractedTunggakanRecord;
@@ -56,77 +57,91 @@ export default function TunggakanReviewRow({
       data-tunggakan-editor={isEditing ? "true" : undefined}
       className={[
         "border-t border-light-grey/20 transition-colors",
-        row.importStatus === "IGNORED" ? "bg-amber-50" : "hover:bg-background/60",
+        row.importStatus === "IGNORED"
+          ? "bg-amber-50"
+          : isEditing
+            ? "bg-dark-blue/3"
+            : "hover:bg-background/60",
       ].join(" ")}
     >
-      <td className="w-10 whitespace-nowrap px-3 py-2 text-left">
-        <input
-          type="checkbox"
-          checked={isSelected}
-          disabled={row.importStatus === "IGNORED"}
-          className="h-4 w-4 accent-dark-blue disabled:cursor-not-allowed disabled:opacity-40"
-          onChange={(event) => onSelectionChange(event.target.checked)}
-        />
-      </td>
-      <td className="w-min whitespace-nowrap px-3 py-2 text-left text-xs font-medium text-dark-grey">
-        <div className="flex flex-wrap items-center gap-2">
-          {isEditing ? (
-            <input
-              className="min-h-9 w-full min-w-40 rounded-xl border border-light-grey/35 bg-white px-4 py-2 text-xs font-medium text-dark-blue outline-none transition-colors placeholder:text-light-grey focus:border-dark-blue"
-              value={draft.nama}
-              onChange={(event) => onDraftFieldChange("nama", event.target.value)}
-            />
-          ) : (
-            <span className="block truncate font-medium text-dark-grey" title={row.nama}>
-              {row.nama || "-"}
-            </span>
-          )}
+      {/* Checkbox Column */}
+      <td className="w-10 whitespace-nowrap px-3 text-center">
+        <div className="flex items-center justify-center">
+          <input
+            type="checkbox"
+            checked={isSelected}
+            disabled={row.importStatus === "IGNORED"}
+            className="h-4 w-4 accent-dark-blue disabled:cursor-not-allowed disabled:opacity-40"
+            onChange={(event) => onSelectionChange(event.target.checked)}
+          />
         </div>
+      </td>
+
+      {/* Name */}
+      <td className={`overflow-hidden text-sm font-semibold text-dark-grey w-min whitespace-nowrap ${isEditing ? "px-3 py-4" : "px-3 py-2"}`}>
+        {isEditing ? (
+          <TableInputField
+            value={draft.nama}
+            placeholder="Masukkan Nama Penghuni"
+            align="start"
+            onChange={(value) => onDraftFieldChange("nama", value)}
+          />
+        ) : (
+          <span className="block truncate font-semibold text-dark-grey" title={row.nama}>
+            {row.nama || "-"}
+          </span>
+        )}
         {row.importMessage && !isEditing ? (
           <p className="mt-1 text-[10px] font-semibold text-[#B54708]" title={row.importMessage}>
             {row.importMessage}
           </p>
         ) : null}
       </td>
-      <td className="overflow-hidden px-3 py-3.5 text-xs font-medium text-dark-grey">
+
+      {/* No. Kad Pengenalan */}
+      <td className={`overflow-hidden text-sm font-semibold text-dark-grey w-min whitespace-nowrap ${isEditing ? "px-3 py-4" : "px-3 py-2"}`}>
         {isEditing ? (
-          <input
-            className="min-h-9 w-full min-w-32 rounded-xl border border-light-grey/35 bg-white px-4 py-2 text-xs font-medium text-dark-blue outline-none transition-colors placeholder:text-light-grey focus:border-dark-blue"
+          <TableInputFieldFormat
             value={draft.noKadPengenalan}
-            onChange={(event) =>
-              onDraftFieldChange("noKadPengenalan", event.target.value)
-            }
+            placeholder="Masukkan No. Kad Pengenalan"
+            align="start"
+            format="######-##-####"
+            onChange={(value) => onDraftFieldChange("noKadPengenalan", value)}
           />
         ) : (
           <span
-            className="block truncate font-medium text-dark-grey"
+            className="block truncate font-semibold text-dark-grey"
             title={row.noKadPengenalan || "-"}
           >
-            {row.noKadPengenalan || "-"}
+            {row.noKadPengenalan && row.noKadPengenalan.length === 12
+              ? row.noKadPengenalan.replace(/(\d{6})(\d{2})(\d{4})/, "$1-$2-$3")
+              : row.noKadPengenalan || "-"}
           </span>
         )}
       </td>
-      <td className="px-3 py-3.5 text-center text-xs font-medium text-dark-grey">
+
+      {/* Jumlah Tunggakan */}
+      <td className={`overflow-hidden text-sm font-semibold text-dark-grey w-min whitespace-nowrap ${isEditing ? "px-3 py-4" : "px-3 py-2"}`}>
         {isEditing ? (
-          <input
-            className="min-h-9 w-full min-w-24 rounded-xl border border-light-grey/35 bg-white px-4 py-2 text-center text-xs font-medium text-dark-blue outline-none transition-colors placeholder:text-light-grey focus:border-dark-blue"
-            inputMode="decimal"
-            placeholder="0.00"
+          <TableInputField
             value={draft.jumlahTunggakan}
-            onChange={(event) =>
-              onDraftFieldChange("jumlahTunggakan", event.target.value)
-            }
+            placeholder="0.00"
+            align="end" 
+            inputMode="decimal"
+            onChange={(value) => onDraftFieldChange("jumlahTunggakan", value)}
           />
         ) : (
-          <span className="block text-center font-medium text-dark-grey">
+          <span className="block text-right font-semibold text-dark-grey">
             {formatTunggakanAmount(row.jumlahTunggakan)}
           </span>
         )}
       </td>
-      <td className="px-3 py-3.5">
+
+      {/* Action Buttons */}
+      <td className={`w-[0%] px-3 w-min whitespace-nowrap ${isEditing ? "py-4" : "py-2"}`}>
         <div className="flex items-center justify-center gap-1">
           {isEditing ? (
-            <>
+            <div className="flex items-center justify-center gap-1">
               <ActionButton
                 icon="save"
                 label="Simpan perubahan tunggakan"
@@ -139,14 +154,16 @@ export default function TunggakanReviewRow({
                 textClass="text-red"
                 onClick={onDelete}
               />
-            </>
+            </div>
           ) : (
-            <ActionButton
-              icon="edit"
-              label="Edit tunggakan"
-              textClass="text-dark-blue"
-              onClick={onEdit}
-            />
+            <div className="flex items-center justify-center gap-1">
+              <ActionButton
+                icon="edit"
+                label="Edit tunggakan"
+                textClass="text-dark-blue"
+                onClick={onEdit}
+              />
+            </div>
           )}
         </div>
       </td>
