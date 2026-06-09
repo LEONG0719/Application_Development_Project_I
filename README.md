@@ -38,6 +38,8 @@ It integrates a high-performance **Next.js Web Client** with a standalone **Pyth
 
 ---
 
+<br />
+
 ## 🌟 Core Features
 
 *   **Laman Utama (Home / Dashboard)**: Live collection tracking graphs (Monthly collections, Year-To-Date (YTD) cumulative amounts) and comparison widgets indicating performance against target metrics.
