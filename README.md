@@ -23,6 +23,8 @@ It integrates a high-performance **Next.js Web Client** with a standalone **Pyth
 
 ---
 
+<br />
+
 ## 📌 Table of Contents
 1. [Core Features](#-core-features)
 2. [Project Architecture](#-project-architecture)
@@ -31,6 +33,8 @@ It integrates a high-performance **Next.js Web Client** with a standalone **Pyth
 5. [Setup & Local Deployment](#-setup--local-deployment)
 6. [AI Staging & Import Workflow](#-ai-staging--import-workflow)
 7. [Audit Trails & Security](#-audit-trails--security)
+
+<br />
 
 ---
 
@@ -47,7 +51,11 @@ It integrates a high-performance **Next.js Web Client** with a standalone **Pyth
 *   **Kuarters (Quarters)**: Configure quarter building categories (address, base rental, maintenance fees, and penalty rates) and track live occupancy statuses (`VACANT` / `OCCUPIED`) and historical unit stays.
 *   **Jejak Audit (Audit Trails)**: Secure log capture capturing all administrative writes (Create, Update, Delete, Verify, Login, Logout, Export, Import) for corporate compliance.
 
+<br />
+
 ---
+
+<br />
 
 ## 🏗 Project Architecture
 
@@ -67,7 +75,11 @@ graph TD
 *   **Database Access Layer**: Managed via Prisma ORM connecting directly to the PostgreSQL database hosted on Supabase.
 *   **AI Extraction Microservice**: A standalone FastAPI Python REST service that handles spreadsheet/PDF document ingestion and parsing.
 
+<br />
+
 ---
+
+<br />
 
 ## 🛠 Technology Stack
 
@@ -86,7 +98,11 @@ graph TD
 *   **Parsing Engines**: Openpyxl (spreadsheet processing), PDFMiner/PyPDF
 *   **AI Engine**: Google Gemini API SDK
 
+<br />
+
 ---
+
+<br />
 
 ## 📊 Database Schema Overview
 
@@ -114,7 +130,11 @@ The Supabase PostgreSQL database contains exactly **19 tables** organized to cle
 | | `ArrearsSummaryDraft` | Temporary staging table for arrears audits. |
 | **Governance** | `AuditLog` | Automated administrative write actions logging. |
 
+<br />
+
 ---
+
+<br />
 
 ## ⚡ Supabase Automation: Triggers & Scheduled Jobs
 
@@ -132,7 +152,11 @@ Triggers are registered on the database to instantly sync and calculate resident
 *   **`check_status_on_occupancy`** (on the `UnitOccupancy` table): Re-runs calculations if a resident's check-in/checkout assignments are modified.
 *   **`check_status_on_transaction`** (on the `Transaction` table): Triggers recalculation if transaction ledgers or payment events are posted or deleted.
 
+<br />
+
 ---
+
+<br />
 
 ## 🚀 Setup & Local Deployment
 
@@ -182,14 +206,10 @@ Since the database and authentication layers are hosted on **Supabase**, follow 
 3. Retrieve your project API URL, Anon Key, and Service Role Key under **Project Settings > API**. Put these in your `.env` file.
 
 #### B. Supabase Email Template Setup
-Because the administrative console uses email/password auth logins, customize the authentication email templates:
 1. Navigate to **Supabase Dashboard > Authentication > Email Templates**.
 2. Customize the templates (Invite user, Confirmation, Reset Password) to use your agency language context (e.g., Malay/English), and set the redirection links matching your deployed frontend URL.
 
 #### C. Supabase Extensions, Triggers & Scheduled Jobs (pg_cron) Configuration
-
-To deploy the background automation and real-time triggers to your database:
-
 1. **Activate pg_cron Extension**:
    - Navigate to the **Supabase Dashboard > Database > Extensions** (or **Integrations > Cron**).
    - Locate and **enable** the `pg_cron` extension. This must be done **before** executing schema migrations.
@@ -236,16 +256,17 @@ npm install
 # 2. Generate Prisma Client local type definitions
 npx prisma generate
 
-# 3. Apply all database migrations to your Supabase PostgreSQL database
-# (This provisions the base tables, SQL functions, status triggers, and cron jobs)
-npx prisma migrate dev
-
-# 4. Start Next.js development server
+# 3. Start Next.js development server
 npm run dev
 ```
 
 The app will start running on [http://localhost:3000](http://localhost:3000).
+
+<br />
+
 ---
+
+<br />
 
 ### 5. Setting Up the Python AI Service
 In another terminal instance, navigate to the `ai_service` folder and activate the Python virtual environment:
@@ -269,7 +290,11 @@ python -m uvicorn main:app --host 127.0.0.1 --port 8000
 
 Verify that the service is running by visiting [http://127.0.0.1:8000/health](http://127.0.0.1:8000/health). You should see `{"status":"ok"}`.
 
+<br />
+
 ---
+
+<br />
 
 ## 🔄 AI Staging & Import Workflow
 
@@ -294,7 +319,11 @@ sequenceDiagram
 3.  **Staging View**: The spreadsheet rows load into Next.js as editable draft cards. If an IC number is missing, or a unit code is invalid, the review table highlights the cells in red.
 4.  **Database Commit**: Once the administrator edits or verifies all validations, clicking the verify action transfers all draft records to the `Resident` or `Payment` production tables, automatically clearing the drafts and refreshing the dashboard view.
 
+<br />
+
 ---
+
+<br />
 
 ## 🔒 Audit Trails & Security
 
