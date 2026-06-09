@@ -473,16 +473,14 @@ export default function TunggakanReviewTable({
                   rowCount: 10,
                 })
               ) : paginatedRows.length === 0 ? (
-                 <tr className="border-t border-light-grey/20">
-                  <td
-                    colSpan={5}
-                    className="px-6 py-10 text-center text-sm font-medium text-grey"
-                  >
-                    {isSearchFilterActive || isStatusFilterActive
-                      ? "Tiada rekod tunggakan yang sepadan dengan tapisan semasa."
-                      : "Tiada rekod tunggakan ditemui."}
-                  </td>
-                </tr>
+                loadingTableRows({
+                  mode: "message",
+                  columnCount: 5,
+                  rowCount: 1,
+                  message: isSearchFilterActive || isStatusFilterActive
+                    ? "Tiada rekod tunggakan yang sepadan dengan tapisan semasa."
+                    : "Tiada rekod tunggakan ditemui.",
+                })
               ) : (
                 paginatedRows.map((resident) => {
                   const key = getTunggakanRowKey(resident);

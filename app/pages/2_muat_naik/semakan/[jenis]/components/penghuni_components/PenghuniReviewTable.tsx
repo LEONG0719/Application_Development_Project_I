@@ -432,16 +432,14 @@ export default function PenghuniReviewTable({
                 rowCount: 10,
               })
             ) : paginatedRows.length === 0 ? (
-              <tr className="border-t border-light-grey/20">
-                <td
-                  colSpan={7}
-                  className="px-6 py-10 text-center text-sm font-medium text-grey"
-                >
-                  {isSearchFilterActive || isStatusFilterActive
-                    ? "Tiada rekod penghuni yang sepadan dengan tapisan semasa."
-                    : "Tiada rekod penghuni baharu ditemui."}
-                </td>
-              </tr>
+              loadingTableRows({
+                mode: "message",
+                columnCount: 7,
+                rowCount: 1,
+                message: isSearchFilterActive || isStatusFilterActive
+                  ? "Tiada rekod penghuni yang sepadan dengan tapisan semasa."
+                  : "Tiada rekod penghuni baharu ditemui.",
+              })
             ) : (
               paginatedRows.map((resident) => {
                 const recordKey = getPenghuniRecordKey(resident);

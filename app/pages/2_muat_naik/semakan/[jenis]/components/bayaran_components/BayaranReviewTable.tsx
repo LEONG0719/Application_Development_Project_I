@@ -523,16 +523,14 @@ export default function BayaranReviewTable({
                 rowCount: 10,
               })
             ) : paginatedRows.length === 0 ? (
-              <tr className="border-t border-light-grey/20">
-                <td
-                  colSpan={8}
-                  className="px-6 py-10 text-center text-sm font-medium text-grey"
-                >
-                  {isSearchFilterActive || isStatusFilterActive
-                    ? "Tiada rekod bayaran yang sepadan dengan tapisan semasa."
-                    : "Tiada rekod bayaran ditemui."}
-                </td>
-              </tr>
+              loadingTableRows({
+                mode: "message",
+                columnCount: 8,
+                rowCount: 1,
+                message: isSearchFilterActive || isStatusFilterActive
+                  ? "Tiada rekod bayaran yang sepadan dengan tapisan semasa."
+                  : "Tiada rekod bayaran ditemui.",
+              })
             ) : (
               paginatedRows.map((resident) => {
                 const isEditing = editingId === resident.id;
