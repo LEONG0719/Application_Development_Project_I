@@ -38,11 +38,7 @@ export default function StatCards({
             <p className="text-xs font-semibold text-grey/70">
               {stat.label}
             </p>
-            <p
-              className={[
-                "text-3xl font-bold text-dark-grey",
-              ].join(" ")}
-            >
+            <p className="text-3xl font-bold text-dark-grey">
               {displayValue}
             </p>
             <div

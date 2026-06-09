@@ -64,7 +64,6 @@ export default function KuartersReviewTable({
   onFilteredStatsChange,
 }: KuartersReviewTableProps) {
   const [savedRecords, setSavedRecords] = useState(records);
-  const categories = savedRecords;
 
   const [categoryDrafts, setCategoryDrafts] = useState<
     Record<string, KuartersCategoryDraft>
@@ -477,14 +476,14 @@ export default function KuartersReviewTable({
     }
 
     const draft = categoryDrafts[categoryId];
-    const targetCategory = categories.find((category) => category.id === categoryId);
+    const targetCategory = savedRecords.find((category) => category.id === categoryId);
 
     if (!draft || !targetCategory) {
       setEditingCategoryId(null);
       return;
     }
 
-    const nextCategories = categories.map((category) =>
+    const nextCategories = savedRecords.map((category) =>
       category.id === categoryId ? { ...category, ...draft } : category,
     );
 
@@ -519,7 +518,7 @@ export default function KuartersReviewTable({
       return;
     }
 
-    const targetCategory = categories.find((category) => category.id === categoryId);
+    const targetCategory = savedRecords.find((category) => category.id === categoryId);
 
     if (!targetCategory) {
       setEditingCategoryId(null);
@@ -528,7 +527,7 @@ export default function KuartersReviewTable({
 
     const unitKeys = new Set(targetCategory.units.map(getUnitKey));
     const categoryKey = getKuartersRecordKey(targetCategory);
-    const nextCategories = categories.filter((category) => category.id !== categoryId);
+    const nextCategories = savedRecords.filter((category) => category.id !== categoryId);
 
     setSavingTarget(`category:${categoryId}`);
     try {
@@ -643,7 +642,7 @@ export default function KuartersReviewTable({
       return;
     }
 
-    const nextCategories = categories.map((category) => {
+    const nextCategories = savedRecords.map((category) => {
       if (category.id !== selectedCategory.id) {
         return category;
       }
@@ -755,7 +754,7 @@ export default function KuartersReviewTable({
 
       <div className="grid overflow-hidden rounded-lg border border-light-grey/20 bg-white lg:grid-cols-[1fr_260px]">
         <KuartersCategoryTable
-          categories={categories}
+          categories={savedRecords}
           pageCategories={pageCategories}
           selectedCategoryId={resolvedSelectedCategoryId}
           selectedKeys={selectedKeySet}

@@ -271,6 +271,14 @@ function getExtractResult<T extends ExtractResult>(
   return extractResult?.documentType === documentType ? (extractResult as T) : null;
 }
 
+/**
+ * Parses a signed monetary string (supports RM prefix, negative signs, and
+ * parenthesized negatives) into a numeric value.
+ *
+ * NOTE: This utility is also duplicated in ExtractReviewPage.tsx and
+ * TunggakanReviewTable.tsx. Consider extracting to a shared util if more
+ * sharing is needed in the future.
+ */
 function parseSignedAmount(value: string) {
   const normalizedValue = String(value ?? "").trim();
 

@@ -802,13 +802,8 @@ export default function ExtractReviewPage({
           fileName={isLoadingDraft ? "Memuatkan draf..." : content.fileName}
           onReviewLater={handleReviewLater}
           parsingMode={
-            kind === "bayaran"
-              ? bayaranExtract?.parsingMode
-              : kind === "kuarters"
-              ? kuartersExtract?.parsingMode
-              : kind === "penghuni"
-              ? penghuniExtract?.parsingMode
-              : tunggakanExtract?.parsingMode
+            // All four extract result types share the same parsingMode field
+            extractResult?.parsingMode
           }
         />
 

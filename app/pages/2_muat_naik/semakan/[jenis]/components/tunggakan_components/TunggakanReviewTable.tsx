@@ -494,8 +494,8 @@ export default function TunggakanReviewTable({
         </div>
       ) : null}
 
+      {/* Table: horizontal scroll on small screens */}
       <div className="rounded-lg overflow-x-auto overflow-y-auto">
-        <div className="rounded-lg overflow-x-auto overflow-y-auto">
           <table className="w-full min-w-180 border-collapse text-left">
             {/* Table Header */}
             <thead className="bg-background">
@@ -582,7 +582,6 @@ export default function TunggakanReviewTable({
               </tr>
             </tfoot>
           </table>
-        </div>
       </div>
     </section>
   );

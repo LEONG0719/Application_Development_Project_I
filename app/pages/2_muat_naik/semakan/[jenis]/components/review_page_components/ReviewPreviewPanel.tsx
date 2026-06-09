@@ -3,9 +3,6 @@ import type {
   ExtractedPenghuniRecord,
   ExtractedQuarterRecord,
   ExtractedTunggakanRecord,
-  KuartersExtractResult,
-  BayaranExtractResult,
-  PenghuniExtractResult,
 } from "../../../../components/extract-review-shared";
 import ReviewTable from "./ReviewTable";
 import type { ReviewKind } from "./types";
@@ -20,15 +17,15 @@ type ReviewPreviewPanelProps = {
     records: ExtractedBayaranRecord[],
     totalAmount: string,
   ) => ExtractedBayaranRecord | void | Promise<ExtractedBayaranRecord | void>;
-  bayaranParsingMode?: BayaranExtractResult["parsingMode"];
+  bayaranParsingMode?: "strict" | "assisted";
   penghuniRecords: ExtractedPenghuniRecord[];
-  penghuniParsingMode?: PenghuniExtractResult["parsingMode"];
+  penghuniParsingMode?: "strict" | "assisted";
   onPenghuniRecordsChange?: (
     records: ExtractedPenghuniRecord[],
   ) => ExtractedPenghuniRecord | void | Promise<ExtractedPenghuniRecord | void>;
   onPenghuniRecordDelete?: (record: ExtractedPenghuniRecord) => Promise<void>;
   kuartersRecords: ExtractedQuarterRecord[];
-  kuartersParsingMode?: KuartersExtractResult["parsingMode"];
+  kuartersParsingMode?: "strict" | "assisted";
   onKuartersRecordsChange?: (records: ExtractedQuarterRecord[]) => Promise<void>;
   onKuartersCategoryChange?: (params: {
     categoryId: string;
