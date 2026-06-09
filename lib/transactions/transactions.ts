@@ -249,7 +249,8 @@ export async function reverseTransaction(originalTxId: string, _adminId: string,
     }
 
     if (original.residentId) {
-      await applyFinancialDeltaToBilling(tx, original.residentId, original.transactionDate, original.category, -currentNet, remarks);
+        const targetChargeMonth = original.chargeMonth || original.transactionDate;
+        await applyFinancialDeltaToBilling(tx, original.residentId, targetChargeMonth, original.category, -currentNet, remarks);
     }
 
     const newTransactionNo = await generateTransactionNo(tx);
@@ -273,6 +274,7 @@ export async function reverseTransaction(originalTxId: string, _adminId: string,
         creditAmount: reverseCredit,
         description: remarks,
         relatedTransactionId: original.id, 
+        chargeMonth: original.chargeMonth,
       },
     });
   });
@@ -308,7 +310,8 @@ export async function adjustTransaction(originalTxId: string, _adminId: string, 
     if (deltaAmount === 0) throw new Error("Tiada perubahan jumlah dikesan.");
 
     if (original.residentId) {
-      await applyFinancialDeltaToBilling(tx, original.residentId, original.transactionDate, original.category, deltaAmount, remarks);
+        const targetChargeMonth = original.chargeMonth || original.transactionDate;
+        await applyFinancialDeltaToBilling(tx, original.residentId, targetChargeMonth, original.category, deltaAmount, remarks);
     }
 
     let newDebit = 0;
@@ -340,6 +343,7 @@ export async function adjustTransaction(originalTxId: string, _adminId: string, 
         creditAmount: newCredit,
         description: remarks,
         relatedTransactionId: original.id, 
+        chargeMonth: original.chargeMonth,
       },
     });
   });
@@ -382,14 +386,16 @@ export async function generateTransactionNos(txClient: TransactionNoClient = pri
 async function applyFinancialDeltaToBilling(
   tx: Prisma.TransactionClient,
   residentId: string,
-  transactionDate: Date,
+  targetChargeMonth: Date,
   category: TransactionCategory,
   deltaAmount: number,
   remarks: string
 ) {
   if (!residentId || deltaAmount === 0) return;
 
-  const chargeMonth = getMonthStartInAppTimeZone(transactionDate);
+  // 1. Force the date to the first day of the app timezone month to find the correct MonthlyCharge.
+  const chargeMonth = getMonthStartInAppTimeZone(targetChargeMonth);
+
   let monthlyCharge = await tx.monthlyCharge.findUnique({
     where: { residentId_chargeMonth: { residentId, chargeMonth } }
   });

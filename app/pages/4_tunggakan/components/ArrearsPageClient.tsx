@@ -16,7 +16,8 @@ import TunggakanSummaryCards from "./TunggakanList/TunggakanSummaryCards";
 import TunggakanTable from "./TunggakanList/TunggakanTable";
 import ArrearsDownload from "./TunggakanList/TableButton/ArrearsDownload";
 import ArrearsFilter from "./TunggakanList/TableButton/ArrearsFilter";
-import ArrearsFilterMonth from "./TunggakanList/TableButton/ArrearsFIlterMonth";
+import ArrearsSearch from "./TunggakanList/TableButton/ArrearsSearch";
+import ArrearsFilterMonth from "./TunggakanList/TableButton/ArrearsFilterMonth";
 
 const STATUS_BAYARAN_OPTIONS = [
   { value: "SUDAH_DIKUTIP", label: "Sudah Dikutip" },
