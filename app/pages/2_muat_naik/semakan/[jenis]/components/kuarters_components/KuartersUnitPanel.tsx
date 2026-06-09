@@ -175,6 +175,11 @@ export default function KuartersUnitPanel({
                           {unit.unitCode}
                         </span>
                       )}
+                      {unit.isExisted && !isEditing ? (
+                        <p className="mt-1 text-[10px] font-semibold text-[#B54708]">
+                          Unit Sudah Ada
+                        </p>
+                      ) : null}
                     </td>
                     <td className={`w-[0%] px-3 text-center whitespace-nowrap ${isEditing ? "py-4" : "py-2"}`}>
                       <div className="flex justify-center gap-1">

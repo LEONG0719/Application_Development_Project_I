@@ -282,6 +282,10 @@ export default function LamanUtamaAnalysis({
           ))}
         </div>
       )}
+
+      {totalPages <= 1 && (
+        <div className="pt-8"></div>
+      )}
     </div>
   );
 }

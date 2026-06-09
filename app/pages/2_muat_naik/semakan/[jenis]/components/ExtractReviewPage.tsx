@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import GlobalFixedMessage from "@/app/components/Message/GlobalFixedMessage";
 import type { GlobalFixedNotice } from "@/app/components/Message/GlobalFixedMessage";
 import { ROUTES } from "../../../../../constants/routes";
+import SearchingDataOverlay from "@/app/components/Loading/SearchingDataOverlay";
 import type {
   BayaranExtractResult,
   ExtractedBayaranRecord,
@@ -807,7 +808,10 @@ export default function ExtractReviewPage({
   );
 
   return (
-    <section className="min-h-full bg-background">
+    <section className="relative min-h-full bg-background">
+      {isLoadingDraft && (
+        <SearchingDataOverlay message="Memuatkan draf..." isFixed />
+      )}
       <div className="flex w-full flex-col gap-4 mb-10">
         <ReviewHeader
           fileName={isLoadingDraft ? "Memuatkan draf..." : content.fileName}
@@ -850,6 +854,7 @@ export default function ExtractReviewPage({
         <ReviewActions
           verifyingMode={verifyingMode}
           onVerify={handleVerifyData}
+          selectedCount={selectedRecordKeys.length}
         />
 
         <GlobalFixedMessage

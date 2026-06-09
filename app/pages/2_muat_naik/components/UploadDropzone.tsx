@@ -104,10 +104,10 @@ export default function UploadDropzone({
           </h2>
 
           {/* Instruction */}
-          <p className="text-sm font-medium leading-6 text-[#667085]">
+          <div className="text-sm font-medium leading-6 text-[#667085]">
             <div>Pastikan fail dalam format PDF atau Excel (.xlsx) sahaja.</div>
             <div>Saiz fail maksimum adalah 25MB.</div>
-          </p>
+          </div>
         </div>
         
         <div className="flex flex-col items-center justify-center gap-2">

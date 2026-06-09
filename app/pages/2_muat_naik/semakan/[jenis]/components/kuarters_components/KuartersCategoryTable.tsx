@@ -248,12 +248,16 @@ export default function KuartersCategoryTable({
                                 </span>
                               )}
                               {field === "categoryName" ? (
-                                <span className="block text-[10px] font-semibold text-grey text-left">
-                                  {category.unitCount} unit
-                                  {category.categoryIsExisted
-                                    ? " - kategori sedia ada"
-                                    : ""}
-                                </span>
+                                <>
+                                  <span className="block text-[10px] font-semibold text-grey text-left">
+                                    {category.unitCount} unit
+                                  </span>
+                                  {category.categoryIsExisted ? (
+                                    <p className="mt-1 text-[10px] font-semibold text-[#B54708] text-left">
+                                      Kategori Sudah Ada
+                                    </p>
+                                  ) : null}
+                                </>
                               ) : null}
                             </>
                           )}
