@@ -93,7 +93,11 @@ export async function createUploadedDocumentForKind({
           category: documentCategoryForKind(kind),
           uploadedById: currentAdmin?.profile.id ?? null,
           description: "Menunggu semakan dan pengesahan data ekstrak.",
-          remark: null,
+          remark: JSON.stringify({
+            documentType: kind,
+            parsingMode: payload.extractResult.parsingMode || "strict",
+            records: [],
+          }),
         },
       });
 

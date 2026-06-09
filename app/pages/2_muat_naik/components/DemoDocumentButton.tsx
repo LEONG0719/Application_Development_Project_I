@@ -48,7 +48,7 @@ export default function DemoDocumentButton({
   return (
     <button
       type="button"
-      className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-[#DCE2F1] bg-white px-5 text-xs font-extrabold text-dark-blue shadow-sm transition hover:border-[#C8D2EA] hover:bg-[#FBFCFF] disabled:cursor-not-allowed disabled:opacity-50"
+      className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-[#DCE2F1] bg-white px-5 text-xs font-bold text-dark-blue shadow-sm transition hover:border-[#C8D2EA] hover:bg-[#FBFCFF] disabled:cursor-not-allowed disabled:opacity-50"
       disabled={!canDownload}
       onClick={handleDownloadSamples}
     >

@@ -69,6 +69,20 @@ export async function mapUploadedDocumentForReview(
     return null;
   }
 
+  // Parse parsingMode from remark JSON
+  if (document.remark) {
+    try {
+      const parsedRemark = JSON.parse(document.remark);
+      if (parsedRemark && typeof parsedRemark === "object" && "parsingMode" in parsedRemark) {
+        extractResult.parsingMode = parsedRemark.parsingMode;
+      }
+    } catch {
+      extractResult.parsingMode = "strict";
+    }
+  } else {
+    extractResult.parsingMode = "strict";
+  }
+
   return {
     id: document.id,
     kind: extractResult.documentType,

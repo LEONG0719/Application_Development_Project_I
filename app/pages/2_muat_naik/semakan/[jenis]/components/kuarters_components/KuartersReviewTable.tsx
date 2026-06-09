@@ -1,8 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import GlobalFixedMessage from "@/app/components/Message/GlobalFixedMessage";
 import type { GlobalFixedNotice } from "@/app/components/Message/GlobalFixedMessage";
+import Icon, { commonIcons } from "@/app/components/Icon/Icon";
+import ToolbarButton from "@/app/components/ToolbarIconButton";
+import { InputField as SharedInputField } from "@/app/components/InputField";
+import { downloadXlsxFile, type XlsxCell, type XlsxSheet } from "@/lib/download/xlsx-export";
+
 import {
   type ExtractedQuarterRecord,
   type ExtractedQuarterUnit,
@@ -37,6 +42,7 @@ type KuartersReviewTableProps = {
   }) => Promise<void>;
   selectedKeys?: string[];
   onSelectedKeysChange?: (keys: string[]) => void;
+  isLoading?: boolean;
 };
 
 export default function KuartersReviewTable({
@@ -48,8 +54,11 @@ export default function KuartersReviewTable({
   onUnitDelete,
   selectedKeys = [],
   onSelectedKeysChange,
+  isLoading = false,
 }: KuartersReviewTableProps) {
-  const categories = records;
+  const [savedRecords, setSavedRecords] = useState(records);
+  const categories = savedRecords;
+
   const [categoryDrafts, setCategoryDrafts] = useState<
     Record<string, KuartersCategoryDraft>
   >({});
@@ -65,24 +74,79 @@ export default function KuartersReviewTable({
   const [unitPage, setUnitPage] = useState(1);
   const isSaving = savingTarget !== null;
 
+  // Search State
+  const [filterQuery, setFilterQuery] = useState("");
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+
+  const searchInputRef = useRef<HTMLDivElement | null>(null);
+
+  const isSearchFilterActive = filterQuery.trim().length > 0;
+
+  // Filtered Categories
+  const filteredCategories = useMemo(() => {
+    return savedRecords.filter((category) => {
+      // 1. Search Query Filter
+      if (filterQuery.trim()) {
+        const query = filterQuery.toLowerCase().trim();
+        const nameMatch = (category.categoryName || "").toLowerCase().includes(query);
+        const addressMatch = (category.address || "").toLowerCase().includes(query);
+        const unitsMatch = category.units.some((u) => (u.unitCode || "").toLowerCase().includes(query));
+        if (!nameMatch && !addressMatch && !unitsMatch) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+  }, [savedRecords, filterQuery]);
+
+  // Filtered Units of Selected Category
+  const filteredUnits = useMemo(() => {
+    const selectedCat =
+      filteredCategories.find((category) => category.id === selectedCategoryId) ??
+      filteredCategories[0] ??
+      null;
+
+    if (!selectedCat) {
+      return [];
+    }
+
+    return selectedCat.units.filter((unit) => {
+      // 1. Search Query Filter
+      if (filterQuery.trim()) {
+        const query = filterQuery.toLowerCase().trim();
+        const categoryNameMatch = (selectedCat.categoryName || "").toLowerCase().includes(query);
+        const addressMatch = (selectedCat.address || "").toLowerCase().includes(query);
+        const unitCodeMatch = (unit.unitCode || "").toLowerCase().includes(query);
+        if (!categoryNameMatch && !addressMatch && !unitCodeMatch) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+  }, [filteredCategories, selectedCategoryId, filterQuery]);
+
   const selectedCategory =
-    categories.find((category) => category.id === selectedCategoryId) ??
-    categories[0] ??
+    filteredCategories.find((category) => category.id === selectedCategoryId) ??
+    filteredCategories[0] ??
     null;
   const resolvedSelectedCategoryId = selectedCategory?.id ?? "";
+
   const totalCategoryPages = Math.max(
     1,
-    Math.ceil(categories.length / QUARTER_CATEGORIES_PER_PAGE),
+    Math.ceil(filteredCategories.length / QUARTER_CATEGORIES_PER_PAGE),
   );
   const safeCategoryPage = Math.min(categoryPage, totalCategoryPages);
   const categoryStartIndex = (safeCategoryPage - 1) * QUARTER_CATEGORIES_PER_PAGE;
-  const pageCategories = categories.slice(
+  const pageCategories = filteredCategories.slice(
     categoryStartIndex,
     categoryStartIndex + QUARTER_CATEGORIES_PER_PAGE,
   );
-  const categoryDisplayStart = categories.length === 0 ? 0 : categoryStartIndex + 1;
+  const categoryDisplayStart = filteredCategories.length === 0 ? 0 : categoryStartIndex + 1;
   const categoryDisplayEnd = categoryStartIndex + pageCategories.length;
-  const units = selectedCategory?.units ?? [];
+
+  const units = filteredUnits;
   const totalUnitPages = Math.max(1, Math.ceil(units.length / QUARTER_UNITS_PER_PAGE));
   const safeUnitPage = Math.min(unitPage, totalUnitPages);
   const unitStartIndex = (safeUnitPage - 1) * QUARTER_UNITS_PER_PAGE;
@@ -92,8 +156,9 @@ export default function KuartersReviewTable({
   );
   const unitDisplayStart = units.length === 0 ? 0 : unitStartIndex + 1;
   const unitDisplayEnd = unitStartIndex + pageUnits.length;
+
   const selectedKeySet = new Set(selectedKeys);
-  const allCategoryKeys = categories
+  const allCategoryKeys = filteredCategories
     .filter(isSelectableCategory)
     .map(getKuartersRecordKey);
   const isAllCategoriesSelected =
@@ -113,6 +178,13 @@ export default function KuartersReviewTable({
   const getSaveErrorMessage = (error: unknown, fallbackMessage: string) =>
     error instanceof Error ? error.message : fallbackMessage;
 
+  useEffect(() => {
+    setSavedRecords(records);
+    setEditingCategoryId(null);
+    setEditingUnitKey(null);
+  }, [records]);
+
+  // Handle pointer down outside edit forms
   useEffect(() => {
     if (!editingCategoryId && !editingUnitKey) {
       return;
@@ -145,6 +217,92 @@ export default function KuartersReviewTable({
       document.removeEventListener("pointerdown", handlePointerDown);
     };
   }, [editingCategoryId, editingUnitKey, isSaving]);
+
+  // Auto-focus search input when opened
+  useEffect(() => {
+    if (isSearchOpen) {
+      searchInputRef.current?.querySelector("input")?.focus();
+    }
+  }, [isSearchOpen]);
+
+  function handleToggleSearch() {
+    if (isSearchOpen) {
+      setFilterQuery("");
+      setIsSearchOpen(false);
+      return;
+    }
+    setIsSearchOpen(true);
+  }
+
+  function handleClearSearch() {
+    setFilterQuery("");
+    setIsSearchOpen(false);
+  }
+
+  const handleDownload = () => {
+    const headers: XlsxCell[] = [
+      { value: "Kategori Kuarters", style: "header" },
+      { value: "Alamat", style: "header" },
+      { value: "Kadar Sewa (RM)", style: "header", align: "right" },
+      { value: "Kadar Senggara (RM)", style: "header", align: "right" },
+      { value: "Kadar Penalti (RM)", style: "header", align: "right" },
+      { value: "ID Unit", style: "header" },
+      { value: "Status", style: "header", align: "center" },
+    ];
+
+    const rows: XlsxSheet["rows"] = [];
+    filteredCategories.forEach((category) => {
+      const categoryStatus = category.categoryIsExisted ? "Kategori Sedia Ada" : "Baharu";
+
+      if (category.units.length === 0) {
+        rows.push([
+          category.categoryName || "N/A",
+          category.address || "N/A",
+          { value: Number(category.rentalPrice) || 0, type: "number", align: "right" },
+          { value: Number(category.maintenancePrice) || 0, type: "number", align: "right" },
+          { value: Number(category.penaltyPrice) || 0, type: "number", align: "right" },
+          "N/A",
+          { value: categoryStatus, align: "center" },
+        ]);
+      } else {
+        category.units.forEach((unit) => {
+          const unitStatus = unit.isExisted ? "Unit Sedia Ada" : category.categoryIsExisted ? "Kategori Sedia Ada" : "Baharu";
+          rows.push([
+            category.categoryName || "N/A",
+            category.address || "N/A",
+            { value: Number(category.rentalPrice) || 0, type: "number", align: "right" },
+            { value: Number(category.maintenancePrice) || 0, type: "number", align: "right" },
+            { value: Number(category.penaltyPrice) || 0, type: "number", align: "right" },
+            unit.unitCode || "N/A",
+            { value: unitStatus, align: "center" },
+          ]);
+        });
+      }
+    });
+
+    const filename = isSearchFilterActive
+      ? `Kuarters_Semakan_Ditapis_${new Date().toISOString().slice(0, 10)}`
+      : `Kuarters_Semakan_Semua_${new Date().toISOString().slice(0, 10)}`;
+
+    downloadXlsxFile({
+      filename,
+      sheets: [
+        {
+          name: "Senarai Kuarters",
+          columns: [
+            { width: 30 },
+            { width: 35 },
+            { width: 18 },
+            { width: 22 },
+            { width: 20 },
+            { width: 16 },
+            { width: 24 },
+          ],
+          rows: [headers, ...rows],
+        },
+      ],
+    });
+  };
 
   const selectCategory = (categoryId: string) => {
     if (isSaving) {
@@ -190,7 +348,7 @@ export default function KuartersReviewTable({
 
     const nextKeys = new Set(selectedKeys);
 
-    categories.forEach((category) => {
+    filteredCategories.forEach((category) => {
       const categoryKey = getKuartersRecordKey(category);
       const unitKeys = category.units.map(getUnitKey);
       const selectableUnitKeys = category.units
@@ -498,10 +656,76 @@ export default function KuartersReviewTable({
   };
 
   return (
-    <>
-      <div
-        className="mb-6 grid overflow-hidden rounded-2xl border border-light-grey/20 bg-white lg:grid-cols-[1fr_260px]"
-      >
+    <section className="flex flex-col gap-3 rounded-lg bg-light-blue p-1">
+      <div className="flex flex-row justify-between px-3 pt-3">
+        {/* Header */}
+        <div>
+          <div className="text-lg font-bold text-dark-grey">Pratinjau Kategori & Unit Kuarters</div>
+          <div className="text-xs text-grey">Sila semak maklumat sebelum pengesahan.</div>
+        </div>
+
+        <div className="flex items-center gap-4">
+          {/* Search Button */}
+          <ToolbarButton
+            icon={commonIcons.search}
+            label="Cari rekod kuarters"
+            isActive={isSearchOpen}
+            onClick={handleToggleSearch}
+          />
+
+          {/* Download Button */}
+          <ToolbarButton
+            icon={commonIcons.download}
+            label="Muat turun data kuarters"
+            onClick={handleDownload}
+          />
+        </div>
+      </div>
+
+      {isSearchOpen ? (
+        <div className="px-3">
+          <div className="rounded-lg bg-white p-4 shadow">
+            <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+                <div ref={searchInputRef} className="flex-1">
+                  <SharedInputField
+                    label="CARIAN MENGIKUT KATEGORI, ALAMAT ATAU ID UNIT"
+                    value={filterQuery}
+                    state="active"
+                    onChange={setFilterQuery}
+                    placeholder="Contoh: Kuarters Kelas D atau Unit 102"
+                    showLabel
+                    leadingIcon={(
+                      <Icon
+                        icon={commonIcons.search}
+                        size={18}
+                        className="text-light-grey"
+                      />
+                    )}
+                    className="w-full"
+                    activeBackgroundClass="bg-light-blue"
+                    inputFontSize={12}
+                    inputMinHeight={40}
+                  />
+                </div>
+
+                <div className="flex items-center gap-3 self-start lg:self-end">
+                  <button
+                    type="button"
+                    className="inline-flex min-h-10 items-center rounded-xl border border-light-grey/25 bg-white px-4 py-2 text-sm font-semibold text-grey transition-colors hover:border-dark-blue hover:text-dark-blue disabled:cursor-not-allowed disabled:opacity-40"
+                    disabled={!isSearchFilterActive}
+                    onClick={handleClearSearch}
+                  >
+                    Kosongkan
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      <div className="grid overflow-hidden rounded-lg border border-light-grey/20 bg-white lg:grid-cols-[1fr_260px]">
         <KuartersCategoryTable
           categories={categories}
           pageCategories={pageCategories}
@@ -518,6 +742,7 @@ export default function KuartersReviewTable({
           totalPages={totalCategoryPages}
           displayStart={categoryDisplayStart}
           displayEnd={categoryDisplayEnd}
+          isLoading={isLoading}
           onPageChange={(page) => {
             if (!isSaving) {
               setCategoryPage(page);
@@ -548,6 +773,7 @@ export default function KuartersReviewTable({
           totalPages={totalUnitPages}
           displayStart={unitDisplayStart}
           displayEnd={unitDisplayEnd}
+          isLoading={isLoading}
           onPageChange={(page) => {
             if (!isSaving) {
               setUnitPage(page);
@@ -562,7 +788,7 @@ export default function KuartersReviewTable({
         />
       </div>
       <GlobalFixedMessage notice={notice} onDismiss={() => setNotice(null)} />
-    </>
+    </section>
   );
 }
 

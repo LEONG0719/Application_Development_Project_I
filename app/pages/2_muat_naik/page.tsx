@@ -8,6 +8,7 @@ import CategoryTabs from "./components/CategoryTabs";
 import DemoDocumentButton from "./components/DemoDocumentButton";
 import ParsingModeTabs from "./components/ParsingModeTabs";
 import ProcessingQueueTable from "./components/ProcessingQueueTable";
+import { DateField } from "@/app/components/InputField";
 import UploadDropzone from "./components/UploadDropzone";
 import {
   categoryByDraftKind,
@@ -298,13 +299,13 @@ function MuatNaikPageContent() {
 
   return (
     <section className="min-h-full bg-background">
-      <div className="flex w-full flex-col gap-6">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="flex min-w-0 flex-col gap-1">
-            <h1 className="text-[30px] font-extrabold leading-tight text-[#07162F]">
+      <div className="flex w-full flex-col gap-4">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex min-w-0 flex-col">
+            <h1 className="text-2xl font-extrabold leading-9 tracking-tight text-[#0B1C30]">
               Muat Naik Document
             </h1>
-            <p className="text-[15px] font-medium text-[#667085]">
+            <p className="text-sm font-extralight text-grey/70">
               Sila muat naik fail untuk pemprosesan maklumat sistem.
             </p>
           </div>
@@ -328,18 +329,20 @@ function MuatNaikPageContent() {
         {activeDraftKind === "tunggakan" ? (
           <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-[#DCE2F1] bg-white px-5 py-4 shadow-sm">
             <div className="min-w-0">
-              <p className="text-sm font-extrabold text-[#07162F]">
+              <p className="text-md font-bold text-dark-grey">
                 Tarikh Tunggakan
               </p>
-              <p className="mt-1 text-xs font-semibold text-[#667085]">
+              <p className="text-xs text-grey">
                 Pilih tarikh rujukan tunggakan sebelum memproses fail.
               </p>
             </div>
-            <DatePickerField
+            <DateField
+              showLabel={false}
               label="Tarikh Tunggakan"
               value={tunggakanDate}
-              maxDate={today}
-              disabled={isProcessing}
+              maxDate={formatDateInput(today)}
+              state={isProcessing ? "inactive" : "active"}
+              className="w-full sm:w-72"
               onChange={(value) => {
                 setTunggakanDate(value);
                 setProcessingError("");
@@ -374,161 +377,6 @@ function MuatNaikPageContent() {
   );
 }
 
-function DatePickerField({
-  label,
-  value,
-  maxDate,
-  disabled = false,
-  onChange,
-}: {
-  label: string;
-  value: string;
-  maxDate?: Date;
-  disabled?: boolean;
-  onChange: (value: string) => void;
-}) {
-  const initialDate = parseDateInput(value);
-  const normalizedMaxDate = maxDate ? startOfDay(maxDate) : null;
-  const [isOpen, setIsOpen] = useState(false);
-  const [visibleMonth, setVisibleMonth] = useState(
-    initialDate ?? startOfDay(new Date()),
-  );
-  const days = buildCalendarDays(visibleMonth);
-  const nextMonth = addMonths(visibleMonth, 1);
-  const isNextMonthDisabled =
-    normalizedMaxDate &&
-    new Date(nextMonth.getFullYear(), nextMonth.getMonth(), 1) >
-      new Date(
-        normalizedMaxDate.getFullYear(),
-        normalizedMaxDate.getMonth(),
-        1,
-      );
-
-  return (
-    <label className="block w-full sm:w-72">
-      <span className="mb-2 block text-xs font-extrabold uppercase tracking-[0.18em] text-grey">
-        {label}
-      </span>
-      <div className="relative">
-        <button
-          type="button"
-          disabled={disabled}
-          className={`flex min-h-11 w-full items-center gap-3 rounded-2xl border bg-white py-2 pl-3 pr-4 text-left text-sm font-semibold shadow-[inset_0_1px_0_rgba(255,255,255,0.8),0_3px_10px_rgba(15,23,42,0.04)] outline-none transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
-            isOpen
-              ? "border-dark-blue text-dark-blue"
-              : "border-light-grey/25 text-dark-grey hover:border-dark-blue/30"
-          }`}
-          aria-expanded={isOpen}
-          aria-haspopup="dialog"
-          onClick={() => setIsOpen((currentState) => !currentState)}
-        >
-          <span className="grid h-7 w-7 shrink-0 place-items-center rounded-xl bg-light-blue text-dark-blue">
-            <Icon icon="calendar_month" size={17} />
-          </span>
-          <span className={value ? "truncate" : "truncate text-grey"}>
-            {value ? formatDateLabel(value) : "Pilih tarikh"}
-          </span>
-        </button>
-
-        {isOpen ? (
-          <div
-            className="absolute right-0 top-full z-40 mt-2 w-72 rounded-3xl border border-light-grey/20 bg-white p-3 shadow-[0_18px_45px_rgba(13,47,86,0.16)]"
-            role="dialog"
-            aria-label={`Pilih ${label}`}
-          >
-            <div className="mb-3 flex items-center justify-between">
-              <button
-                type="button"
-                className="grid h-9 w-9 place-items-center rounded-xl text-grey transition-colors hover:bg-light-blue hover:text-dark-blue"
-                aria-label="Bulan sebelumnya"
-                onClick={() =>
-                  setVisibleMonth((currentDate) => addMonths(currentDate, -1))
-                }
-              >
-                <Icon icon="chevron_left" size={20} />
-              </button>
-              <div className="text-sm font-extrabold text-dark-grey">
-                {formatMonthLabel(visibleMonth)}
-              </div>
-              <button
-                type="button"
-                disabled={Boolean(isNextMonthDisabled)}
-                className="grid h-9 w-9 place-items-center rounded-xl text-grey transition-colors hover:bg-light-blue hover:text-dark-blue disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-grey"
-                aria-label="Bulan seterusnya"
-                onClick={() =>
-                  setVisibleMonth((currentDate) => addMonths(currentDate, 1))
-                }
-              >
-                <Icon icon="chevron_right" size={20} />
-              </button>
-            </div>
-
-            <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-extrabold uppercase tracking-[0.12em] text-grey">
-              {["A", "I", "S", "R", "K", "J", "S"].map((dayLabel, index) => (
-                <div key={`${dayLabel}-${index}`} className="py-1.5">
-                  {dayLabel}
-                </div>
-              ))}
-            </div>
-
-            <div className="mt-1 grid grid-cols-7 gap-1">
-              {days.map((day) => {
-                const dayValue = formatDateInput(day.date);
-                const isSelected = dayValue === value;
-                const isVisibleMonth =
-                  day.date.getMonth() === visibleMonth.getMonth();
-                const isDisabled = normalizedMaxDate
-                  ? startOfDay(day.date) > normalizedMaxDate
-                  : false;
-
-                return (
-                  <button
-                    key={dayValue}
-                    type="button"
-                    disabled={isDisabled}
-                    className={`grid h-9 place-items-center rounded-xl text-sm font-bold transition-colors ${
-                      isDisabled
-                        ? "cursor-not-allowed text-light-grey/60"
-                        : isSelected
-                        ? "bg-dark-blue text-white"
-                        : isVisibleMonth
-                          ? "text-dark-grey hover:bg-light-blue hover:text-dark-blue"
-                          : "text-light-grey hover:bg-light-blue"
-                    }`}
-                    onClick={() => {
-                      if (isDisabled) {
-                        return;
-                      }
-
-                      onChange(dayValue);
-                      setIsOpen(false);
-                    }}
-                  >
-                    {day.date.getDate()}
-                  </button>
-                );
-              })}
-            </div>
-
-            {value ? (
-              <button
-                type="button"
-                className="mt-3 w-full rounded-xl border border-light-grey/25 px-3 py-2 text-sm font-semibold text-grey transition-colors hover:border-dark-blue hover:text-dark-blue"
-                onClick={() => {
-                  onChange("");
-                  setIsOpen(false);
-                }}
-              >
-                Kosongkan tarikh
-              </button>
-            ) : null}
-          </div>
-        ) : null}
-      </div>
-    </label>
-  );
-}
-
 function parseDateInput(value: string | undefined) {
   if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
     return null;
@@ -543,29 +391,6 @@ function startOfDay(date: Date) {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate());
 }
 
-function addMonths(date: Date, amount: number) {
-  return new Date(date.getFullYear(), date.getMonth() + amount, 1);
-}
-
-function buildCalendarDays(monthDate: Date) {
-  const firstDayOfMonth = new Date(
-    monthDate.getFullYear(),
-    monthDate.getMonth(),
-    1,
-  );
-  const firstCalendarDate = new Date(firstDayOfMonth);
-  firstCalendarDate.setDate(
-    firstCalendarDate.getDate() - firstCalendarDate.getDay(),
-  );
-
-  return Array.from({ length: 42 }, (_, index) => {
-    const date = new Date(firstCalendarDate);
-    date.setDate(firstCalendarDate.getDate() + index);
-
-    return { date };
-  });
-}
-
 function formatDateInput(date: Date) {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -578,25 +403,4 @@ function isDateAfter(value: string, maxDate: Date) {
   const date = parseDateInput(value);
 
   return Boolean(date && startOfDay(date) > startOfDay(maxDate));
-}
-
-function formatDateLabel(value: string) {
-  const date = parseDateInput(value);
-
-  if (!date) {
-    return value;
-  }
-
-  return new Intl.DateTimeFormat("ms-MY", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  }).format(date);
-}
-
-function formatMonthLabel(date: Date) {
-  return new Intl.DateTimeFormat("ms-MY", {
-    month: "long",
-    year: "numeric",
-  }).format(date);
 }

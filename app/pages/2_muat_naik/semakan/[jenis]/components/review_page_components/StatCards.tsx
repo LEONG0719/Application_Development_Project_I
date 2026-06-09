@@ -9,38 +9,59 @@ export default function StatCards({
   isLoading?: boolean;
 }) {
   return (
-    <div className="grid gap-4 md:grid-cols-3">
-      {stats.map((stat) => (
-        <div
-          key={stat.label}
-          className="min-h-29 rounded border border-[#E7EAF2] bg-white px-6 py-5 shadow-sm"
-        >
-          <p className="text-[10px] font-extrabold uppercase text-[#667085]">
-            {stat.label}
-          </p>
-          {isLoading ? (
-            <>
-              <div className="mt-3 h-8 w-28 animate-pulse rounded bg-[#E7EAF2]" />
-              <div className="mt-5 h-3 w-32 animate-pulse rounded bg-[#EEF1F7]" />
-            </>
-          ) : (
-            <>
-              <p className="mt-2 text-[30px] font-extrabold leading-none text-[#07162F]">
-                {stat.value}
-              </p>
-              <div
-                className={[
-                  "mt-4 flex items-center gap-1 text-[10px] font-extrabold",
-                  stat.tone === "green" ? "text-green" : "text-blue-500",
-                ].join(" ")}
-              >
-                <Icon icon={stat.icon} size={12} weight={700} />
-                {stat.helper}
-              </div>
-            </>
-          )}
-        </div>
-      ))}
-    </div>
+    <section className="flex flex-col gap-3 md:flex-row">
+      {stats.map((stat) => {
+        const isDate =
+          stat.label.toLowerCase().includes("tarikh") ||
+          stat.icon === "calendar_month";
+        const isCurrency = stat.label.toLowerCase().includes("rm");
+
+        let displayValue = stat.value;
+        if (isLoading) {
+          if (isDate) {
+            displayValue = "N/A";
+          } else if (isCurrency) {
+            displayValue = "RM 0.00";
+          } else {
+            displayValue = "0";
+          }
+        }
+
+        return (
+          <article
+            key={stat.label}
+            className={[
+              "flex flex-col flex-1 gap-1 rounded-lg border-l-4 bg-white p-4 shadow",
+              stat.tone === "green" ? "border-l-green" : "border-l-dark-blue",
+            ].join(" ")}
+          >
+            <p className="text-xs font-semibold text-grey/70">
+              {stat.label}
+            </p>
+            <p
+              className={[
+                "text-3xl font-bold text-dark-grey",
+              ].join(" ")}
+            >
+              {displayValue}
+            </p>
+            <div
+              className={[
+                "flex items-center gap-1 text-xs font-bold",
+                stat.tone === "green" ? "text-green" : "text-dark-blue",
+                isLoading ? "opacity-50" : "",
+              ].join(" ")}
+            >
+              <Icon
+                icon={stat.icon}
+                size={16}
+                className={stat.tone === "green" ? "text-green" : "text-dark-blue"}
+              />
+              {stat.helper}
+            </div>
+          </article>
+        );
+      })}
+    </section>
   );
 }
