@@ -358,9 +358,8 @@ function DatePickerField({
       <div className="relative">
         <button
           type="button"
-          className={`flex min-h-12 w-full items-center gap-3 rounded-md border border-light-grey/40 bg-white p-3 text-left text-sm outline-none transition-colors ${
-            isOpen ? "text-dark-blue" : "text-dark-grey hover:border-dark-blue/30"
-          }`}
+          className={`flex min-h-12 w-full items-center gap-3 rounded-md border border-light-grey/40 bg-white p-3 text-left text-sm outline-none transition-colors ${isOpen ? "text-dark-blue" : "text-dark-grey hover:border-dark-blue/30"
+            }`}
           aria-expanded={isOpen}
           aria-haspopup="dialog"
           onClick={() => setIsOpen((currentState) => !currentState)}
@@ -424,13 +423,12 @@ function DatePickerField({
                   <button
                     key={dateValue}
                     type="button"
-                    className={`grid h-9 place-items-center rounded-xl text-sm font-bold transition-colors ${
-                      isSelected
+                    className={`grid h-9 place-items-center rounded-xl text-sm font-bold transition-colors ${isSelected
                         ? "bg-dark-blue text-white"
                         : isVisibleMonth
                           ? "text-dark-grey hover:bg-light-blue hover:text-dark-blue"
                           : "text-light-grey hover:bg-light-blue"
-                    }`}
+                      }`}
                     onClick={() => {
                       onChange(dateValue);
                       setIsOpen(false);
@@ -472,16 +470,16 @@ function parseDateInput(value: string | undefined) {
 
   const date = dayFirstMatch
     ? new Date(
-        Number(dayFirstMatch[3]),
-        Number(dayFirstMatch[2]) - 1,
-        Number(dayFirstMatch[1]),
-      )
+      Number(dayFirstMatch[3]),
+      Number(dayFirstMatch[2]) - 1,
+      Number(dayFirstMatch[1]),
+    )
     : isoDateMatch
       ? new Date(
-          Number(isoDateMatch[1]),
-          Number(isoDateMatch[2]) - 1,
-          Number(isoDateMatch[3]),
-        )
+        Number(isoDateMatch[1]),
+        Number(isoDateMatch[2]) - 1,
+        Number(isoDateMatch[3]),
+      )
       : null;
 
   return date && !Number.isNaN(date.getTime()) ? date : null;

@@ -53,11 +53,10 @@ export function InputFieldActionButton({
             <button
                 type="button"
                 disabled={disabled || !onClick}
-                className={`inline-flex gap-1 rounded-xl py-2 text-[11px] font-bold uppercase transition disabled:cursor-not-allowed disabled:opacity-60 ${
-                    isPrimary
-                        ? "bg-dark-blue px-3 text-white hover:opacity-90"
-                        : "text-dark-blue hover:underline"
-                }`}
+                className={`inline-flex gap-1 rounded-xl py-2 text-[11px] font-bold uppercase transition disabled:cursor-not-allowed disabled:opacity-60 ${isPrimary
+                    ? "bg-dark-blue px-3 text-white hover:opacity-90"
+                    : "text-dark-blue hover:underline"
+                    }`}
                 onClick={onClick}
             >
                 {label}
@@ -93,13 +92,12 @@ export function TableInputField({
             disabled={disabled}
             onChange={(event) => onChange(event.target.value)}
             placeholder={placeholder}
-            className={`min-h-9 rounded-xl border border-light-grey/35 bg-white px-4 py-2 text-sm font-semibold text-dark-blue outline-none transition-colors placeholder:text-light-grey focus:border-dark-blue ${
-                align === "start"
-                    ? "w-full min-w-35 text-left"
-                    : align === "end"
-                        ? "w-full min-w-32 text-right"
-                        : "w-full min-w-32 text-center"
-            } disabled:cursor-not-allowed disabled:bg-background`}
+            className={`min-h-9 rounded-xl border border-light-grey/35 bg-white px-4 py-2 text-sm font-semibold text-dark-blue outline-none transition-colors placeholder:text-light-grey focus:border-dark-blue ${align === "start"
+                ? "w-full min-w-35 text-left"
+                : align === "end"
+                    ? "w-full min-w-32 text-right"
+                    : "w-full min-w-32 text-center"
+                } disabled:cursor-not-allowed disabled:bg-background`}
         />
     );
 }
@@ -127,13 +125,12 @@ export function TableInputFieldFormat({
             disabled={disabled}
             onValueChange={(values) => onChange(values.value)}
             placeholder={placeholder}
-            className={`min-h-9 rounded-xl border border-light-grey/35 bg-white px-4 py-2 text-sm font-semibold text-dark-blue outline-none transition-colors placeholder:text-light-grey focus:border-dark-blue ${
-                align === "start"
-                    ? "w-full min-w-35 text-left"
-                    : align === "end"
-                        ? "w-full min-w-32 text-right"
-                        : "w-full min-w-32 text-center"
-            } disabled:cursor-not-allowed disabled:bg-background`}
+            className={`min-h-9 rounded-xl border border-light-grey/35 bg-white px-4 py-2 text-sm font-semibold text-dark-blue outline-none transition-colors placeholder:text-light-grey focus:border-dark-blue ${align === "start"
+                ? "w-full min-w-35 text-left"
+                : align === "end"
+                    ? "w-full min-w-32 text-right"
+                    : "w-full min-w-32 text-center"
+                } disabled:cursor-not-allowed disabled:bg-background`}
         />
     );
 }
@@ -156,13 +153,12 @@ export function TablePickerField({
         <button
             type="button"
             disabled={disabled}
-            className={`flex w-full items-center justify-between gap-3 rounded-xl border border-light-grey/35 bg-white px-4 py-2 text-left text-sm font-semibold text-dark-blue outline-none transition-colors hover:border-dark-blue disabled:cursor-not-allowed disabled:bg-background disabled:opacity-60 ${
-                align === "start"
-                    ? "text-left"
-                    : align === "end"
-                        ? "text-right"
-                        : "text-center"
-            }`}
+            className={`flex w-full items-center justify-between gap-3 rounded-xl border border-light-grey/35 bg-white px-4 py-2 text-left text-sm font-semibold text-dark-blue outline-none transition-colors hover:border-dark-blue disabled:cursor-not-allowed disabled:bg-background disabled:opacity-60 ${align === "start"
+                ? "text-left"
+                : align === "end"
+                    ? "text-right"
+                    : "text-center"
+                }`}
             aria-haspopup="dialog"
             onClick={onClick}
         >
@@ -184,7 +180,7 @@ export function InputField({
     required = false,
     leadingIcon,
     trailingIcon,
-    error = false, 
+    error = false,
     errorMessage = "",
     state,
     onChange,
@@ -195,7 +191,7 @@ export function InputField({
     inputMinHeight,
     inputTextClassName,
     activeBackgroundClass = "bg-white",
-    inactiveBackgroundClass = "bg-transparent", 
+    inactiveBackgroundClass = "bg-transparent",
 }: {
     label: string;
     value: string;
@@ -262,12 +258,16 @@ export function DateField({
     inputMinHeight,
     activeBackgroundClass = "bg-white",
     inactiveBackgroundClass = "bg-transparent",
+    minDate,
+    maxDate,
     onChange,
 }: {
     label: string;
     value: string;
     state: FieldState;
     required?: boolean;
+    minDate?: string;
+    maxDate?: string;
     onChange: (value: string) => void;
 } & Omit<BaseFieldStyleProps, "leadingIcon" | "trailingIcon">) {
     const containerRef = useRef<HTMLDivElement | null>(null);
@@ -341,7 +341,7 @@ export function DateField({
                 activeBackgroundClass={activeBackgroundClass}
                 inactiveBackgroundClass={inactiveBackgroundClass}
                 trailingIcon={<Icon icon={commonIcons.calendar} size={18} className="text-grey" />}
-                onChange={() => {}}
+                onChange={() => { }}
             />
 
             <button
@@ -370,6 +370,8 @@ export function DateField({
                             containerRef={containerRef}
                             isOpen={true}
                             value={value}
+                            minDate={minDate}
+                            maxDate={maxDate}
                             disableAbsolutePositioning={true}
                             onChange={(nextValue) => {
                                 onChange(nextValue);
@@ -439,7 +441,7 @@ export function InputFieldPassword({
                         ${leadingIcon ? 'pl-9' : 'pl-3'} pr-10 py-3
                         ${error ? 'border-red focus-within:border-red' : 'border border-light-grey/40'}
                         ${state === "active" ? activeBackgroundClass : inactiveBackgroundClass}`}
-                    style={{textAlign: textAlign, fontSize: inputFontSize, minHeight: inputMinHeight}}
+                    style={{ textAlign: textAlign, fontSize: inputFontSize, minHeight: inputMinHeight }}
                 />
                 <button
                     type="button"
@@ -467,7 +469,7 @@ export function InputFieldFormat({
     placeholder = "",
     leadingIcon,
     trailingIcon,
-    error = false, 
+    error = false,
     errorMessage = "",
     state,
     onChange,
@@ -477,7 +479,7 @@ export function InputFieldFormat({
     inputFontSize,
     inputMinHeight,
     activeBackgroundClass = "bg-white",
-    inactiveBackgroundClass = "bg-transparent", 
+    inactiveBackgroundClass = "bg-transparent",
 }: {
     label: string;
     format: string;
@@ -517,7 +519,7 @@ export function InputFieldFormat({
                         onValueChange={(values) => onChange && onChange(values.value)}
                         placeholder={placeholder}
                         className={`${inputClass} ${state === "active" ? activeBackgroundClass : inactiveBackgroundClass}`}
-                        style={{textAlign: textAlign, fontSize: inputFontSize, minHeight: inputMinHeight}}
+                        style={{ textAlign: textAlign, fontSize: inputFontSize, minHeight: inputMinHeight }}
                     />
                 )}
                 {trailingIcon && (
@@ -541,7 +543,7 @@ export function InputBox({
     placeholder = "",
     leadingIcon,
     trailingIcon,
-    error = false, 
+    error = false,
     errorMessage = "",
     state,
     onChange,
@@ -550,7 +552,7 @@ export function InputBox({
     inputFontSize,
     inputMinHeight,
     activeBackgroundClass = "bg-white",
-    inactiveBackgroundClass = "bg-transparent", 
+    inactiveBackgroundClass = "bg-transparent",
 }: {
     label: string;
     value: string;
@@ -610,7 +612,7 @@ export function DropdownField({
     placeholder = "",
     leadingIcon,
     trailingIcon,
-    error = false, 
+    error = false,
     errorMessage = "",
     showLabel = true,
     state,
@@ -620,7 +622,7 @@ export function DropdownField({
     inputFontSize,
     inputMinHeight,
     activeBackgroundClass = "bg-white",
-    inactiveBackgroundClass = "bg-transparent", 
+    inactiveBackgroundClass = "bg-transparent",
 }: {
     label: string;
     options: (string | DropdownOption)[];
@@ -630,8 +632,8 @@ export function DropdownField({
 } & BaseFieldStyleProps) {
     const [isOpen, setIsOpen] = useState(false);
     const showError = !!error;
-    
-    const normalizedOptions = options.map(opt => 
+
+    const normalizedOptions = options.map(opt =>
         typeof opt === 'string' ? { label: opt } : opt
     );
 

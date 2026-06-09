@@ -139,6 +139,7 @@ export default function ReviewTable({
       onUnitDelete={onKuartersUnitDelete}
       selectedKeys={selectedKeys}
       onSelectedKeysChange={onSelectedKeysChange}
+      isLoading={isLoading}
     />
   );
 }

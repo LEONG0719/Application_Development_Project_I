@@ -776,7 +776,7 @@ export default function ExtractReviewPage({
 
   return (
     <section className="min-h-full bg-background">
-      <div className="flex w-full flex-col gap-4">
+      <div className="flex w-full flex-col gap-4 mb-10">
         <ReviewHeader
           fileName={isLoadingDraft ? "Memuatkan draf..." : content.fileName}
           onReviewLater={handleReviewLater}

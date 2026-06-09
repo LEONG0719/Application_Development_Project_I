@@ -27,6 +27,7 @@ export function PaginationControls({
     totalRecords,
     onPageChange,
     disabled = false,
+    isSimple = false,
 }: {
     currentPage: number;
     totalPages: number;
@@ -35,8 +36,8 @@ export function PaginationControls({
     totalRecords: number;
     onPageChange: (page: number) => void;
     disabled?: boolean;
+    isSimple?: boolean;
 }) {
-    // 处理输入框逻辑，移除浏览器默认的上下箭头样式
     const [inputValue, setInputValue] = useState(currentPage.toString());
 
     useEffect(() => { setInputValue(currentPage.toString()); }, [currentPage]);
@@ -60,18 +61,20 @@ export function PaginationControls({
     const btnClass = "flex h-8 w-8 items-center justify-center rounded-md border border-light-grey/30 bg-white text-grey hover:border-dark-blue hover:text-dark-blue disabled:opacity-30 disabled:pointer-events-none";
 
     return (
-        <div className="flex flex-row items-center justify-between w-full gap-4">
+        <div className={`flex flex-row items-center w-full gap-4 ${isSimple ? "justify-center" : "justify-between"}`}>
             <div className="flex flex-row items-center gap-1.5">
                 <button className={btnClass} onClick={() => goToPage(1)} disabled={isDisabled || currentPage === 1}>«</button>
                 <button className={btnClass} onClick={() => goToPage(currentPage - 1)} disabled={isDisabled || currentPage === 1}>‹</button>
 
-                <button 
-                    className={btnClass} 
-                    onClick={() => goToPage(currentPage - 1)}
-                    disabled={isDisabled || currentPage <= 1}
-                >
-                    {currentPage > 1 ? currentPage - 1 : ""}
-                </button>
+                {!isSimple && (
+                    <button 
+                        className={btnClass} 
+                        onClick={() => goToPage(currentPage - 1)}
+                        disabled={isDisabled || currentPage <= 1}
+                    >
+                        {currentPage > 1 ? currentPage - 1 : ""}
+                    </button>
+                )}
 
                 <input
                     type="text"
@@ -84,21 +87,25 @@ export function PaginationControls({
                     className="h-8 w-10 rounded-md border-2 bg-dark-blue border-dark-blue text-white text-center font-bold outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 />
 
-                <button 
-                    className={btnClass} 
-                    onClick={() => goToPage(currentPage + 1)}
-                    disabled={isDisabled || currentPage >= totalPages}
-                >
-                    {currentPage < totalPages ? currentPage + 1 : ""}
-                </button>
+                {!isSimple && (
+                    <button 
+                        className={btnClass} 
+                        onClick={() => goToPage(currentPage + 1)}
+                        disabled={isDisabled || currentPage >= totalPages}
+                    >
+                        {currentPage < totalPages ? currentPage + 1 : ""}
+                    </button>
+                )}
 
                 <button className={btnClass} onClick={() => goToPage(currentPage + 1)} disabled={isDisabled || currentPage === totalPages}>›</button>
                 <button className={btnClass} onClick={() => goToPage(totalPages)} disabled={isDisabled || currentPage === totalPages}>»</button>
             </div>
 
-            <div className="text-xs text-grey">
-                Memaparkan <span className="font-bold">{totalRecords === 0 ? 0 : startIndex + 1}</span> - <span className="font-bold">{endIndex}</span> Daripada <span className="font-bold">{totalRecords}</span> Rekod
-            </div>
+            {!isSimple && (
+                <div className="text-xs text-grey">
+                    Memaparkan <span className="font-bold">{totalRecords === 0 ? 0 : startIndex + 1}</span> - <span className="font-bold">{endIndex}</span> Daripada <span className="font-bold">{totalRecords}</span> Rekod
+                </div>
+            )}
         </div>
     );
 }
