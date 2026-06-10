@@ -185,7 +185,7 @@ export default function AuthLogin({ onSwitchToRegister, onForgotPassword }: Auth
                     {/* Email Input */}
                     <div className="flex flex-col gap-1">
                         <div className="font-bold text-sm text-grey">Emel</div>
-                        <div className="flex flex-row items-center gap-3 rounded-lg border border-transparent bg-light-blue p-3 focus-within:border-black">
+                        <div className="flex flex-row items-center gap-3 rounded-lg border border-transparent bg-light-blue p-3 focus-within:border-content">
                             {/* Email Icon */}
                             <Icon icon="email"></Icon>
 
@@ -204,7 +204,7 @@ export default function AuthLogin({ onSwitchToRegister, onForgotPassword }: Auth
                     {/* Password Input */}
                     <div className="flex flex-col gap-1">
                         <div className="font-bold text-sm text-grey">Kata Laluan</div>
-                        <div className="flex flex-row items-center gap-3 rounded-lg border border-transparent bg-light-blue p-3 focus-within:border-black">
+                        <div className="flex flex-row items-center gap-3 rounded-lg border border-transparent bg-light-blue p-3 focus-within:border-content">
                             {/* Password Icon */}
                             <Icon icon="password"></Icon>
 

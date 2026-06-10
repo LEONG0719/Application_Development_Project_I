@@ -18,7 +18,7 @@ export default function ReviewHeader({
       {/* Return Button */}
       <button
         type="button"
-        className="fixed left-61 top-6 z-40 inline-flex min-h-10 items-center gap-2 rounded-xl border border-light-grey/25 bg-white px-4 py-2 text-sm font-bold text-grey shadow-2xl transition-colors hover:border-dark-blue hover:text-dark-blue"
+        className="fixed left-61 top-6 z-40 inline-flex min-h-10 items-center gap-2 rounded-xl border border-light-grey/25 bg-surface px-4 py-2 text-sm font-bold text-grey shadow-2xl transition-colors hover:border-dark-blue hover:text-dark-blue"
         onClick={onReviewLater}
       >
         <Icon icon="arrow_back" size={18} />
@@ -31,7 +31,7 @@ export default function ReviewHeader({
         <span
           className={[
             "flex h-10 w-10 shrink-0 items-center justify-center rounded",
-            isPdf ? "bg-[#FFEAEA] text-red" : "bg-[#EAF8EF] text-green",
+            isPdf ? "bg-danger-surface text-red" : "bg-success-surface text-green",
           ].join(" ")}
         >
           <Icon
@@ -51,7 +51,7 @@ export default function ReviewHeader({
 
       {/* Parsing Mode */}
       {parsingMode && (
-        <span className="shrink-0 rounded border border-[#C9D6F2] bg-white px-3 py-1.5 text-[11px] font-extrabold text-dark-blue self-center">
+        <span className="shrink-0 rounded border border-border bg-surface px-3 py-1.5 text-[11px] font-extrabold text-dark-blue self-center">
           {parsingMode === "assisted" ? "Mod Bantuan AI" : "Mod Ketat"}
         </span>
       )}

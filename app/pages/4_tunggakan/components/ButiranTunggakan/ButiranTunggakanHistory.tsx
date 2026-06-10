@@ -94,7 +94,7 @@ export default function ButiranTunggakanHistory({
               <th className="px-4 py-3 text-right whitespace-nowrap">Baki (RM)</th>
             </tr>
           </thead>
-          <tbody className="bg-white">
+          <tbody className="bg-surface">
             {isLoading ? (
               loadingTableRows({
                 mode: "loading",
@@ -132,7 +132,7 @@ export default function ButiranTunggakanHistory({
           </tbody>
           <tfoot>
             <tr>
-              <td colSpan={7} className="border-t border-light-grey/20 bg-white px-4 py-4">
+              <td colSpan={7} className="border-t border-light-grey/20 bg-surface px-4 py-4">
                 <PaginationControls
                   currentPage={currentPage}
                   totalPages={totalPages}

@@ -1,7 +1,7 @@
 export default function BayaranPageHeader() {
   return (
     <header className="flex flex-col">
-      <h1 className="text-2xl font-extrabold leading-tight text-dark-grey">
+      <h1 className="text-2xl font-extrabold leading-tight text-content">
         Semakan Bayaran
       </h1>
       <p className="text-sm font-extralight text-grey/70">

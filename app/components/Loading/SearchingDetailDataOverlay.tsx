@@ -36,8 +36,8 @@ export default function SearchingDetailDataOverlay({
   return (
     <div className="p-6 bg-light-blue overflow-y-auto">
       <div className="flex min-h-108 items-center justify-center">
-        <div className="w-full max-w-md rounded-xl border border-red/20 bg-white p-6 text-center">
-          <h4 className="text-lg font-extrabold text-dark-grey">
+        <div className="w-full max-w-md rounded-xl border border-red/20 bg-surface p-6 text-center">
+          <h4 className="text-lg font-extrabold text-content">
             {title}
           </h4>
           <p className="mt-2 text-sm leading-6 text-grey">{message}</p>

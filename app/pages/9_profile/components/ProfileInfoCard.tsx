@@ -35,11 +35,11 @@ function ProfileValueRow({
 }) {
   return (
     <div>
-      <div className="mb-1.5 text-[8px] font-bold uppercase tracking-[0.9px] text-[#95A3B8]">
+      <div className="mb-1.5 text-[8px] font-bold uppercase tracking-[0.9px] text-content-subtle">
         {label}
       </div>
-      <div className="flex min-h-5 items-center gap-2 text-xs text-[#0B1C30]">
-        <Icon icon={icon} size={14} className="text-[#8AA0BD]" />
+      <div className="flex min-h-5 items-center gap-2 text-xs text-content">
+        <Icon icon={icon} size={14} className="text-content-subtle" />
         {value || "-"}
       </div>
     </div>
@@ -63,7 +63,7 @@ export default function ProfileInfoCard({
 }) {
   return (
     <form
-      className="mb-4 rounded-[5px] border border-[#E9EDF5] bg-white p-5.5 shadow-[0_1px_2px_rgba(15,23,42,0.04)]"
+      className="mb-4 rounded-[5px] border border-border bg-surface p-5.5 shadow-[0_1px_2px_rgba(15,23,42,0.04)]"
       onSubmit={onSubmit}
     >
       <h2 className="mb-7 flex items-center gap-2 text-xs font-extrabold">
@@ -86,7 +86,7 @@ export default function ProfileInfoCard({
             onChange={(value) =>
               onProfileFormChange({ ...profileForm, fullName: value })
             }
-            leadingIcon={<Icon icon="person" size={14} className="text-[#8AA0BD]" />}
+            leadingIcon={<Icon icon="person" size={14} className="text-content-subtle" />}
             labelFontSize={8}
             inputFontSize={12}
             inputMinHeight={40}
@@ -110,7 +110,7 @@ export default function ProfileInfoCard({
             onChange={(value) =>
               onProfileFormChange({ ...profileForm, department: value })
             }
-            leadingIcon={<Icon icon="apartment" size={14} className="text-[#8AA0BD]" />}
+            leadingIcon={<Icon icon="apartment" size={14} className="text-content-subtle" />}
             labelFontSize={8}
             inputFontSize={12}
             inputMinHeight={40}
@@ -155,7 +155,7 @@ export default function ProfileInfoCard({
             onChange={(value) =>
               onProfileFormChange({ ...profileForm, phoneNumber: value })
             }
-            leadingIcon={<Icon icon="phone" size={14} className="text-[#8AA0BD]" />}
+            leadingIcon={<Icon icon="phone" size={14} className="text-content-subtle" />}
             labelFontSize={8}
             inputFontSize={12}
             inputMinHeight={40}

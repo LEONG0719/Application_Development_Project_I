@@ -6,7 +6,7 @@ function headerCard(title: string, value: string, statusText: string, statusIcon
     const borderColor = statusColor ? `border-${statusColor.replace("text-", "")}` : "border-transparent";
 
     return (
-        <div className={`flex flex-col flex-1 gap-1 border-l-4 ${borderColor} bg-white p-4 rounded-lg shadow`}>
+        <div className={`flex flex-col flex-1 gap-1 border-l-4 ${borderColor} bg-surface p-4 rounded-lg shadow`}>
             <h2 className="text-xs text-grey/70 font-semibold">{title}</h2>
             <p className="text-3xl font-bold">{value}</p>
             <p className={`text-xs font-bold flex items-center gap-1 ${statusColor}`}>

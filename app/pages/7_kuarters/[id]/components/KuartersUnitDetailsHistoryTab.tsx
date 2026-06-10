@@ -504,7 +504,7 @@ export default function KuartersUnitDetailsHistoryTab({
               <th className="w-[0%] text-center p-3 whitespace-nowrap">Tindakan</th>
             </tr>
           </thead>
-          <tbody className="bg-white">
+          <tbody className="bg-surface">
             {currentHistory.length === 0 ? (
               <tr className="text-sm">
                 <td className="px-3 py-4 text-center text-grey" colSpan={6}>
@@ -525,7 +525,7 @@ export default function KuartersUnitDetailsHistoryTab({
                       {isEditing ? (
                         <button
                           type="button"
-                          className="font-normal text-dark-grey underline-offset-2 hover:underline"
+                          className="font-normal text-content underline-offset-2 hover:underline"
                           disabled={Boolean(pendingAction)}
                           onClick={openResidentPicker}
                         >
@@ -620,7 +620,7 @@ export default function KuartersUnitDetailsHistoryTab({
 
           <tfoot>
             <tr>
-              <td colSpan={6} className="bg-white border-t border-light-grey/20 px-4 py-4">
+              <td colSpan={6} className="bg-surface border-t border-light-grey/20 px-4 py-4">
                 <PaginationControls
                   currentPage={currentPage}
                   totalPages={totalPages}

@@ -121,7 +121,7 @@ export default function BayaranRecordsTable({
       </thead>
 
       {/* Table Body */}
-      <tbody className="bg-white">
+      <tbody className="bg-surface">
         {/* Loading State / Error */}
         {isLoading ? (
           loadingTableRows({ // During Loading
@@ -177,7 +177,7 @@ export default function BayaranRecordsTable({
 
               {/* Amount Data */}
               <td
-                className={`w-min whitespace-nowrap px-3 py-2 text-right font-bold text-dark-grey ${mainTextSize}`}
+                className={`w-min whitespace-nowrap px-3 py-2 text-right font-bold text-content ${mainTextSize}`}
               >
                 {row.amount}
               </td>

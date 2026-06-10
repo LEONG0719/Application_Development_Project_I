@@ -124,7 +124,7 @@ export default function FilterDate({
   const calendarOverlay = openField ? (
     <div
       data-filter-date-calendar
-      className={`${USE_FIXED_CALENDAR_PORTAL ? "fixed" : renderInFlow ? "relative mt-2" : "absolute"} z-9999 rounded-3xl border border-light-grey/20 bg-white shadow-[0_18px_45px_rgba(13,47,86,0.16)]`}
+      className={`${USE_FIXED_CALENDAR_PORTAL ? "fixed" : renderInFlow ? "relative mt-2" : "absolute"} z-9999 rounded-3xl border border-light-grey/20 bg-surface shadow-[0_18px_45px_rgba(13,47,86,0.16)]`}
       style={
         USE_FIXED_CALENDAR_PORTAL
           ? {
@@ -180,7 +180,7 @@ export default function FilterDate({
   return (
     <div
       ref={panelRef}
-      className={`${renderInFlow ? "relative mt-2" : "absolute right-0 top-full mt-2"} z-20 w-118 max-w-[90vw] flex flex-col gap-2 rounded-2xl border border-light-grey/20 bg-white p-3 shadow-lg`}
+      className={`${renderInFlow ? "relative mt-2" : "absolute right-0 top-full mt-2"} z-20 w-118 max-w-[90vw] flex flex-col gap-2 rounded-2xl border border-light-grey/20 bg-surface p-3 shadow-lg`}
       role="group"
       aria-label={ariaLabel}
     >
@@ -197,10 +197,10 @@ export default function FilterDate({
           <button
             ref={startButtonRef}
             type="button"
-            className={`flex min-h-10 w-full items-center gap-2 rounded-2xl border bg-white py-2 pl-3 pr-3 text-left text-sm font-semibold shadow-[inset_0_1px_0_rgba(255,255,255,0.8),0_3px_10px_rgba(15,23,42,0.04)] outline-none transition-colors ${
+            className={`flex min-h-10 w-full items-center gap-2 rounded-2xl border bg-surface py-2 pl-3 pr-3 text-left text-sm font-semibold shadow-[inset_0_1px_0_rgba(255,255,255,0.8),0_3px_10px_rgba(15,23,42,0.04)] outline-none transition-colors ${
               openField === "start"
                 ? "border-dark-blue text-dark-blue"
-                : "border-light-grey/25 text-dark-grey hover:border-dark-blue/30"
+                : "border-light-grey/25 text-content hover:border-dark-blue/30"
             }`}
             aria-expanded={openField === "start"}
             aria-haspopup="dialog"
@@ -221,10 +221,10 @@ export default function FilterDate({
             <button
               ref={endButtonRef}
               type="button"
-              className={`flex min-h-10 w-full items-center gap-2 rounded-2xl border bg-white py-2 pl-3 pr-3 text-left text-sm font-semibold shadow-[inset_0_1px_0_rgba(255,255,255,0.8),0_3px_10px_rgba(15,23,42,0.04)] outline-none transition-colors ${
+              className={`flex min-h-10 w-full items-center gap-2 rounded-2xl border bg-surface py-2 pl-3 pr-3 text-left text-sm font-semibold shadow-[inset_0_1px_0_rgba(255,255,255,0.8),0_3px_10px_rgba(15,23,42,0.04)] outline-none transition-colors ${
                 openField === "end"
                   ? "border-dark-blue text-dark-blue"
-                  : "border-light-grey/25 text-dark-grey hover:border-dark-blue/30"
+                  : "border-light-grey/25 text-content hover:border-dark-blue/30"
               }`}
               aria-expanded={openField === "end"}
               aria-haspopup="dialog"

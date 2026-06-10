@@ -58,7 +58,7 @@ export function PaginationControls({
         else setInputValue(currentPage.toString());
     };
 
-    const btnClass = "flex h-8 w-8 items-center justify-center rounded-md border border-light-grey/30 bg-white text-grey hover:border-dark-blue hover:text-dark-blue disabled:opacity-30 disabled:pointer-events-none";
+    const btnClass = "flex h-8 w-8 items-center justify-center rounded-md border border-light-grey/30 bg-surface text-grey hover:border-dark-blue hover:text-dark-blue disabled:opacity-30 disabled:pointer-events-none";
 
     return (
         <div className={`flex flex-row items-center w-full gap-4 ${isSimple ? "justify-center" : "justify-between"}`}>

@@ -268,7 +268,7 @@ export default function SearchBar({
   const isSearchActive = value.trim().length > 0;
 
   return (
-    <div className="rounded-lg bg-white p-4 shadow">
+    <div className="rounded-lg bg-surface p-4 shadow">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         {/* Input field */}
         <div ref={inputRef} className="flex-1">
@@ -293,7 +293,7 @@ export default function SearchBar({
         <div className="flex items-center gap-3 self-start lg:self-end">
           <button
             type="button"
-            className="inline-flex min-h-10 items-center rounded-xl border border-light-grey/25 bg-white px-4 py-2 text-sm font-semibold text-grey transition-colors hover:border-dark-blue hover:text-dark-blue disabled:cursor-not-allowed disabled:opacity-40"
+            className="inline-flex min-h-10 items-center rounded-xl border border-light-grey/25 bg-surface px-4 py-2 text-sm font-semibold text-grey transition-colors hover:border-dark-blue hover:text-dark-blue disabled:cursor-not-allowed disabled:opacity-40"
             disabled={!isSearchActive}
             onClick={onClear}
           >

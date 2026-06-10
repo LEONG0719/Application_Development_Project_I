@@ -18,7 +18,7 @@ export function ProfileField({
 }) {
   return (
     <label className="block">
-      <span className="mb-1.5 block text-[8px] font-bold uppercase tracking-[0.9px] text-[#95A3B8]">
+      <span className="mb-1.5 block text-[8px] font-bold uppercase tracking-[0.9px] text-content-subtle">
         {label}
       </span>
       {isEditing ? (
@@ -32,11 +32,11 @@ export function ProfileField({
           inputMinHeight={40}
           inputFontSize={12}
           className="tracking-normal"
-          activeBackgroundClass="bg-white"
+          activeBackgroundClass="bg-surface"
         />
       ) : (
-        <span className="flex min-h-5 items-center gap-2 text-xs text-[#0B1C30]">
-          <Icon icon={icon} size={14} className="text-[#8AA0BD]" />
+        <span className="flex min-h-5 items-center gap-2 text-xs text-content">
+          <Icon icon={icon} size={14} className="text-content-subtle" />
           {value || "-"}
         </span>
       )}
@@ -55,11 +55,11 @@ export function ReadOnlyProfileField({
 }) {
   return (
     <div>
-      <div className="mb-1.5 text-[8px] font-bold uppercase tracking-[0.9px] text-[#95A3B8]">
+      <div className="mb-1.5 text-[8px] font-bold uppercase tracking-[0.9px] text-content-subtle">
         {label}
       </div>
-      <div className="flex min-h-5 items-center gap-2 text-xs text-[#0B1C30]">
-        <Icon icon={icon} size={14} className="text-[#8AA0BD]" />
+      <div className="flex min-h-5 items-center gap-2 text-xs text-content">
+        <Icon icon={icon} size={14} className="text-content-subtle" />
         {value}
       </div>
     </div>
@@ -86,11 +86,11 @@ export function ProfileSegmentedField({
 
   return (
     <label className="block">
-      <span className="mb-1.5 block text-[8px] font-bold uppercase tracking-[0.9px] text-[#95A3B8]">
+      <span className="mb-1.5 block text-[8px] font-bold uppercase tracking-[0.9px] text-content-subtle">
         {label}
       </span>
       {isEditing ? (
-        <div className="grid h-10 grid-cols-3 gap-1 rounded-[3px] bg-[#F7F9FF] p-1">
+        <div className="grid h-10 grid-cols-3 gap-1 rounded-[3px] bg-surface-muted p-1">
           {options.map((option) => {
             const active = option.value === value;
 
@@ -102,7 +102,7 @@ export function ProfileSegmentedField({
                   "inline-flex items-center justify-center gap-1.5 rounded-xs px-2 text-[11px] font-bold transition",
                   active
                     ? "border border-dark-blue bg-dark-blue text-white shadow-[0_3px_8px_rgba(21,30,102,0.18)]"
-                    : "border border-[#E1E6F2] bg-white/45 text-[#667085] hover:bg-white hover:text-dark-blue",
+                    : "border border-border bg-surface/45 text-content-muted hover:bg-surface hover:text-dark-blue",
                 ].join(" ")}
                 onClick={() => onChange(option.value)}
               >
@@ -118,8 +118,8 @@ export function ProfileSegmentedField({
           })}
         </div>
       ) : (
-        <span className="flex min-h-5 items-center gap-2 text-xs text-[#0B1C30]">
-          <Icon icon={icon} size={14} className="text-[#8AA0BD]" />
+        <span className="flex min-h-5 items-center gap-2 text-xs text-content">
+          <Icon icon={icon} size={14} className="text-content-subtle" />
           {selectedLabel}
         </span>
       )}
@@ -138,7 +138,7 @@ export function PasswordInput({
 }) {
   return (
     <label className="grid gap-2">
-      <span className="text-[8px] font-extrabold uppercase tracking-[0.9px] text-[#95A3B8]">
+      <span className="text-[8px] font-extrabold uppercase tracking-[0.9px] text-content-subtle">
         {label}
       </span>
       <InputField
@@ -152,7 +152,7 @@ export function PasswordInput({
         inputMinHeight={40}
         inputFontSize={12}
         className="tracking-normal"
-        activeBackgroundClass="bg-white"
+        activeBackgroundClass="bg-surface"
       />
     </label>
   );

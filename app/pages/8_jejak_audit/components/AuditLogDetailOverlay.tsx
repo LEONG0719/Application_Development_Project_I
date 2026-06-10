@@ -15,7 +15,7 @@ function getAuditActionTextClass(actionType: string) {
   return (
     badgeClass
       .split(" ")
-      .find((className) => className.startsWith("text-")) ?? "text-dark-grey"
+      .find((className) => className.startsWith("text-")) ?? "text-content"
   );
 }
 
@@ -133,8 +133,8 @@ export default function AuditLogDetailOverlay({
           </div>
         ) : (
           <div className="flex min-h-108 items-center justify-center bg-light-blue p-6">
-            <div className="w-full max-w-md rounded-xl border border-red/20 bg-white p-6 text-center">
-              <h4 className="text-lg font-extrabold text-dark-grey">
+            <div className="w-full max-w-md rounded-xl border border-red/20 bg-surface p-6 text-center">
+              <h4 className="text-lg font-extrabold text-content">
                 Rekod tidak ditemui
               </h4>
               <p className="mt-2 text-sm leading-6 text-grey">

@@ -20,7 +20,7 @@ export default function BayaranPagination({
   totalRecordCount: number;
 }) {
   return (
-    <div className="border-t border-light-grey/20 bg-white px-4 py-4 sm:px-5">
+    <div className="border-t border-light-grey/20 bg-surface px-4 py-4 sm:px-5">
       <PaginationControls
         currentPage={currentPage}
         totalPages={totalPages}

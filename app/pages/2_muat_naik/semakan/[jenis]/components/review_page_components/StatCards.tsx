@@ -31,14 +31,14 @@ export default function StatCards({
           <article
             key={stat.label}
             className={[
-              "flex flex-col flex-1 gap-1 rounded-lg border-l-4 bg-white p-4 shadow",
+              "flex flex-col flex-1 gap-1 rounded-lg border-l-4 bg-surface p-4 shadow",
               stat.tone === "green" ? "border-l-green" : "border-l-dark-blue",
             ].join(" ")}
           >
             <p className="text-xs font-semibold text-grey/70">
               {stat.label}
             </p>
-            <p className="text-3xl font-bold text-dark-grey">
+            <p className="text-3xl font-bold text-content">
               {displayValue}
             </p>
             <div

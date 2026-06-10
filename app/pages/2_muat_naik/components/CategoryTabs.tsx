@@ -32,8 +32,8 @@ export default function CategoryTabs({
               className={[
                 "rounded-lg text-sm font-bold transition-colors",
                 isActive
-                  ? "bg-white text-dark-blue shadow-[0_2px_8px_rgba(15,23,42,0.08)]"
-                  : "text-[#43506B] hover:bg-white/60 hover:text-dark-blue",
+                  ? "bg-surface text-dark-blue shadow-[0_2px_8px_rgba(15,23,42,0.08)]"
+                  : "text-content-muted hover:bg-surface/60 hover:text-dark-blue",
                 disabled ? "cursor-not-allowed opacity-60" : "",
               ].join(" ")}
             >

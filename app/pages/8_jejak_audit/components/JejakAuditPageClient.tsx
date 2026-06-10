@@ -254,7 +254,7 @@ export default function JejakAuditPageClient({
   }
 
   return (
-    <main className="relative flex flex-col gap-4 text-[#0B1C30]">
+    <main className="relative flex flex-col gap-4 text-content">
       <AuditLogHeader />
       <AuditLogSummaryCard
         totalRecords={pagination.totalRecords}

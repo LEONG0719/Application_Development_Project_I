@@ -32,11 +32,11 @@ export default function AuthenticationPage() {
     : "md:w-[calc(100%+36rem)]";
 
   return (
-    <div className="relative h-full overflow-hidden bg-white">
+    <div className="relative h-full overflow-hidden bg-surface">
       {/* Desktop Layout with Transitioning Panels */}
       <div className={`hidden h-full transition-all duration-250ms ease-[cubic-bezier(0.2,0.8,0.2,1)] md:flex ${boardWidthClass} ${boardClass}`}>
         {/* Register Component */}
-        <div className="h-full w-xl shrink-0 bg-white p-6 shadow-2xl">
+        <div className="h-full w-xl shrink-0 bg-surface p-6 shadow-2xl">
           <AuthRegister onSwitchToLogin={() => setActivePanel("login")} />
         </div>
 
@@ -50,7 +50,7 @@ export default function AuthenticationPage() {
         </div>
 
         {/* Login Component */}
-        <div className="h-full w-xl shrink-0 bg-white p-6 shadow-2xl">
+        <div className="h-full w-xl shrink-0 bg-surface p-6 shadow-2xl">
           <AuthLogin
             onSwitchToRegister={() => setActivePanel("register")}
             onForgotPassword={() => setActivePanel("forgot")}
@@ -70,7 +70,7 @@ export default function AuthenticationPage() {
       {/* Mobile Layout (All Floating Window) */}
       {!isForgotPanel ? (
         <div className="fixed inset-0 z-40 flex items-center justify-center p-4 md:hidden">
-          <div className="max-h-[calc(100dvh-2rem)] w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-6 shadow-2xl">
+          <div className="max-h-[calc(100dvh-2rem)] w-full max-w-lg overflow-y-auto rounded-2xl bg-surface p-6 shadow-2xl">
             {activePanel === "register" ? (
               <AuthRegister onSwitchToLogin={() => setActivePanel("login")} />
             ) : (
@@ -86,7 +86,7 @@ export default function AuthenticationPage() {
       {/* Forgot Password (Floating Window for Both Mobile and Desktop) */}
       {isForgotPanel ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl flex flex-col justify-evenly gap-6">
+          <div className="w-full max-w-lg rounded-2xl bg-surface p-6 shadow-2xl flex flex-col justify-evenly gap-6">
             <AuthForgot onClose={() => setActivePanel("login")} />
           </div>
         </div>

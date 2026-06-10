@@ -12,14 +12,14 @@ export default function BayaranStatsCards({
         <article
           key={stat.label}
           className={[
-            "flex flex-col gap-1 rounded-lg border-l-4 bg-white p-4 shadow",
+            "flex flex-col gap-1 rounded-lg border-l-4 bg-surface p-4 shadow",
             stat.accent,
           ].join(" ")}
         >
           <p className="text-xs font-semibold text-grey/70">
             {stat.label}
           </p>
-          <p className="text-3xl font-bold text-dark-grey">
+          <p className="text-3xl font-bold text-content">
             {stat.value}
           </p>
           <div

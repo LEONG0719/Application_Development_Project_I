@@ -50,15 +50,15 @@ function formatShortTransactionId(value?: string | null) {
 function getStatusBadge(status: string) {
   switch (status) {
     case "NORMAL":
-      return <span className="bg-normal px-2 py-0.5 text-[10px] font-bold uppercase text-[#0E7490]">Normal</span>;
+      return <span className="bg-normal px-2 py-0.5 text-[10px] font-bold uppercase text-info">Normal</span>;
     case "DIBALIKAN":
       return <span className="rounded-[5px] bg-red px-2 py-0.5 text-[10px] font-bold uppercase text-white">Dibalikkan</span>;
     case "DILARASKAN":
-      return <span className="rounded-[5px] bg-[#FEF3C7] px-2 py-0.5 text-[10px] font-bold uppercase text-[#92400E]">Dilaraskan</span>;
+      return <span className="rounded-[5px] bg-warning-surface px-2 py-0.5 text-[10px] font-bold uppercase text-warning">Dilaraskan</span>;
     case "PEMBALIKAN":
       return <span className="rounded-[5px] bg-red/50 px-2 py-0.5 text-[10px] font-bold uppercase text-white/80">Pembalikan</span>;
     case "PELARASAN":
-      return <span className="rounded-[5px] bg-[#FEF3C7]/50 px-2 py-0.5 text-[10px] font-bold uppercase text-[#92400E]/50">Pelarasan</span>;
+      return <span className="rounded-[5px] bg-warning-surface/50 px-2 py-0.5 text-[10px] font-bold uppercase text-warning/50">Pelarasan</span>;
     default:
       return <span className="rounded-[5px] bg-light-blue px-2 py-0.5 text-[10px] font-bold uppercase text-grey">{status}</span>;
   }
@@ -113,7 +113,7 @@ export default function TransaksiTable({
           </tr>
         </thead>
 
-        <tbody className="bg-white">
+        <tbody className="bg-surface">
           {isLoading || isFetching ? (
             loadingTableRows({
               mode: "loading",
@@ -169,7 +169,7 @@ export default function TransaksiTable({
                   onDoubleClick={() => onView(tx)}
                 >
                   {/* Date */}
-                  <td className={`w-min whitespace-nowrap p-3 text-dark-grey ${isMuted ? "opacity-50" : ""}`}>
+                  <td className={`w-min whitespace-nowrap p-3 text-content ${isMuted ? "opacity-50" : ""}`}>
                     {new Date(tx.transactionDate).toLocaleDateString("en-GB")}
                   </td>
 
@@ -179,7 +179,7 @@ export default function TransaksiTable({
                   </td>
 
                   {/* Category */}
-                  <td className={`w-min whitespace-nowrap p-3 capitalize text-dark-grey ${isMuted ? "opacity-50" : ""}`}>
+                  <td className={`w-min whitespace-nowrap p-3 capitalize text-content ${isMuted ? "opacity-50" : ""}`}>
                     {tx.category.replace(/_/g, " ")}
                   </td>
 
@@ -202,7 +202,7 @@ export default function TransaksiTable({
 
                   {/* Resident */}
                   <td className={`w-min whitespace-nowrap p-3 ${isMuted ? "opacity-50" : ""}`}>
-                    <p className="max-w-50 truncate font-bold text-dark-grey">{tx.resident?.fullName || "Tiada"}</p>
+                    <p className="max-w-50 truncate font-bold text-content">{tx.resident?.fullName || "Tiada"}</p>
                     <p className="text-xs text-grey">
                       {tx.resident?.icNumber && tx.resident.icNumber.length === 12
                       ? tx.resident.icNumber.replace(/(\d{6})(\d{2})(\d{4})/, "$1-$2-$3")
@@ -239,7 +239,7 @@ export default function TransaksiTable({
                         </span>
                       )
                     ) : (
-                      <span className={keepStrongColor ? "text-dark-grey font-normal" : "font-normal text-light-grey"}>-</span>
+                      <span className={keepStrongColor ? "text-content font-normal" : "font-normal text-light-grey"}>-</span>
                     )}
                   </td>
 
@@ -259,7 +259,7 @@ export default function TransaksiTable({
                         </span>
                       )
                     ) : (
-                      <span className={keepStrongColor ? "text-dark-grey font-normal" : "font-normal text-light-grey"}>-</span>
+                      <span className={keepStrongColor ? "text-content font-normal" : "font-normal text-light-grey"}>-</span>
                     )}
                   </td>
 

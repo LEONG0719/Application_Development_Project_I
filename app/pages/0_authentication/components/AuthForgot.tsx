@@ -154,7 +154,7 @@ export default function AuthForgot({ onClose }: AuthForgotProps) {
 								<div
 									className={`
 										flex flex-row flex-1 items-center gap-3 rounded-lg border bg-light-blue p-3 
-										${!isEmailValid && email.length > 0 ? "border-red focus-within:border-red" : "border-transparent focus-within:border-black"}
+										${!isEmailValid && email.length > 0 ? "border-red focus-within:border-red" : "border-transparent focus-within:border-content"}
 									`}
 								>
 									{/* Email Icon */}
@@ -204,7 +204,7 @@ export default function AuthForgot({ onClose }: AuthForgotProps) {
 								<div
 									className={`
 										flex flex-row items-center gap-3 border rounded-lg bg-light-blue p-3 
-										${!isOtpValid && otp.length > 0 ? "border-red focus-within:border-red" : "border-transparent focus-within:border-black"}
+										${!isOtpValid && otp.length > 0 ? "border-red focus-within:border-red" : "border-transparent focus-within:border-content"}
 									`}
 								>
 									{/* OTP Icon */}
@@ -239,7 +239,7 @@ export default function AuthForgot({ onClose }: AuthForgotProps) {
 									<div
 										className={`
 											flex flex-row items-center gap-3 rounded-lg border bg-light-blue p-3 
-											${!isPasswordValid && password.length > 0 ? "border-red focus-within:border-red" : "border-transparent focus-within:border-black"}
+											${!isPasswordValid && password.length > 0 ? "border-red focus-within:border-red" : "border-transparent focus-within:border-content"}
 										`}
 									>
 										{/* Password Icon */}
@@ -275,7 +275,7 @@ export default function AuthForgot({ onClose }: AuthForgotProps) {
 									<div
 										className={`
 											flex flex-row items-center gap-3 rounded-lg border bg-light-blue p-3 
-											${!isPasswordMatch && confirmPassword.length > 0 ? "border-red focus-within:border-red" : "border-transparent focus-within:border-black"}
+											${!isPasswordMatch && confirmPassword.length > 0 ? "border-red focus-within:border-red" : "border-transparent focus-within:border-content"}
 										`}
 									>
 										{/* Confirm Password Icon */}

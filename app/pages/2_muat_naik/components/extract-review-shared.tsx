@@ -184,7 +184,7 @@ export function Pagination({
         <button
           type="button"
           className={[
-            "inline-flex items-center justify-center rounded-md border border-light-grey/30 bg-white text-grey transition-colors hover:border-dark-blue hover:text-dark-blue disabled:cursor-not-allowed disabled:opacity-40",
+            "inline-flex items-center justify-center rounded-md border border-light-grey/30 bg-surface text-grey transition-colors hover:border-dark-blue hover:text-dark-blue disabled:cursor-not-allowed disabled:opacity-40",
             isCompact ? "min-h-7 min-w-7" : "min-h-8 min-w-8",
           ].join(" ")}
           onClick={() => changePage(currentPage - 1)}
@@ -214,7 +214,7 @@ export function Pagination({
                 isCompact ? "min-h-7 min-w-7 px-1.5 text-xs" : "min-h-8 min-w-8 px-2 text-sm",
                 page === currentPage
                   ? "border-dark-blue bg-dark-blue font-bold text-white"
-                  : "border-light-grey/30 bg-white text-grey hover:border-dark-blue hover:text-dark-blue",
+                  : "border-light-grey/30 bg-surface text-grey hover:border-dark-blue hover:text-dark-blue",
               ].join(" ")}
               aria-current={page === currentPage ? "page" : undefined}
               onClick={() => changePage(page)}
@@ -226,7 +226,7 @@ export function Pagination({
         <button
           type="button"
           className={[
-            "inline-flex items-center justify-center rounded-md border border-light-grey/30 bg-white text-grey transition-colors hover:border-dark-blue hover:text-dark-blue disabled:cursor-not-allowed disabled:opacity-40",
+            "inline-flex items-center justify-center rounded-md border border-light-grey/30 bg-surface text-grey transition-colors hover:border-dark-blue hover:text-dark-blue disabled:cursor-not-allowed disabled:opacity-40",
             isCompact ? "min-h-7 min-w-7" : "min-h-8 min-w-8",
           ].join(" ")}
           onClick={() => changePage(currentPage + 1)}

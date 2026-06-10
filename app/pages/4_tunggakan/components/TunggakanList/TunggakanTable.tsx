@@ -71,7 +71,7 @@ export default function TunggakanTable({
             <th className="text-left p-3 w-min whitespace-nowrap">
               <input
                 type="checkbox"
-                className="w-4 h-4 rounded border-gray-300 text-dark-blue focus:ring-dark-blue accent-dark-blue"
+                className="w-4 h-4 rounded border-border text-dark-blue focus:ring-dark-blue accent-dark-blue"
                 onChange={(e) => onSelectAll(e.target.checked)}
                 checked={selectedIds.length === data.length && data.length > 0 && !isLoading}
                 disabled={isLoading || data.length === 0}
@@ -108,7 +108,7 @@ export default function TunggakanTable({
         </thead>
         
         {/* Table Body */}
-        <tbody className="bg-white">
+        <tbody className="bg-surface">
           {isLoading ? (
             loadingTableRows({
               mode: "loading",
@@ -140,7 +140,7 @@ export default function TunggakanTable({
                 <td className="px-3 py-2 text-left w-min whitespace-nowrap">
                   <input
                     type="checkbox"
-                    className="w-4 h-4 rounded border-gray-300 text-dark-blue focus:ring-dark-blue accent-dark-blue"
+                    className="w-4 h-4 rounded border-border text-dark-blue focus:ring-dark-blue accent-dark-blue"
                     checked={selectedIds.includes(row.id)}
                     onClick={(e) => e.stopPropagation()}
                     onChange={() => onSelectRow(row.id)}
@@ -149,7 +149,7 @@ export default function TunggakanTable({
                 
                 {/* Penghuni (Resident Info) */}
                 <td className="px-3 py-2 text-left w-min whitespace-nowrap">
-                  <div className={`font-bold ${mainTextSize} text-dark-grey`}>{row.fullName}</div>
+                  <div className={`font-bold ${mainTextSize} text-content`}>{row.fullName}</div>
                   <div className={`font-extralight ${subTextSize} text-grey`}>
                     {row.icNumber && row.icNumber.length === 12
                       ? row.icNumber.replace(/(\d{6})(\d{2})(\d{4})/, "$1-$2-$3")
@@ -159,7 +159,7 @@ export default function TunggakanTable({
                 
                 {/* Kuarters (Quarters Info) */}
                 <td className="px-3 py-2 text-left w-min whitespace-nowrap">
-                  <div className={`font-bold ${mainTextSize} text-dark-grey`}>{row.quarterClass}</div>
+                  <div className={`font-bold ${mainTextSize} text-content`}>{row.quarterClass}</div>
                   <div className={`font-extralight ${subTextSize} text-grey whitespace-nowrap`}> {
                       row.unitCode && row.quarterAddress ? `${row.unitCode}, ${row.quarterAddress}` : 
                       row.unitCode ? `${row.unitCode}` :
@@ -169,32 +169,32 @@ export default function TunggakanTable({
                 </td>
                 
                 {/* Monthly Rental Charge */}
-                <td className={`px-3 py-2 text-right font-medium text-dark-grey ${mainTextSize} w-min whitespace-nowrap`}>
+                <td className={`px-3 py-2 text-right font-medium text-content ${mainTextSize} w-min whitespace-nowrap`}>
                   {row.sewa.toFixed(2)}
                 </td>
                 
                 {/* Maintenance Charge */}
-                <td className={`px-3 py-2 text-right font-medium text-dark-grey ${mainTextSize} w-min whitespace-nowrap`}>
+                <td className={`px-3 py-2 text-right font-medium text-content ${mainTextSize} w-min whitespace-nowrap`}>
                   {row.senggara.toFixed(2)}
                 </td>
                 
                 {/* Penalty Charge */}
-                <td className={`px-3 py-2 text-right font-medium text-dark-grey ${mainTextSize} w-min whitespace-nowrap`}>
+                <td className={`px-3 py-2 text-right font-medium text-content ${mainTextSize} w-min whitespace-nowrap`}>
                   {row.penalti.toFixed(2)}
                 </td>
                 
                 {/* Additional Charges */}
-                <td className={`px-3 py-2 text-right font-medium text-dark-grey ${mainTextSize} w-min whitespace-nowrap`}>
+                <td className={`px-3 py-2 text-right font-medium text-content ${mainTextSize} w-min whitespace-nowrap`}>
                   {row.tambahan.toFixed(2)}
                 </td>
                 
                 {/* Rebate Amount */}
-                <td className={`px-3 py-2 text-right font-medium ${row.rebat > 0 ? "text-green" : "text-dark-grey"} ${mainTextSize} w-min whitespace-nowrap`}>
+                <td className={`px-3 py-2 text-right font-medium ${row.rebat > 0 ? "text-green" : "text-content"} ${mainTextSize} w-min whitespace-nowrap`}>
                   {row.rebat.toFixed(2)}
                 </td>
                 
                 {/* Total Current Arrears */}
-                <td className={`px-3 py-2 text-right font-bold ${row.jumlahTunggakan > 0 ? "text-red" : "text-dark-grey"} ${mainTextSize} w-min whitespace-nowrap`}>
+                <td className={`px-3 py-2 text-right font-bold ${row.jumlahTunggakan > 0 ? "text-red" : "text-content"} ${mainTextSize} w-min whitespace-nowrap`}>
                   {row.jumlahTunggakan.toFixed(2)}
                 </td>
                 
@@ -222,7 +222,7 @@ export default function TunggakanTable({
         {/* Pagination Controls */}
         <tfoot>
           <tr>
-            <td colSpan={10} className="bg-white border-t border-light-grey/20 px-3 py-4">
+            <td colSpan={10} className="bg-surface border-t border-light-grey/20 px-3 py-4">
               <div className="flex flex-col gap-2">
                 <PaginationControls
                   currentPage={currentPage}

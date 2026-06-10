@@ -23,14 +23,14 @@ export default function ProfilePasswordCard({
     passwordForm.newPassword !== passwordForm.confirmPassword;
 
   return (
-    <section className="mb-4 rounded-[5px] border border-[#E9EDF5] bg-white p-5.5 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+    <section className="mb-4 rounded-[5px] border border-border bg-surface p-5.5 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
       <div className="flex items-center justify-between gap-4 max-sm:flex-col max-sm:items-start">
         <div>
           <div className="mb-1.5 flex items-center gap-2 text-xs font-extrabold">
             <Icon icon="key" size={15} />
             TUKAR KATA LALUAN
           </div>
-          <p className="text-[10px] leading-5 text-[#64748B]">
+          <p className="text-[10px] leading-5 text-content-muted">
             Pastikan kata laluan anda kuat dan unik untuk melindungi akaun anda.
           </p>
         </div>

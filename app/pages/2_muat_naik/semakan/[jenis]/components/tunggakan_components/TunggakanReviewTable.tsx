@@ -375,7 +375,7 @@ export default function TunggakanReviewTable({
         <div className="flex flex-row justify-between pt-3">
           {/* Header */}
           <div>
-            <div className="text-lg font-bold text-dark-grey">Pratinjau Data Tunggakan</div>
+            <div className="text-lg font-bold text-content">Pratinjau Data Tunggakan</div>
             <div className="text-xs text-grey">Sila semak maklumat sebelum pengesahan.</div>
           </div>
 
@@ -464,7 +464,7 @@ export default function TunggakanReviewTable({
             </thead>
 
             {/* Table Body */}
-            <tbody className="bg-white">
+            <tbody className="bg-surface">
               {/* Loading Animation */}
               {isLoading ? (
                 loadingTableRows({
@@ -509,7 +509,7 @@ export default function TunggakanReviewTable({
               )}
             </tbody>
             <tfoot>
-              <tr className="border-t border-light-grey/20 bg-white">
+              <tr className="border-t border-light-grey/20 bg-surface">
                 <td colSpan={5} className="px-4 py-4 sm:px-5">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <PaginationControls

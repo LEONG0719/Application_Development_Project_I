@@ -248,13 +248,13 @@ export default function ProfilePage() {
   if (isLoading) {
     return (
       <div className="flex min-h-[calc(100vh-120px)] items-center justify-center">
-        <div className="h-10 w-10 animate-spin rounded-full border-4 border-[#D9E1F3] border-t-dark-blue" />
+        <div className="h-10 w-10 animate-spin rounded-full border-4 border-border border-t-dark-blue" />
       </div>
     );
   }
 
   return (
-    <main className="w-full text-[#0B1C30]">
+    <main className="w-full text-content">
       <GlobalFixedMessage
         notice={feedback ? { tone: feedback.type, message: feedback.message } : null}
         onDismiss={() => setFeedback(null)}

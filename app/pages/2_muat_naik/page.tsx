@@ -47,7 +47,7 @@ export default function MuatNaikPage() {
 function MuatNaikPageFallback() {
   return (
     <div className="flex min-h-[calc(100vh-120px)] items-center justify-center">
-      <div className="h-10 w-10 animate-spin rounded-full border-4 border-[#D9E1F3] border-t-dark-blue" />
+      <div className="h-10 w-10 animate-spin rounded-full border-4 border-border border-t-dark-blue" />
     </div>
   );
 }
@@ -295,7 +295,7 @@ function MuatNaikPageContent() {
       <div className="flex w-full flex-col gap-4">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex min-w-0 flex-col">
-            <h1 className="text-2xl font-extrabold leading-9 tracking-tight text-[#0B1C30]">
+            <h1 className="text-2xl font-extrabold leading-9 tracking-tight text-content">
               Muat Naik Document
             </h1>
             <p className="text-sm font-extralight text-grey/70">
@@ -320,9 +320,9 @@ function MuatNaikPageContent() {
         />
 
         {activeDraftKind === "tunggakan" ? (
-          <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-[#DCE2F1] bg-white px-5 py-4 shadow-sm">
+          <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-border bg-surface px-5 py-4 shadow-sm">
             <div className="min-w-0">
-              <p className="text-md font-bold text-dark-grey">
+              <p className="text-md font-bold text-content">
                 Tarikh Tunggakan
               </p>
               <p className="text-xs text-grey">

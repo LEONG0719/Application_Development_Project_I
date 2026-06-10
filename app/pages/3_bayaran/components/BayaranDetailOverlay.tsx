@@ -55,7 +55,7 @@ function TabButton({
       className={`-mb-px py-4 text-sm font-bold transition-colors ${
         isActive
           ? "border-b-4 border-dark-blue text-dark-blue"
-          : "text-gray-500 hover:text-dark-blue"
+          : "text-content-muted hover:text-dark-blue"
       }`}
       onClick={onClick}
     >
@@ -193,7 +193,7 @@ export default function BayaranDetailOverlay({
         </header>
 
         <nav
-          className="flex items-center justify-center gap-8 border-b border-light-grey/20 bg-white"
+          className="flex items-center justify-center gap-8 border-b border-light-grey/20 bg-surface"
           aria-label="Tab butiran bayaran"
         >
           <TabButton
@@ -428,7 +428,7 @@ function PaymentHistoryTab({
                 <th className="w-min px-4 py-3 text-right whitespace-nowrap">Amaun (RM)</th>
               </tr>
             </thead>
-            <tbody className="bg-white">
+            <tbody className="bg-surface">
               {isLoading ? (
                 loadingTableRows({
                   mode: "loading",
@@ -473,7 +473,7 @@ function PaymentHistoryTab({
               <tr>
                 <td
                   colSpan={5}
-                  className="bg-white border-t border-light-grey/20 px-4 py-4"
+                  className="bg-surface border-t border-light-grey/20 px-4 py-4"
                 >
                   <PaginationControls
                     currentPage={currentPage}
@@ -501,8 +501,8 @@ function ErrorState({
 }) {
   return (
     <div className="flex min-h-96 items-center justify-center">
-      <div className="w-full max-w-md rounded-xl border border-red/20 bg-white p-6 text-center">
-        <h3 className="text-lg font-extrabold text-dark-grey">
+      <div className="w-full max-w-md rounded-xl border border-red/20 bg-surface p-6 text-center">
+        <h3 className="text-lg font-extrabold text-content">
           Butiran Tidak Dapat Dipaparkan
         </h3>
         <p className="mt-2 text-sm leading-6 text-grey">{errorMessage}</p>

@@ -137,7 +137,7 @@ export default function PenghuniDetailHistory({ residentId }: { residentId?: str
                             <th className="w-min text-right p-3 whitespace-nowrap">Baki (RM)</th>
                         </tr>
                     </thead>
-                    <tbody className="bg-white">
+                    <tbody className="bg-surface">
                         {isLoading ? (
                             loadingTableRows({
                                 mode: "loading",
@@ -176,7 +176,7 @@ export default function PenghuniDetailHistory({ residentId }: { residentId?: str
                     {/* Pagination Controls */}
                     <tfoot>
                         <tr>
-                            <td colSpan={7} className="bg-white border-t border-light-grey/20 px-4 py-4">
+                            <td colSpan={7} className="bg-surface border-t border-light-grey/20 px-4 py-4">
                                 <PaginationControls
                                     currentPage={currentPage}
                                     totalPages={totalPages}

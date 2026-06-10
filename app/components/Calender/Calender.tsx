@@ -162,7 +162,7 @@ function CalenderPanel({
 
     return (
         <div
-            className={`${disableAbsolutePositioning ? "relative" : "absolute top-full left-0 right-0"} z-50 w-full rounded-3xl bg-white p-2 shadow-lg flex flex-col gap-0.5`}
+            className={`${disableAbsolutePositioning ? "relative" : "absolute top-full left-0 right-0"} z-50 w-full rounded-3xl bg-surface p-2 shadow-lg flex flex-col gap-0.5`}
             style={scale !== undefined ? { zoom: scale } : undefined}
         >
             {/* Header (Month and Year) */}
@@ -181,7 +181,7 @@ function CalenderPanel({
                 {/* Month and Year Label */}
                 <button
                     type="button"
-                    className="flex-1 cursor-pointer text-center text-xs font-bold text-dark-grey transition-colors hover:text-dark-blue"
+                    className="flex-1 cursor-pointer text-center text-xs font-bold text-content transition-colors hover:text-dark-blue"
                     onClick={() => {
                         if (!monthOnly) {
                             setShowMonthYearPicker(!showMonthYearPicker);
@@ -238,7 +238,7 @@ function CalenderPanel({
                                         ? "cursor-not-allowed text-light-grey/60"
                                         : monthIdx === currentMonth
                                         ? "bg-dark-blue text-white"
-                                        : "text-dark-grey hover:bg-light-blue hover:text-dark-blue"
+                                        : "text-content hover:bg-light-blue hover:text-dark-blue"
                                 }`}
                                 onClick={() => {
                                     if (isDisabled) {
@@ -308,7 +308,7 @@ function CalenderPanel({
                                             : isSelected
                                                 ? "bg-dark-blue text-white"
                                                 : isVisibleMonth
-                                                    ? "text-dark-grey hover:bg-light-blue hover:text-dark-blue"
+                                                    ? "text-content hover:bg-light-blue hover:text-dark-blue"
                                                     : "text-light-grey hover:bg-light-blue"
                                     } ${hasCustomDisabledVisual ? (activeDisabledMeta?.className ?? "") : ""}`}
                                 style={disabledCustomStyle}

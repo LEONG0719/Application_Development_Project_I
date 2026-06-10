@@ -135,12 +135,12 @@ export default function LamanUtamaAnalysis({
       }`}
     >
       <div className="px-8 pt-8 pb-6 flex flex-row justify-between items-center w-full">
-        <h4 className="text-lg font-bold text-[#0B1C30]">
+        <h4 className="text-lg font-bold text-content">
           Analisis Tunggakan Mengikut Kelas
         </h4>
         
         {totalPages > 1 && (
-          <span className="text-xs font-semibold text-dark-blue bg-white/60 px-2.5 py-1 rounded-md border border-slate-200">
+          <span className="text-xs font-semibold text-dark-blue bg-surface/60 px-2.5 py-1 rounded-md border border-border">
             Halaman {currentPage + 1} Daripada {totalPages}
           </span>
         )}
@@ -171,13 +171,13 @@ export default function LamanUtamaAnalysis({
                 {Array.from({ length: 5 }).map((_, i) => (
                   <div key={i} className="flex flex-col gap-2 w-full">
                     <div className="flex flex-row justify-between items-center w-full">
-                      <div className="h-4 w-1/3 animate-pulse rounded bg-slate-200" />
-                      <div className="h-4 w-1/5 animate-pulse rounded bg-slate-200" />
+                      <div className="h-4 w-1/3 animate-pulse rounded bg-border" />
+                      <div className="h-4 w-1/5 animate-pulse rounded bg-border" />
                     </div>
-                    <div className="w-full h-3.5 bg-slate-100 rounded-full overflow-hidden">
-                      <div className="h-full w-full animate-pulse bg-slate-200" />
+                    <div className="w-full h-3.5 bg-surface-muted rounded-full overflow-hidden">
+                      <div className="h-full w-full animate-pulse bg-border" />
                     </div>
-                    <div className="h-3 w-1/5 animate-pulse rounded bg-slate-200" />
+                    <div className="h-3 w-1/5 animate-pulse rounded bg-border" />
                   </div>
                 ))}
               </div>
@@ -212,7 +212,7 @@ export default function LamanUtamaAnalysis({
                         return (
                           <div key={index} className="flex flex-col gap-2 w-full">
                             <div className="flex flex-row justify-between items-center w-full">
-                              <span className="text-sm font-bold text-[#0B1C30]">
+                              <span className="text-sm font-bold text-content">
                                 {item.className}
                               </span>
                               <span className="text-base font-bold text-red">
@@ -220,12 +220,12 @@ export default function LamanUtamaAnalysis({
                               </span>
                             </div>
 
-                            <div className="relative w-full h-3.5 bg-white rounded-full overflow-hidden">
+                            <div className="relative w-full h-3.5 bg-surface-muted rounded-full overflow-hidden">
                               <div
                                 className="absolute top-0 bottom-0 left-0 rounded-full transition-all duration-500 ease-out"
                                 style={{
                                   width: `${outstandingRate}%`,
-                                  backgroundColor: `rgba(186, 26, 26, ${item.opacity})`,
+                                  backgroundColor: `color-mix(in srgb, var(--color-red) ${item.opacity * 100}%, transparent)`,
                                 }}
                               />
                             </div>

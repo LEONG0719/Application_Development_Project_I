@@ -152,7 +152,7 @@ export default function AuditLogTablePanel({
       <div className="flex flex-col gap-3 pt-3 px-3">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h2 className="text-lg font-bold text-dark-grey">
+            <h2 className="text-lg font-bold text-content">
               Senarai Aktiviti Sistem
             </h2>
             <p className="text-xs text-grey/70">
@@ -160,7 +160,7 @@ export default function AuditLogTablePanel({
             </p>
           </div>
 
-          <div className="flex items-center gap-4 text-[#607083]">
+          <div className="flex items-center gap-4 text-content-muted">
             <SearchBarToggleButton
               label="Cari rekod audit"
               isOpen={isSearchOpen}
@@ -189,13 +189,13 @@ export default function AuditLogTablePanel({
         ) : null}
       </div>
 
-      <div className="overflow-hidden rounded-lg bg-white shadow">
+      <div className="overflow-hidden rounded-lg bg-surface shadow">
         {bootstrapError ? (
-          <div className="border-b border-light-grey/20 bg-[#FFF4F4] px-4 py-3 text-sm font-semibold text-[#B42318]">
+          <div className="border-b border-light-grey/20 bg-danger-surface px-4 py-3 text-sm font-semibold text-red">
             {bootstrapError}
           </div>
         ) : currentPageError || initialErrorMessage ? (
-          <div className="border-b border-light-grey/20 bg-[#FFF4F4] px-4 py-3 text-sm font-semibold text-[#B42318]">
+          <div className="border-b border-light-grey/20 bg-danger-surface px-4 py-3 text-sm font-semibold text-red">
             {currentPageError || initialErrorMessage}
           </div>
         ) : null}
@@ -215,7 +215,7 @@ export default function AuditLogTablePanel({
                 <th className="w-[0%] text-center p-3 whitespace-nowrap">Tindakan</th>
               </tr>
             </thead>
-            <tbody className="bg-white">
+            <tbody className="bg-surface">
               {isBootstrapping ? (
                 loadingTableRows({
                   mode: "loading",
@@ -347,7 +347,7 @@ function AuditCell({
   return (
     <td
       className={[
-        "w-min overflow-hidden text-ellipsis whitespace-nowrap px-3 py-2 text-sm text-dark-grey",
+        "w-min overflow-hidden text-ellipsis whitespace-nowrap px-3 py-2 text-sm text-content",
         strong ? "font-semibold" : "font-medium",
         className,
       ].join(" ")}

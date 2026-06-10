@@ -7,6 +7,18 @@ import GlobalFixedMessage from "./components/Message/GlobalFixedMessage";
 import Sidebar from "./components/Layout/Sidebar";
 import { ROUTES, SHELL_ROUTES, SHELL_ROUTE_PREFIXES } from "./constants/routes";
 
+const themeBootstrapScript = `
+  try {
+    var storedTheme = localStorage.getItem("quarter-management-theme");
+    var theme = storedTheme === "dark" ? "dark" : "light";
+    document.documentElement.dataset.theme = theme;
+    document.documentElement.style.colorScheme = theme;
+  } catch (error) {
+    document.documentElement.dataset.theme = "light";
+    document.documentElement.style.colorScheme = "light";
+  }
+`;
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -23,7 +35,7 @@ export default function RootLayout({
   const shouldShowShell = !isAuthRoute && isShellRoute;
 
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       {/* Import Google Manrope font for headings and UI elements and Google Material Symbols font for icons. */}
       <head>
         <link
@@ -34,6 +46,7 @@ export default function RootLayout({
           rel="stylesheet"
           href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
         />
+        <script dangerouslySetInnerHTML={{ __html: themeBootstrapScript }} />
       </head>
       
       <body className="h-screen overflow-hidden">

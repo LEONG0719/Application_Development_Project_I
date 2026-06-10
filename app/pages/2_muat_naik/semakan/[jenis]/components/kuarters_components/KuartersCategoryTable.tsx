@@ -120,7 +120,7 @@ export default function KuartersCategoryTable({
   isLoading = false,
 }: KuartersCategoryTableProps) {
   return (
-    <div className="bg-white flex flex-col justify-between h-full">
+    <div className="bg-surface flex flex-col justify-between h-full">
       <div className="overflow-x-auto">
         <table className="w-full min-w-200 border-collapse text-left">
           <thead className="bg-background">
@@ -154,7 +154,7 @@ export default function KuartersCategoryTable({
           </thead>
 
           {/* Body */}
-          <tbody className="bg-white">
+          <tbody className="bg-surface">
             {isLoading ? (
               loadingTableRows({
                 mode: "loading",
@@ -220,7 +220,7 @@ export default function KuartersCategoryTable({
                         <td
                           key={`${category.id}-${field}`}
                           className={[
-                            "overflow-hidden text-sm font-semibold text-dark-grey w-min whitespace-nowrap",
+                            "overflow-hidden text-sm font-semibold text-content w-min whitespace-nowrap",
                             isMoneyField ? "text-right" : "text-left",
                             isEditing ? "px-3 py-4" : "px-3 py-2",
                           ].join(" ")}
@@ -241,12 +241,12 @@ export default function KuartersCategoryTable({
                           ) : (
                             <>
                               {isMoneyField ? (
-                                <span className="block text-right font-semibold text-dark-grey">
+                                <span className="block text-right font-semibold text-content">
                                   {formatPrice(value)}
                                 </span>
                               ) : (
                                 <span
-                                  className="block truncate font-semibold text-dark-grey text-left"
+                                  className="block truncate font-semibold text-content text-left"
                                   title={String(value || "-")}
                                 >
                                   {value || "-"}
@@ -258,7 +258,7 @@ export default function KuartersCategoryTable({
                                     {category.unitCount} unit
                                   </span>
                                   {category.categoryIsExisted ? (
-                                    <p className="mt-1 text-[10px] font-semibold text-[#B54708] text-left">
+                                    <p className="mt-1 text-[10px] font-semibold text-warning text-left">
                                       Kategori Sudah Ada
                                     </p>
                                   ) : null}
@@ -326,7 +326,7 @@ export default function KuartersCategoryTable({
           </tbody>
         </table>
       </div>
-      <div className="border-t border-light-grey/20 bg-white p-3">
+      <div className="border-t border-light-grey/20 bg-surface p-3">
         <PaginationControls
           currentPage={currentPage}
           totalPages={totalPages}

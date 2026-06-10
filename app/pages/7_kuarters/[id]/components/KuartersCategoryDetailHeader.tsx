@@ -20,11 +20,11 @@ function RatePill({
   value: number | null;
 }) {
   return (
-    <div className="rounded-lg border border-light-grey/20 bg-white px-4 py-3 shadow-sm">
+    <div className="rounded-lg border border-light-grey/20 bg-surface px-4 py-3 shadow-sm">
       <p className="text-xs font-bold uppercase text-grey/70">
         {label}
       </p>
-      <p className="mt-2 text-lg font-extrabold text-dark-grey">
+      <p className="mt-2 text-lg font-extrabold text-content">
         {value === null ? "--" : `RM ${formatMoney(value)}`}
       </p>
     </div>
@@ -43,17 +43,17 @@ export default function KuartersCategoryDetailHeader({
     <section className="flex flex-col gap-4">
       <Link
         href="/pages/7_kuarters"
-        className="fixed left-61 top-6 z-40 inline-flex min-h-10 items-center gap-2 rounded-xl border border-light-grey/25 bg-white px-4 py-2 text-sm font-bold text-grey shadow-2xl transition-colors hover:border-dark-blue hover:text-dark-blue"
+        className="fixed left-61 top-6 z-40 inline-flex min-h-10 items-center gap-2 rounded-xl border border-light-grey/25 bg-surface px-4 py-2 text-sm font-bold text-grey shadow-2xl transition-colors hover:border-dark-blue hover:text-dark-blue"
       >
         <Icon icon="arrow_back" size={18} />
         Kembali ke Senarai Kategori
       </Link>
 
       <div>
-        <h1 className="text-2xl font-extrabold tracking-[-0.03em] text-dark-grey">
+        <h1 className="text-2xl font-extrabold tracking-[-0.03em] text-content">
           Kategori: {resolvedCategoryName}
         </h1>
-        <p className="max-w-3xl text-sm font-semibold text-dark-grey">
+        <p className="max-w-3xl text-sm font-semibold text-content">
           Alamat: {resolvedAddress}
         </p>
         <p className="max-w-3xl text-sm font-extralight text-grey/70">

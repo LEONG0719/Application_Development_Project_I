@@ -105,13 +105,13 @@ export default function TransaksiReverseModal({ isOpen, onClose, transaction, on
                 label="NAMA PENGHUNI"
                 value={transaction.resident?.fullName || "Tiada"}
                 state="inactive"
-                inactiveBackgroundClass="bg-[#EEF4FF]"
+                inactiveBackgroundClass="bg-surface-muted"
               />
               <InputField
                 label="NO. KAD PENGENALAN"
                 value={formatIcNumber(transaction.resident?.icNumber)}
                 state="inactive"
-                inactiveBackgroundClass="bg-[#EEF4FF]"
+                inactiveBackgroundClass="bg-surface-muted"
               />
             </div>
 
@@ -121,15 +121,15 @@ export default function TransaksiReverseModal({ isOpen, onClose, transaction, on
                 value={formatRM(originalAmount)}
                 state="inactive"
                 inputTextClassName={isDebit ? "text-red font-bold" : "text-green font-bold"}
-                inactiveBackgroundClass="bg-[#EEF4FF]"
+                inactiveBackgroundClass="bg-surface-muted"
               />
-              <Icon icon="arrow_forward" size={20} className="text-gray-400 mt-5" />
+              <Icon icon="arrow_forward" size={20} className="text-content-subtle mt-5" />
               <InputField
                 label={`${isDebit ? "DEBIT" : "KREDIT"} BARU (RM)`}
                 value="0.00"
                 state="inactive"
                 inputTextClassName={isDebit ? "text-red font-bold" : "text-green font-bold"}
-                inactiveBackgroundClass="bg-[#EEF4FF]"
+                inactiveBackgroundClass="bg-surface-muted"
               />
             </div>
 
@@ -140,7 +140,7 @@ export default function TransaksiReverseModal({ isOpen, onClose, transaction, on
               onChange={setRemarks}
               error={Boolean(error)}
               errorMessage={error}
-              activeBackgroundClass="bg-white"
+              activeBackgroundClass="bg-surface"
             />
           </div>
 
@@ -148,7 +148,7 @@ export default function TransaksiReverseModal({ isOpen, onClose, transaction, on
           <div className="flex flex-col gap-4">
             <Topic content="PRATONTON TRANSAKSI BERKAITAN" />
             
-            <div className="overflow-x-auto overflow-y-auto rounded-lg border border-light-grey/20 bg-white">
+            <div className="overflow-x-auto overflow-y-auto rounded-lg border border-light-grey/20 bg-surface">
               <table className="w-full min-w-220 text-left">
                 <thead className="bg-background text-xs font-bold text-grey">
                   <tr>
@@ -160,10 +160,10 @@ export default function TransaksiReverseModal({ isOpen, onClose, transaction, on
                     <th className="w-min whitespace-nowrap p-3 text-right">Kredit (RM)</th>
                   </tr>
                 </thead>
-                <tbody className="bg-white">
+                <tbody className="bg-surface">
                   {/* Original Row */}
                   <tr className="border-b border-light-grey/20 text-sm transition-colors">
-                    <td className="w-min whitespace-nowrap p-3 text-dark-grey">{new Date(transaction.transactionDate).toLocaleDateString("en-GB")}</td>
+                    <td className="w-min whitespace-nowrap p-3 text-content">{new Date(transaction.transactionDate).toLocaleDateString("en-GB")}</td>
                     <td className="w-min whitespace-nowrap p-3 font-bold">{transaction.transactionNo}</td>
                     <td className="w-min whitespace-nowrap p-3"><span className="rounded-[5px] bg-red px-2 py-0.5 text-[10px] font-bold uppercase text-white">Dibalikkan</span></td>
                     <td className="max-w-80 truncate p-3 text-grey">{transaction.description || "-"}</td>
@@ -176,7 +176,7 @@ export default function TransaksiReverseModal({ isOpen, onClose, transaction, on
                   </tr>
                   {/* Balancing Row (Current / New Transaksi) */}
                   <tr className="border-b border-light-grey/20 text-sm transition-colors">
-                    <td className="w-min whitespace-nowrap border-l-4 border-dark-blue p-3 text-dark-grey">Hari Ini</td>
+                    <td className="w-min whitespace-nowrap border-l-4 border-dark-blue p-3 text-content">Hari Ini</td>
                     <td className="w-min whitespace-nowrap p-3 italic text-light-grey">Diberikan Nanti</td>
                     <td className="w-min whitespace-nowrap p-3"><span className="rounded-[5px] bg-red px-2 py-0.5 text-[10px] font-bold uppercase text-white">Pembalikan</span></td>
                     <td className="max-w-80 truncate p-3 text-grey">{remarks || "-"}</td>

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Icon from "@/app/components/Icon/Icon";
 import ButtonHelp from "@/app/components/Layout/ButtonHelp";
 import ButtonLogout from "@/app/components/Layout/ButtonLogout";
+import ButtonTheme from "@/app/components/Layout/ButtonTheme";
 
 export default function Header() {
     const [mounted, setMounted] = useState(false);
@@ -36,7 +37,7 @@ export default function Header() {
     }, []);
 
     return (
-        <header className="flex flex-row items-center justify-end gap-5 p-4">
+        <header className="app-header flex flex-row items-center justify-end gap-5 p-4">
             <div className={`mr-auto flex items-center gap-3 rounded-full border border-light-grey/20 bg-light-grey/10 px-4 py-1.5 text-xs font-medium text-grey transition-opacity duration-300 ${mounted ? 'opacity-100' : 'opacity-0'}`}>
                 <div className="flex items-center gap-1.5 text-dark-blue">
                     <Icon icon="schedule" size={16} className="animate-pulse" />
@@ -48,6 +49,7 @@ export default function Header() {
                     <span className="font-semibold">{formattedDate || "Hari, 00 Bulan 0000"}</span>
                 </div>
             </div>
+            <ButtonTheme />
             <ButtonHelp />
             <ButtonLogout />
         </header>

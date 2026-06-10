@@ -71,7 +71,7 @@ function TabButton({
       className={`-mb-px py-4 text-sm font-bold transition-colors ${
         isActive
           ? "border-b-4 border-dark-blue text-dark-blue"
-          : "text-gray-500 hover:text-dark-blue"
+          : "text-content-muted hover:text-dark-blue"
       }`}
       onClick={onClick}
     >
@@ -140,31 +140,31 @@ function ButiranInfoTab({
             label="SEWA (RM)"
             value={formatMoney(profile.charges.sewa)}
             state="inactive"
-            inactiveBackgroundClass="bg-[#EEF4FF] text-red"
+            inactiveBackgroundClass="bg-surface-muted text-red"
           />
           <InputField
             label="SENGGARA (RM)"
             value={formatMoney(profile.charges.senggara)}
             state="inactive"
-            inactiveBackgroundClass="bg-[#EEF4FF] text-red"
+            inactiveBackgroundClass="bg-surface-muted text-red"
           />
           <InputField
             label="PENALTI (RM)"
             value={formatMoney(profile.charges.penalti)}
             state="inactive"
-            inactiveBackgroundClass="bg-[#EEF4FF] text-red"
+            inactiveBackgroundClass="bg-surface-muted text-red"
           />
           <InputField
             label="TAMBAHAN (RM)"
             value={formatMoney(profile.charges.tambahan)}
             state="inactive"
-            inactiveBackgroundClass="bg-[#EEF4FF] text-red"
+            inactiveBackgroundClass="bg-surface-muted text-red"
           />
           <InputField
             label="REBAT (RM)"
             value={formatMoney(profile.charges.rebat)}
             state="inactive"
-            inactiveBackgroundClass="bg-[#EEF4FF] text-green"
+            inactiveBackgroundClass="bg-surface-muted text-green"
           />
         </div>
 
@@ -310,7 +310,7 @@ export default function ButiranTunggakanModal({
         </header>
 
         <nav
-          className="flex items-center justify-center gap-8 border-b border-light-grey/20 bg-white"
+          className="flex items-center justify-center gap-8 border-b border-light-grey/20 bg-surface"
           aria-label="Tab butiran tunggakan"
         >
           <TabButton

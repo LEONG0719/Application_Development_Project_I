@@ -90,7 +90,7 @@ export default function KuartersUnitPanel({
   const hasSelectableUnits = units.some(isSelectableUnit);
 
   return (
-    <div className="border-t border-light-grey/20 bg-white lg:border-l lg:border-t-0 flex flex-col justify-between h-full">
+    <div className="border-t border-light-grey/20 bg-surface lg:border-l lg:border-t-0 flex flex-col justify-between h-full">
       <div className="overflow-x-auto">
         <table className="w-full border-collapse text-left">
           <thead className="bg-background">
@@ -116,7 +116,7 @@ export default function KuartersUnitPanel({
               <th className="w-[0%] p-3 text-center font-bold text-xs text-grey bg-background whitespace-nowrap">Tindakan</th>
             </tr>
           </thead>
-          <tbody className="bg-white">
+          <tbody className="bg-surface">
             {isLoading ? (
               loadingTableRows({
                 mode: "loading",
@@ -163,7 +163,7 @@ export default function KuartersUnitPanel({
                         />
                       </div>
                     </td>
-                    <td className={`overflow-hidden text-sm font-semibold text-dark-grey w-min whitespace-nowrap ${isEditing ? "px-3 py-4" : "px-3 py-2"}`}>
+                    <td className={`overflow-hidden text-sm font-semibold text-content w-min whitespace-nowrap ${isEditing ? "px-3 py-4" : "px-3 py-2"}`}>
                       {isEditing ? (
                         <div onClick={(e) => e.stopPropagation()} onDoubleClick={(e) => e.stopPropagation()}>
                           <TableInputField
@@ -180,12 +180,12 @@ export default function KuartersUnitPanel({
                           />
                         </div>
                       ) : (
-                        <span className="block truncate font-semibold text-dark-grey text-left">
+                        <span className="block truncate font-semibold text-content text-left">
                           {unit.unitCode}
                         </span>
                       )}
                       {unit.isExisted && !isEditing ? (
-                        <p className="mt-1 text-[10px] font-semibold text-[#B54708]">
+                        <p className="mt-1 text-[10px] font-semibold text-warning">
                           Unit Sudah Ada
                         </p>
                       ) : null}
@@ -236,7 +236,7 @@ export default function KuartersUnitPanel({
           </tbody>
         </table>
       </div>
-      <div className="border-t border-light-grey/20 bg-white p-3">
+      <div className="border-t border-light-grey/20 bg-surface p-3">
         <PaginationControls
           currentPage={currentPage}
           totalPages={totalPages}

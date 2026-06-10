@@ -2,7 +2,7 @@ export default function KuartersPageHeader() {
   return (
     <div className="flex flex-col gap-4">
       <div>
-        <h1 className="text-2xl font-extrabold text-dark-grey">
+        <h1 className="text-2xl font-extrabold text-content">
           Pengurusan Kuarters
         </h1>
         <p className="text-sm font-extralight text-grey/70">

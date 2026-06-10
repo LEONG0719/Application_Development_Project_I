@@ -79,14 +79,14 @@ export default function BayaranFilterShell({
       <div className="flex flex-col gap-3 pt-3 px-3">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h2 className="text-lg font-bold text-dark-grey">
+            <h2 className="text-lg font-bold text-content">
               Senarai Rekod Bayaran
             </h2> 
             <p className="text-xs text-grey">
               Rekod bayaran terkini.
             </p>
           </div>
-          <div className="flex items-center gap-4 text-[#607083]">
+          <div className="flex items-center gap-4 text-content-muted">
             <SearchBarToggleButton
               label="Cari rekod bayaran"
               isOpen={isSearchOpen}
@@ -135,7 +135,7 @@ export default function BayaranFilterShell({
         ) : null}
       </div>
 
-      <div className="overflow-hidden rounded-lg bg-white shadow">{children}</div>
+      <div className="overflow-hidden rounded-lg bg-surface shadow">{children}</div>
     </section>
   );
 }

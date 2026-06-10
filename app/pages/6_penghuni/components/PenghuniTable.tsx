@@ -152,7 +152,7 @@ export default function PenghuniTable({
                  {/* Header of Table Section */}
                 <div className="flex flex-row justify-between pt-3">
                     <div>   
-                        <div className="text-lg font-bold text-dark-grey">Senarai Penghuni</div>
+                        <div className="text-lg font-bold text-content">Senarai Penghuni</div>
                         <div className="text-xs text-grey">Menguruskan pangkalan data penghuni kuarters kerajaan.</div>
                     </div>
                     <div className="flex flex-row gap-4 items-center">
@@ -199,7 +199,7 @@ export default function PenghuniTable({
                     </thead>
                     
                     {/* Table Body */}
-                    <tbody className="bg-white">
+                    <tbody className="bg-surface">
                         {isLoading ? (
                             loadingTableRows({
                                 mode: "loading",
@@ -308,7 +308,7 @@ export default function PenghuniTable({
                     {/* Pagination Controls */}
                     <tfoot>
                         <tr>
-                            <td colSpan={7} className="bg-white border-t border-light-grey/20 px-3 py-4">
+                            <td colSpan={7} className="bg-surface border-t border-light-grey/20 px-3 py-4">
                                 <PaginationControls
                                     currentPage={currentPage}
                                     totalPages={totalPages}

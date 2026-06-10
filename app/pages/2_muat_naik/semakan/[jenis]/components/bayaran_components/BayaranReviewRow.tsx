@@ -94,7 +94,7 @@ export default function BayaranReviewRow({
       </td>
 
       {/* Nama Penghuni */}
-      <td className={`overflow-hidden text-sm font-semibold text-dark-grey w-min whitespace-nowrap ${isEditing ? "px-3 py-4" : "px-3 py-2"}`}>
+      <td className={`overflow-hidden text-sm font-semibold text-content w-min whitespace-nowrap ${isEditing ? "px-3 py-4" : "px-3 py-2"}`}>
         {isEditing ? (
           <div onClick={(e) => e.stopPropagation()} onDoubleClick={(e) => e.stopPropagation()}>
             <TableInputField
@@ -105,19 +105,19 @@ export default function BayaranReviewRow({
             />
           </div>
         ) : (
-          <span className="block truncate font-semibold text-dark-grey" title={row.nama}>
+          <span className="block truncate font-semibold text-content" title={row.nama}>
             {row.nama || "-"}
           </span>
         )}
         {row.isExisted && !isEditing ? (
-          <p className="mt-1 text-[10px] font-semibold text-[#B54708]" title="Rekod bayaran ini telah wujud dalam sistem.">
+          <p className="mt-1 text-[10px] font-semibold text-warning" title="Rekod bayaran ini telah wujud dalam sistem.">
             Rekod bayaran ini telah wujud dalam sistem.
           </p>
         ) : null}
       </td>
 
       {/* No. Kad Pengenalan */}
-      <td className={`overflow-hidden text-sm font-semibold text-dark-grey w-min whitespace-nowrap ${isEditing ? "px-3 py-4" : "px-3 py-2"}`}>
+      <td className={`overflow-hidden text-sm font-semibold text-content w-min whitespace-nowrap ${isEditing ? "px-3 py-4" : "px-3 py-2"}`}>
         {isEditing ? (
           <div onClick={(e) => e.stopPropagation()} onDoubleClick={(e) => e.stopPropagation()}>
             <TableInputFieldFormat
@@ -130,7 +130,7 @@ export default function BayaranReviewRow({
           </div>
         ) : (
           <span
-            className="block truncate font-semibold text-dark-grey"
+            className="block truncate font-semibold text-content"
             title={row.noGajiNoKp || "-"}
           >
             {row.noGajiNoKp && row.noGajiNoKp.length === 12
@@ -141,7 +141,7 @@ export default function BayaranReviewRow({
       </td>
 
       {/* Nama Jabatan */}
-      <td className={`overflow-hidden text-sm font-semibold text-dark-grey w-min whitespace-nowrap ${isEditing ? "px-3 py-4" : "px-3 py-2"}`}>
+      <td className={`overflow-hidden text-sm font-semibold text-content w-min whitespace-nowrap ${isEditing ? "px-3 py-4" : "px-3 py-2"}`}>
         {isEditing ? (
           <div onClick={(e) => e.stopPropagation()} onDoubleClick={(e) => e.stopPropagation()}>
             <TableInputField
@@ -153,7 +153,7 @@ export default function BayaranReviewRow({
           </div>
         ) : (
           <span
-            className="block truncate font-semibold text-dark-grey"
+            className="block truncate font-semibold text-content"
             title={row.jabatanName || "-"}
           >
             {row.jabatanName || "-"}
@@ -162,7 +162,7 @@ export default function BayaranReviewRow({
       </td>
 
       {/* No. Rujukan */}
-      <td className={`overflow-hidden text-sm font-semibold text-dark-grey w-min whitespace-nowrap ${isEditing ? "px-3 py-4" : "px-3 py-2"}`}>
+      <td className={`overflow-hidden text-sm font-semibold text-content w-min whitespace-nowrap ${isEditing ? "px-3 py-4" : "px-3 py-2"}`}>
         {isEditing ? (
           <div onClick={(e) => e.stopPropagation()} onDoubleClick={(e) => e.stopPropagation()}>
             <TableInputField
@@ -174,7 +174,7 @@ export default function BayaranReviewRow({
           </div>
         ) : (
           <span
-            className="block truncate font-semibold text-dark-grey"
+            className="block truncate font-semibold text-content"
             title={row.noRujukan || "-"}
           >
             {row.noRujukan || "-"}
@@ -183,7 +183,7 @@ export default function BayaranReviewRow({
       </td>
 
       {/* Catatan */}
-      <td className={`overflow-hidden text-sm font-semibold text-dark-grey w-min whitespace-nowrap ${isEditing ? "px-3 py-4" : "px-3 py-2"}`}>
+      <td className={`overflow-hidden text-sm font-semibold text-content w-min whitespace-nowrap ${isEditing ? "px-3 py-4" : "px-3 py-2"}`}>
         {isEditing ? (
           <div onClick={(e) => e.stopPropagation()} onDoubleClick={(e) => e.stopPropagation()}>
             <TableInputField
@@ -195,7 +195,7 @@ export default function BayaranReviewRow({
           </div>
         ) : (
           <span
-            className="block truncate font-semibold text-dark-grey"
+            className="block truncate font-semibold text-content"
             title={row.catatan || "-"}
           >
             {row.catatan || "-"}
@@ -204,7 +204,7 @@ export default function BayaranReviewRow({
       </td>
 
       {/* Amaun Bayar (RM) */}
-      <td className={`overflow-hidden text-sm font-semibold text-dark-grey w-min whitespace-nowrap ${isEditing ? "px-3 py-4" : "px-3 py-2"}`}>
+      <td className={`overflow-hidden text-sm font-semibold text-content w-min whitespace-nowrap ${isEditing ? "px-3 py-4" : "px-3 py-2"}`}>
         {isEditing ? (
           <div onClick={(e) => e.stopPropagation()} onDoubleClick={(e) => e.stopPropagation()}>
             <TableInputField
@@ -216,7 +216,7 @@ export default function BayaranReviewRow({
             />
           </div>
         ) : (
-          <span className="block text-right font-semibold text-dark-grey">
+          <span className="block text-right font-semibold text-content">
             {formatBayaranAmount(row.amaunRm)}
           </span>
         )}

@@ -230,7 +230,7 @@ export default function BayaranPageClient() {
   }
 
   return (
-    <main className="relative flex flex-col gap-4 pb-4 text-[#0B1C30]">
+    <main className="relative flex flex-col gap-4 pb-4 text-content">
       <div className="flex w-full flex-col gap-4">
         <BayaranPageHeader />
         <BayaranStatsCards stats={filteredStats} />

@@ -22,7 +22,7 @@ export default function AuditLogPagination({
   const endIndex = pagination.lastRecord;
 
   return (
-    <footer className="border-t border-light-grey/20 bg-white px-4 py-4 sm:px-5 max-lg:min-w-245">
+    <footer className="border-t border-light-grey/20 bg-surface px-4 py-4 sm:px-5 max-lg:min-w-245">
       <PaginationControls
         currentPage={pagination.currentPage}
         totalPages={pagination.totalPages}

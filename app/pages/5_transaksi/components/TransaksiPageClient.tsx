@@ -377,7 +377,7 @@ export default function TransaksiPageClient() {
   };
 
   return (
-    <main className="relative flex flex-col gap-4 pb-4 text-[#0B1C30]">
+    <main className="relative flex flex-col gap-4 pb-4 text-content">
       <TransaksiPageHeader />
       <TransaksiSummaryCards 
         totalCount={summary.totalCount}
@@ -402,7 +402,7 @@ export default function TransaksiPageClient() {
           onAdjust={(tx: any) => setSelectedAdjustTx(tx)}
         />
 
-        <div className="border-t border-light-grey/20 bg-white px-4 py-4 sm:px-5">
+        <div className="border-t border-light-grey/20 bg-surface px-4 py-4 sm:px-5">
           <PaginationControls
             currentPage={currentPage}
             totalPages={totalPages}

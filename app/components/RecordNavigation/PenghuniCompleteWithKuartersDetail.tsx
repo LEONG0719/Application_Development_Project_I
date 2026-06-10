@@ -139,7 +139,7 @@ export default function PenghuniCompleteWithKuartersDetail({
           label="NAMA PENGHUNI"
           value={currentOccupancy?.occupantName ?? "N/A"}
           state="inactive"
-          inactiveBackgroundClass="bg-[#EEF4FF]"
+          inactiveBackgroundClass="bg-surface-muted"
           className="md:col-span-4"
         />
         <InputField
@@ -150,7 +150,7 @@ export default function PenghuniCompleteWithKuartersDetail({
               : "N/A"
           }
           state="inactive"
-          inactiveBackgroundClass="bg-[#EEF4FF]"
+          inactiveBackgroundClass="bg-surface-muted"
           className="md:col-span-2"
         />
         <InputField
@@ -161,7 +161,7 @@ export default function PenghuniCompleteWithKuartersDetail({
               : "N/A"
           }
           state="inactive"
-          inactiveBackgroundClass="bg-[#EEF4FF]"
+          inactiveBackgroundClass="bg-surface-muted"
           className="md:col-span-2"
         />
       </div>
@@ -171,14 +171,14 @@ export default function PenghuniCompleteWithKuartersDetail({
           label="KELAS"
           value={currentOccupancy?.quarterClass ?? "N/A"}
           state="inactive"
-          inactiveBackgroundClass="bg-[#EEF4FF]"
+          inactiveBackgroundClass="bg-surface-muted"
           className="md:col-span-1"
         />
         <InputField
           label="UNIT KUARTERS"
           value={currentOccupancy?.quarterUnit ?? "N/A"}
           state="inactive"
-          inactiveBackgroundClass="bg-[#EEF4FF]"
+          inactiveBackgroundClass="bg-surface-muted"
           className="md:col-span-1"
         />
       </div>
@@ -188,7 +188,7 @@ export default function PenghuniCompleteWithKuartersDetail({
           label="ALAMAT"
           value={currentOccupancy?.quarterAddress ?? "N/A"}
           state="inactive"
-          inactiveBackgroundClass="bg-[#EEF4FF]"
+          inactiveBackgroundClass="bg-surface-muted"
           className="md:col-span-1"
         />
       </div>
@@ -198,21 +198,21 @@ export default function PenghuniCompleteWithKuartersDetail({
           label="TARIKH MASUK"
           value={formatDate(currentOccupancy?.moveInDate ?? null)}
           state="inactive"
-          inactiveBackgroundClass="bg-[#EEF4FF]"
+          inactiveBackgroundClass="bg-surface-muted"
           className="md:col-span-1"
         />
         <InputField
           label="TARIKH KELUAR"
           value={formatDate(currentOccupancy?.moveOutDate ?? null)}
           state="inactive"
-          inactiveBackgroundClass="bg-[#EEF4FF]"
+          inactiveBackgroundClass="bg-surface-muted"
           className="md:col-span-1"
         />
         <InputField
           label="STATUS"
           value={statusLabel}
           state="inactive"
-          inactiveBackgroundClass={`bg-[#EEF4FF] ${statusClass}`}
+          inactiveBackgroundClass={`bg-surface-muted ${statusClass}`}
           className="md:col-span-2"
         />
       </div>

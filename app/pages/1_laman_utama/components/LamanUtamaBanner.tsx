@@ -80,7 +80,7 @@ export default function LamanUtamaBanner({
       onMouseLeave={() => setIsHovered(false)}
       onWheel={handleWheel}
       onClick={handleContainerClick}
-      className="relative w-full h-[223px] overflow-hidden bg-gradient-to-r from-[#151E66] to-[#2D367D] rounded-xl shadow-xl hover:shadow-2xl hover:scale-[1.01] text-white select-none transition-all duration-300 cursor-pointer"
+      className="relative w-full h-[223px] overflow-hidden bg-gradient-to-r from-dark-blue to-brand-secondary rounded-xl shadow-xl hover:shadow-2xl hover:scale-[1.01] text-static-white select-none transition-all duration-300 cursor-pointer"
     >
       <div className="absolute inset-0 bg-white/[0.002] shadow-[0px_20px_25px_-5px_rgba(0,0,0,0.1),0px_8px_10px_-6px_rgba(0,0,0,0.1)] rounded-xl pointer-events-none" />
 
@@ -118,7 +118,7 @@ export default function LamanUtamaBanner({
             <div className="flex flex-row items-center gap-4 w-full mt-4 pr-16">
               <div className="relative flex-grow h-1.5 bg-white/20 rounded-full overflow-hidden">
                 <div
-                  className="absolute top-0 bottom-0 left-0 bg-[#FEC652] rounded-full transition-all duration-500 ease-out"
+                  className="absolute top-0 bottom-0 left-0 bg-warning-strong rounded-full transition-all duration-500 ease-out"
                   style={{ width: `${slide.percentage}%` }}
                 />
               </div>
@@ -137,7 +137,7 @@ export default function LamanUtamaBanner({
             setActiveSlide(0);
           }}
           className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer ${
-            activeSlide === 0 ? "bg-white w-4" : "bg-white/40 hover:bg-white/70 w-1.5"
+            activeSlide === 0 ? "bg-static-white w-4" : "bg-white/40 hover:bg-white/70 w-1.5"
           }`}
           aria-label="Tunjukkan Jumlah Kutipan Bulan Ini"
           title="Bulan Ini"
@@ -148,7 +148,7 @@ export default function LamanUtamaBanner({
             setActiveSlide(1);
           }}
           className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer ${
-            activeSlide === 1 ? "bg-white w-4" : "bg-white/40 hover:bg-white/70 w-1.5"
+            activeSlide === 1 ? "bg-static-white w-4" : "bg-white/40 hover:bg-white/70 w-1.5"
           }`}
           aria-label="Tunjukkan Jumlah Keseluruhan Kutipan"
           title="Keseluruhan"

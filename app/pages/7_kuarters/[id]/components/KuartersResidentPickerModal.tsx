@@ -153,7 +153,7 @@ export default function KuartersResidentPickerModal({
                     <th className="w-[0%] px-4 py-3 text-center whitespace-nowrap">Tindakan</th>
                   </tr>
                 </thead>
-                <tbody className="bg-white">
+                <tbody className="bg-surface">
                   {isLoading ? (
                     loadingTableRows({
                       mode: "loading",
@@ -184,12 +184,12 @@ export default function KuartersResidentPickerModal({
                             className="border-b border-b-light-grey/20 text-sm transition-colors hover:bg-background/60"
                           >
                             <td
-                              className="px-4 py-3 text-left font-bold text-dark-grey w-min whitespace-nowrap"
+                              className="px-4 py-3 text-left font-bold text-content w-min whitespace-nowrap"
                               title={resident.icNumber}
                             >
                               {formatIcNumber(resident.icNumber)}
                             </td>
-                            <td className="px-4 py-3 text-left font-bold text-dark-grey w-min whitespace-nowrap">
+                            <td className="px-4 py-3 text-left font-bold text-content w-min whitespace-nowrap">
                               {resident.fullName}
                             </td>
                             <td className="px-4 py-3 text-center w-min whitespace-nowrap">
@@ -223,7 +223,7 @@ export default function KuartersResidentPickerModal({
                     : null}
                 </tbody>
 
-                <tfoot className="bg-white border-t border-light-grey/20">
+                <tfoot className="bg-surface border-t border-light-grey/20">
                   <tr>
                     <td
                       colSpan={4}

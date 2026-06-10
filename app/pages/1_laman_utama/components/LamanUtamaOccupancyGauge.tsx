@@ -61,7 +61,7 @@ export default function LamanUtamaOccupancyGauge({
       <div className="flex flex-row justify-between items-center w-full mb-2">
         <div className="flex flex-row items-center gap-2">
           <Icon icon="apartment" size={18} className="text-dark-blue" />
-          <h4 className="text-lg font-bold text-[#0B1C30]">
+          <h4 className="text-lg font-bold text-content">
             Status Penghunian Kuarters
           </h4>
         </div>
@@ -73,7 +73,7 @@ export default function LamanUtamaOccupancyGauge({
         <div className="relative w-[320px] h-[192px] rounded-lg bg-light-blue overflow-visible">
           
           {/* Base Background Border (Light Blue) */}
-          <div className="absolute inset-0 border-[16px] border-[#D3E4FE] rounded-lg pointer-events-none" />
+          <div className="absolute inset-0 border-[16px] border-gauge-primary rounded-lg pointer-events-none" />
 
           {/* Dynamic Foreground Running Border (SVG Overlay) */}
           <svg
@@ -84,7 +84,7 @@ export default function LamanUtamaOccupancyGauge({
           >
             <path
               d={pathD}
-              stroke="#151E66"
+              stroke="var(--color-brand-accent)"
               strokeWidth="16"
               strokeLinecap="round"
               strokeDasharray={perimeter}
@@ -108,7 +108,7 @@ export default function LamanUtamaOccupancyGauge({
             </div>
 
             {/* Divider */}
-            <div className="w-[148px] border-t border-[#E2E8F0] my-2" />
+            <div className="w-[148px] border-t border-gauge-secondary my-2" />
 
             {/* Split Dihuni vs Kosong columns */}
             <div className="flex flex-row justify-center items-center gap-6 w-full mt-1">
@@ -120,7 +120,7 @@ export default function LamanUtamaOccupancyGauge({
                     Dihuni
                   </span>
                 </div>
-                <span className="text-lg font-black text-[#0B1C30] mt-0.5">
+                <span className="text-lg font-black text-content mt-0.5">
                   {occupiedDisplay}
                 </span>
                 <span className="text-[12px] font-bold text-dark-blue mt-0.5">
@@ -129,17 +129,17 @@ export default function LamanUtamaOccupancyGauge({
               </div>
 
               {/* Vertical separator */}
-              <div className="h-10 w-px bg-[#E2E8F0]" />
+              <div className="h-10 w-px bg-gauge-secondary" />
 
               {/* Column 2: Kosong */}
               <div className="flex flex-col items-center">
                 <div className="flex flex-row items-center gap-1">
-                  <span className="w-1.5 h-1.5 bg-[#D3E4FE] rounded-full" />
+                  <span className="w-1.5 h-1.5 bg-gauge-primary rounded-full" />
                   <span className="text-[9px] font-bold text-grey uppercase tracking-wider">
                     Kosong
                   </span>
                 </div>
-                <span className="text-lg font-black text-[#0B1C30] mt-0.5">
+                <span className="text-lg font-black text-content mt-0.5">
                   {vacantDisplay}
                 </span>
                 <span className="text-[12px] font-bold text-grey mt-0.5">

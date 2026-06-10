@@ -89,12 +89,12 @@ export default function LamanUtamaPage() {
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[400px] w-full gap-4 text-center select-none p-6 bg-white border border-[#EFF4FF] rounded-xl shadow-sm">
+      <div className="flex flex-col items-center justify-center min-h-[400px] w-full gap-4 text-center select-none p-6 bg-surface border border-border rounded-xl shadow-sm">
         <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red/10 text-red">
           <Icon icon="warning" size={24} />
         </div>
         <h3 className="text-lg font-bold text-dark-blue">Ralat Memuatkan Data</h3>
-        <p className="text-sm text-[#464651] max-w-md">
+        <p className="text-sm text-content-muted max-w-md">
           {error || "Tiada data yang diterima daripada pelayan."}
         </p>
         <button

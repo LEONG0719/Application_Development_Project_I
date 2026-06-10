@@ -40,7 +40,7 @@ function TabButton({
       className={`py-4 text-sm font-medium -mb-px transition-colors ${
         isActive
           ? "border-b-4 border-dark-blue text-dark-blue"
-          : "text-gray-500 hover:text-dark-blue"
+          : "text-content-muted hover:text-dark-blue"
       }`}
       onClick={onClick}
     >
@@ -160,7 +160,7 @@ export default function KuartersUnitDetailsOverlay({
         </header>
 
         <nav
-          className="flex items-center justify-center gap-6 bg-white"
+          className="flex items-center justify-center gap-6 bg-surface"
           aria-label="Unit occupancy tabs"
         >
           <TabButton

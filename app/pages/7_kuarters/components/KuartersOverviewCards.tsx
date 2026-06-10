@@ -20,10 +20,10 @@ function KuartersStatCard({
 }) {
   return (
     <article
-      className={`flex flex-col flex-1 gap-1 rounded-lg border-l-4 bg-white p-4 shadow ${accentClass}`}
+      className={`flex flex-col flex-1 gap-1 rounded-lg border-l-4 bg-surface p-4 shadow ${accentClass}`}
     >
       <p className="text-xs font-semibold text-grey/70">{card.label}</p>
-      <p className="text-3xl font-bold text-dark-grey">
+      <p className="text-3xl font-bold text-content">
         {card.value}
       </p>
     </article>

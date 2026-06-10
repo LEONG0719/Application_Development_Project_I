@@ -124,7 +124,7 @@ export default function PenghuniReviewDetail({
             </button>
           </div>
 
-          <nav className="flex items-center justify-center gap-6 bg-white">
+          <nav className="flex items-center justify-center gap-6 bg-surface">
             <button
               type="button"
               className="py-4 text-sm font-medium -mb-px border-b-4 border-dark-blue text-dark-blue"
@@ -352,13 +352,13 @@ function DatePickerField({
 
   return (
     <label className={`block tracking-widest ${className}`}>
-      <span className="mb-2 block pl-1 font-bold text-gray-500 text-[10px]">
+      <span className="mb-2 block pl-1 font-bold text-content-muted text-[10px]">
         {label}
       </span>
       <div className="relative">
         <button
           type="button"
-          className={`flex min-h-12 w-full items-center gap-3 rounded-md border border-light-grey/40 bg-white p-3 text-left text-sm outline-none transition-colors ${isOpen ? "text-dark-blue" : "text-dark-grey hover:border-dark-blue/30"
+          className={`flex min-h-12 w-full items-center gap-3 rounded-md border border-light-grey/40 bg-surface p-3 text-left text-sm outline-none transition-colors ${isOpen ? "text-dark-blue" : "text-content hover:border-dark-blue/30"
             }`}
           aria-expanded={isOpen}
           aria-haspopup="dialog"
@@ -374,7 +374,7 @@ function DatePickerField({
 
         {isOpen ? (
           <div
-            className="absolute left-0 top-full z-60 mt-2 w-72 rounded-3xl border border-light-grey/20 bg-white p-3 shadow-[0_18px_45px_rgba(13,47,86,0.16)]"
+            className="absolute left-0 top-full z-60 mt-2 w-72 rounded-3xl border border-light-grey/20 bg-surface p-3 shadow-[0_18px_45px_rgba(13,47,86,0.16)]"
             role="dialog"
             aria-label={`Pilih ${label}`}
           >
@@ -389,7 +389,7 @@ function DatePickerField({
               >
                 <Icon icon="chevron_left" size={20} />
               </button>
-              <div className="text-sm font-extrabold text-dark-grey">
+              <div className="text-sm font-extrabold text-content">
                 {formatMonthLabel(visibleMonth)}
               </div>
               <button
@@ -426,7 +426,7 @@ function DatePickerField({
                     className={`grid h-9 place-items-center rounded-xl text-sm font-bold transition-colors ${isSelected
                         ? "bg-dark-blue text-white"
                         : isVisibleMonth
-                          ? "text-dark-grey hover:bg-light-blue hover:text-dark-blue"
+                          ? "text-content hover:bg-light-blue hover:text-dark-blue"
                           : "text-light-grey hover:bg-light-blue"
                       }`}
                     onClick={() => {

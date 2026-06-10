@@ -81,7 +81,7 @@ export default function ButtonLogout() {
 						}
 					}}
 				>
-					<div className="w-full max-w-md rounded-2xl border border-light-blue bg-white p-4 shadow-2xl">
+					<div className="w-full max-w-md rounded-2xl border border-light-blue bg-surface p-4 shadow-2xl">
 						<div className="flex items-start gap-4">
 							{/* Icon */}
 							<div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-red/10 text-red">
@@ -111,7 +111,7 @@ export default function ButtonLogout() {
 							<button
 								ref={cancelButtonRef}
 								type="button"
-								className="inline-flex min-h-11 items-center justify-center rounded-xl border border-light-grey/30 bg-white px-5 py-2.5 text-sm font-semibold text-dark-blue transition-colors hover:bg-background hover:scale-[0.98] active:scale-[0.96]"
+								className="inline-flex min-h-11 items-center justify-center rounded-xl border border-light-grey/30 bg-surface px-5 py-2.5 text-sm font-semibold text-dark-blue transition-colors hover:bg-background hover:scale-[0.98] active:scale-[0.96]"
 								onClick={closeLogoutDialog}
 							>
 								Cancel

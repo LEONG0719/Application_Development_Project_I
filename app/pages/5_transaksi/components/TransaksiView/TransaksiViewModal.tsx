@@ -66,7 +66,7 @@ function TabButton({
       className={`-mb-px py-4 text-sm font-bold transition-colors ${
         isActive
           ? "border-b-4 border-dark-blue text-dark-blue"
-          : "text-gray-500 hover:text-dark-blue"
+          : "text-content-muted hover:text-dark-blue"
       }`}
       onClick={onClick}
     >
@@ -103,15 +103,15 @@ function formatRM(value: number | string) {
 function getStatusBadge(status: string) {
   switch (status) {
     case "NORMAL":
-      return <span className="bg-normal px-2 py-0.5 text-[10px] font-bold uppercase text-[#0E7490]">Normal</span>;
+      return <span className="bg-normal px-2 py-0.5 text-[10px] font-bold uppercase text-info">Normal</span>;
     case "DIBALIKAN":
       return <span className="rounded-[5px] bg-red px-2 py-0.5 text-[10px] font-bold uppercase text-white">Dibalikkan</span>;
     case "DILARASKAN":
-      return <span className="rounded-[5px] bg-[#FEF3C7] px-2 py-0.5 text-[10px] font-bold uppercase text-[#92400E]">Dilaraskan</span>;
+      return <span className="rounded-[5px] bg-warning-surface px-2 py-0.5 text-[10px] font-bold uppercase text-warning">Dilaraskan</span>;
     case "PEMBALIKAN":
       return <span className="rounded-[5px] bg-red px-2 py-0.5 text-[10px] font-bold uppercase text-white">Pembalikan</span>;
     case "PELARASAN":
-      return <span className="rounded-[5px] bg-[#FEF3C7] px-2 py-0.5 text-[10px] font-bold uppercase text-[#92400E]">Pelarasan</span>;
+      return <span className="rounded-[5px] bg-warning-surface px-2 py-0.5 text-[10px] font-bold uppercase text-warning">Pelarasan</span>;
     default:
       return <span className="rounded-[5px] bg-light-blue px-2 py-0.5 text-[10px] font-bold uppercase text-grey">{status}</span>;
   }
@@ -296,7 +296,7 @@ export default function TransaksiViewModal({ isOpen, onClose, transaction }: Tra
         </header>
 
         <nav
-          className="flex items-center justify-center gap-8 border-b border-light-grey/20 bg-white"
+          className="flex items-center justify-center gap-8 border-b border-light-grey/20 bg-surface"
           aria-label="Tab butiran transaksi"
         >
           <TabButton
@@ -354,37 +354,37 @@ export default function TransaksiViewModal({ isOpen, onClose, transaction }: Tra
                       label="TARIKH"
                       value={new Date(transaction.transactionDate).toLocaleDateString("en-GB")}
                       state="inactive"
-                      inactiveBackgroundClass="bg-[#EEF4FF]"
+                      inactiveBackgroundClass="bg-surface-muted"
                     />
                     <InputField
                       label="ID"
                       value={transaction.transactionNo || `${transaction.id.split("-")[0]}...`}
                       state="inactive"
-                      inactiveBackgroundClass="bg-[#EEF4FF]"
+                      inactiveBackgroundClass="bg-surface-muted"
                     />
                     <InputField
                       label="KATEGORI"
                       value={transaction.category.replace(/_/g, " ")}
                       state="inactive"
-                      inactiveBackgroundClass="bg-[#EEF4FF]"
+                      inactiveBackgroundClass="bg-surface-muted"
                     />
                     <InputField
                       label="NO. RESIT"
                       value={transaction.receiptNo || "N/A"}
                       state="inactive"
-                      inactiveBackgroundClass="bg-[#EEF4FF]"
+                      inactiveBackgroundClass="bg-surface-muted"
                     />
                     <InputField
                       label="DEBIT (RM)"
                       value={Number(transaction.debitAmount) > 0 ? formatRM(transaction.debitAmount) : "0.00"}
                       state="inactive"
-                      inactiveBackgroundClass={`bg-[#EEF4FF] ${Number(transaction.debitAmount) > 0 ? "text-red" : ""}`}
+                      inactiveBackgroundClass={`bg-surface-muted ${Number(transaction.debitAmount) > 0 ? "text-red" : ""}`}
                     />
                     <InputField
                       label="KREDIT (RM)"
                       value={Number(transaction.creditAmount) > 0 ? formatRM(transaction.creditAmount) : "0.00"}
                       state="inactive"
-                      inactiveBackgroundClass={`bg-[#EEF4FF] ${Number(transaction.creditAmount) > 0 ? "text-green" : ""}`}
+                      inactiveBackgroundClass={`bg-surface-muted ${Number(transaction.creditAmount) > 0 ? "text-green" : ""}`}
                     />
                   </div>
 
@@ -392,7 +392,7 @@ export default function TransaksiViewModal({ isOpen, onClose, transaction }: Tra
                     label="CATATAN"
                     value={transaction.description || "N/A"}
                     state="inactive"
-                    inactiveBackgroundClass="bg-[#EEF4FF]"
+                    inactiveBackgroundClass="bg-surface-muted"
                     inputMinHeight={110}
                   />
                 </section>

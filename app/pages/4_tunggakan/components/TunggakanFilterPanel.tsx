@@ -37,7 +37,7 @@ function RadioGroup({
           className={`px-3 py-1.5 rounded-full text-xs font-bold border transition-colors ${
             value === opt.value
               ? "bg-dark-blue text-white border-dark-blue"
-              : "bg-white text-grey border-light-grey/25 hover:border-dark-blue hover:text-dark-blue"
+              : "bg-surface text-grey border-light-grey/25 hover:border-dark-blue hover:text-dark-blue"
           }`}
         >
           {opt.label}
@@ -72,7 +72,7 @@ function MultiChipSelect({
           className={`px-3 py-1.5 rounded-full text-xs font-bold border transition-colors ${
             value.includes(opt)
               ? "bg-dark-blue text-white border-dark-blue"
-              : "bg-white text-grey border-light-grey/25 hover:border-dark-blue hover:text-dark-blue"
+              : "bg-surface text-grey border-light-grey/25 hover:border-dark-blue hover:text-dark-blue"
           }`}
         >
           {opt}
@@ -97,16 +97,16 @@ function Toggle({
         type="button"
         onClick={onToggle}
         className={`w-10 h-5 rounded-full transition-colors relative shrink-0 ${
-          enabled ? "bg-dark-blue" : "bg-gray-300"
+          enabled ? "bg-dark-blue" : "bg-border"
         }`}
       >
         <div
-          className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-all ${
+          className={`absolute top-0.5 w-4 h-4 rounded-full bg-static-white shadow transition-all ${
             enabled ? "left-5" : "left-0.5"
           }`}
         />
       </button>
-      <span className="text-sm font-medium text-dark-grey">{label}</span>
+      <span className="text-sm font-medium text-content">{label}</span>
     </div>
   );
 }
@@ -243,7 +243,7 @@ export default function TunggakanFilterPanel({
                       placeholder="Min"
                       value={filters.julatMin}
                       onChange={(e) => set("julatMin", e.target.value)}
-                      className="w-full pl-9 pr-3 py-2.5 border border-light-grey/25 rounded text-sm focus:outline-none focus:ring-1 focus:ring-dark-blue bg-white"
+                      className="w-full pl-9 pr-3 py-2.5 border border-light-grey/25 rounded text-sm focus:outline-none focus:ring-1 focus:ring-dark-blue bg-surface"
                     />
                   </div>
                   <span className="text-grey text-sm font-bold shrink-0">—</span>
@@ -255,7 +255,7 @@ export default function TunggakanFilterPanel({
                       placeholder="Max"
                       value={filters.julatMax}
                       onChange={(e) => set("julatMax", e.target.value)}
-                      className="w-full pl-9 pr-3 py-2.5 border border-light-grey/25 rounded text-sm focus:outline-none focus:ring-1 focus:ring-dark-blue bg-white"
+                      className="w-full pl-9 pr-3 py-2.5 border border-light-grey/25 rounded text-sm focus:outline-none focus:ring-1 focus:ring-dark-blue bg-surface"
                     />
                   </div>
                 </div>
@@ -302,7 +302,7 @@ export default function TunggakanFilterPanel({
         </div>
 
         {/* Footer */}
-        <div className="bg-white border-t border-light-grey/20 px-6 py-4 shrink-0">
+        <div className="bg-surface border-t border-light-grey/20 px-6 py-4 shrink-0">
           <button
             onClick={onClose}
             className="w-full flex items-center justify-center gap-2 bg-dark-blue text-white py-3 rounded-lg font-bold text-sm hover:bg-opacity-90 transition-colors"
@@ -310,7 +310,7 @@ export default function TunggakanFilterPanel({
             <Icon icon="filter" size={18} />
             Papar Keputusan
             {activeCount > 0 && (
-              <span className="ml-2 bg-white text-dark-blue text-xs font-bold px-2 py-0.5 rounded-full">
+              <span className="ml-2 bg-static-white text-static-dark text-xs font-bold px-2 py-0.5 rounded-full">
                 {activeCount} aktif
               </span>
             )}

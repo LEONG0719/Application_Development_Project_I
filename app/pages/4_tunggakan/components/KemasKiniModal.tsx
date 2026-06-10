@@ -98,7 +98,7 @@ function RowEditor({
         <button
           type="button"
           disabled={disabled}
-          className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md bg-[#E5ECFA] px-4 py-2 text-xs font-bold uppercase text-dark-blue transition hover:bg-dark-blue hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+          className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md bg-surface-muted px-4 py-2 text-xs font-bold uppercase text-dark-blue transition hover:bg-dark-blue hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
           onClick={onAdd}
         >
           <Icon icon="add" size={17} />
@@ -107,12 +107,12 @@ function RowEditor({
       </div>
 
       {rows.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-light-grey/50 bg-white/70 px-5 py-8 text-center text-sm font-semibold text-grey">
+        <div className="rounded-lg border border-dashed border-light-grey/50 bg-surface/70 px-5 py-8 text-center text-sm font-semibold text-grey">
           Tiada rekod ditambah.
         </div>
       ) : (
         <div className="flex flex-col gap-3">
-          <div className="grid grid-cols-[184px_1fr_184px_36px] gap-4 px-1 text-[10px] font-bold uppercase tracking-widest text-gray-500">
+          <div className="grid grid-cols-[184px_1fr_184px_36px] gap-4 px-1 text-[10px] font-bold uppercase tracking-widest text-content-muted">
             <div>Tarikh</div>
             <div>Catatan</div>
             <div className="text-right">Amaun (RM)</div>
@@ -155,8 +155,8 @@ function RowEditor({
                   placeholder="0.00"
                   state={disabled ? "inactive" : "active"}
                   textAlign="right"
-                  activeBackgroundClass={`bg-white ${amountToneClass}`}
-                  inactiveBackgroundClass={`bg-[#EEF4FF] ${amountToneClass}`}
+                  activeBackgroundClass={`bg-surface ${amountToneClass}`}
+                  inactiveBackgroundClass={`bg-surface-muted ${amountToneClass}`}
                   onChange={(value) => onChange(row.id, "amaun", value)}
                 />
               </div>
@@ -310,8 +310,8 @@ export default function KemasKiniModal({
 
         {selectedCount === 0 ? (
           <div className="flex min-h-96 items-center justify-center h-full">
-            <div className="flex-1 w-full max-w-md h-full rounded-xl border border-red/20 bg-white p-6 text-center">
-              <h3 className="text-lg font-extrabold text-dark-grey">Tiada Rekod Dipilih</h3>
+            <div className="flex-1 w-full max-w-md h-full rounded-xl border border-red/20 bg-surface p-6 text-center">
+              <h3 className="text-lg font-extrabold text-content">Tiada Rekod Dipilih</h3>
               <p className="mt-2 text-sm leading-6 text-grey">
                 Pilih sekurang-kurangnya satu penghuni pada jadual sebelum kemas kini tunggakan.
               </p>
@@ -323,8 +323,8 @@ export default function KemasKiniModal({
               <div
                 className={`rounded-lg border px-4 py-3 text-sm font-semibold ${
                   feedback.type === "success"
-                    ? "border-green/20 bg-white text-green"
-                    : "border-red/20 bg-white text-red"
+                    ? "border-green/20 bg-surface text-green"
+                    : "border-red/20 bg-surface text-red"
                 }`}
               >
                 {feedback.message}
@@ -333,7 +333,7 @@ export default function KemasKiniModal({
 
             <section className="flex flex-col gap-4">
               <Topic content="PERINCIAN KEWANGAN" />
-              <div className="rounded-lg border border-light-grey/30 bg-white p-4">
+              <div className="rounded-lg border border-light-grey/30 bg-surface p-4">
                 <label className="flex items-center gap-4">
                   <button
                     type="button"
@@ -341,17 +341,17 @@ export default function KemasKiniModal({
                     aria-label="Togol caj penyelenggaraan"
                     aria-pressed={cajSenggaraEnabled}
                     className={`relative h-6 w-12 rounded-full transition-colors ${
-                      cajSenggaraEnabled ? "bg-dark-blue" : "bg-gray-300"
+                      cajSenggaraEnabled ? "bg-dark-blue" : "bg-border"
                     } disabled:cursor-not-allowed disabled:opacity-50`}
                     onClick={() => setCajSenggaraEnabled((value) => !value)}
                   >
                     <span
-                      className={`absolute top-1 h-4 w-4 rounded-full bg-white transition-all ${
+                      className={`absolute top-1 h-4 w-4 rounded-full bg-static-white transition-all ${
                         cajSenggaraEnabled ? "left-7" : "left-1"
                       }`}
                     />
                   </button>
-                  <span className="text-sm font-bold uppercase tracking-wide text-dark-grey">
+                  <span className="text-sm font-bold uppercase tracking-wide text-content">
                     Caj Penyelenggaraan
                   </span>
                 </label>

@@ -120,7 +120,7 @@ export default function FilterOption<T extends string>({
 
   return (
     <div
-      className="absolute right-0 top-full flex flex-col gap-2 z-20 mt-2 rounded-2xl border border-light-grey/20 bg-white p-2 shadow-lg"
+      className="absolute right-0 top-full flex flex-col gap-2 z-20 mt-2 rounded-2xl border border-light-grey/20 bg-surface p-2 shadow-lg"
       aria-label={ariaLabel}
     >
       {/* Description Section */}
@@ -153,7 +153,7 @@ export default function FilterOption<T extends string>({
                 className={`flex w-full items-center justify-between rounded-xl border px-2 py-1 text-left text-sm font-bold transition-colors ${
                   isAllSelected
                     ? "border-dark-blue bg-dark-blue text-white"
-                    : "border-light-grey/40 text-dark-grey hover:bg-light-blue"
+                    : "border-light-grey/40 text-content hover:bg-light-blue"
                 }`}
                 onClick={() => handleSelectAll(setIdx)}
               >
@@ -177,7 +177,7 @@ export default function FilterOption<T extends string>({
                       className={`flex gap-2 w-full items-center justify-between rounded-xl px-2 py-1 text-left text-sm font-semibold transition-colors ${
                         isSelected
                           ? "bg-dark-blue text-white"
-                          : "text-dark-grey hover:bg-light-blue"
+                          : "text-content hover:bg-light-blue"
                       }`}
                       onClick={() => handleToggle(setIdx, option.value)}
                     >

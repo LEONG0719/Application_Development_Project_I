@@ -273,10 +273,10 @@ export default function TunggakanPageClient() {
   const isManualButtonDisabled = isLoading || isFirstDayOfMonth || isBilledThisMonth || isBillingRunning;
 
   return (
-    <main className="relative flex flex-col gap-4 text-[#0B1C30]">
+    <main className="relative flex flex-col gap-4 text-content">
       {/* --- HEADER SECTION --- */}
       <header>
-        <h1 className="text-2xl font-extrabold text-dark-grey">
+        <h1 className="text-2xl font-extrabold text-content">
           Tunggakan
         </h1>
         <p className="text-sm font-extralight text-grey/70">
@@ -303,7 +303,7 @@ export default function TunggakanPageClient() {
             </div>
             
             {/* Action Buttons */}
-            <div className="flex flex-col items-end gap-3 text-[#607083]">
+            <div className="flex flex-col items-end gap-3 text-content-muted">
               <div className="flex items-center gap-3">
                 {/* Manual Run Button */}
                 <div className="group relative inline-block">
@@ -313,8 +313,8 @@ export default function TunggakanPageClient() {
                     disabled={isManualButtonDisabled}
                     className={`inline-flex h-10 items-center gap-2 rounded-lg border px-4 text-sm font-semibold transition-colors
                       ${isManualButtonDisabled 
-                        ? 'border-light-grey/20 bg-white text-grey/50 cursor-not-allowed' 
-                        : 'border-light-grey/20 bg-white text-grey hover:border-dark-blue hover:text-dark-blue'
+                        ? 'border-light-grey/20 bg-surface text-grey/50 cursor-not-allowed'
+                        : 'border-light-grey/20 bg-surface text-grey hover:border-dark-blue hover:text-dark-blue'
                       }`}
                   >
                     <Icon icon={isBillingRunning ? "progress_activity" : "autorenew"} size={18} className={isBillingRunning ? "animate-spin" : ""} />
@@ -322,10 +322,10 @@ export default function TunggakanPageClient() {
                   </button>
 
                   {/* Automated Billing Status Text (Hover Tooltip) */}
-                  <div className="invisible opacity-0 group-hover:visible group-hover:opacity-100 absolute right-0 top-full z-50 mt-2 rounded-xl border border-light-grey/20 bg-white p-4 shadow-xl transition-all duration-200 pointer-events-none text-xs text-right">
+                  <div className="invisible opacity-0 group-hover:visible group-hover:opacity-100 absolute right-0 top-full z-50 mt-2 rounded-xl border border-light-grey/20 bg-surface p-4 shadow-xl transition-all duration-200 pointer-events-none text-xs text-right">
                     <div className="flex flex-col gap-1">
                       <div className="whitespace-nowrap">
-                        <span className="font-bold text-black">Status Caj Automatik{targetBillingMonthLabel ? ` (${targetBillingMonthLabel})` : ""}: </span>
+                        <span className="font-bold text-content">Status Caj Automatik{targetBillingMonthLabel ? ` (${targetBillingMonthLabel})` : ""}: </span>
                         <span className={`font-bold ${isBilledThisMonth ? "text-green" : "text-red"}`}>
                           {isBilledThisMonth ? "Selesai" : "Belum Dijana"}
                         </span>
@@ -348,7 +348,7 @@ export default function TunggakanPageClient() {
                     </div>
 
                     {/* Tooltip Arrow */}
-                    <div className="absolute right-6 top-0 h-2 w-2 -translate-y-1 rotate-45 border-l border-t border-light-grey/20 bg-white" />
+                    <div className="absolute right-6 top-0 h-2 w-2 -translate-y-1 rotate-45 border-l border-t border-light-grey/20 bg-surface" />
                   </div>
                 </div>
 

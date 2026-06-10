@@ -17,29 +17,29 @@ export default function BayaranDeleteDialog({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#07162F]/35 px-4">
-      <div className="w-full max-w-md rounded-xl border border-[#F3C7C7] bg-white p-6 shadow-[0_22px_55px_rgba(15,23,42,0.22)]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-static-dark/35 px-4">
+      <div className="w-full max-w-md rounded-xl border border-red/30 bg-surface p-6 shadow-[0_22px_55px_rgba(15,23,42,0.22)]">
         <div className="flex items-start gap-4">
-          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-[#FFF0F0] text-red">
+          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-danger-surface text-red">
             <Icon icon="delete" size={24} weight={700} />
           </span>
           <div className="min-w-0">
-            <h3 className="text-lg font-extrabold leading-6 text-[#07162F]">
+            <h3 className="text-lg font-extrabold leading-6 text-content">
               Padam Rekod Bayaran?
             </h3>
-            <p className="mt-2 text-sm font-medium leading-6 text-[#4B5567]">
+            <p className="mt-2 text-sm font-medium leading-6 text-content-muted">
               Sahkan untuk memadam maklumat bayaran penghuni ini daripada
               senarai semakan.
             </p>
           </div>
         </div>
 
-        <div className="mt-5 rounded-lg border border-[#EEF1F7] bg-[#F8FAFF] px-4 py-3">
-          <p className="text-[10px] font-extrabold uppercase text-[#667085]">
+        <div className="mt-5 rounded-lg border border-border bg-surface-muted px-4 py-3">
+          <p className="text-[10px] font-extrabold uppercase text-content-muted">
             Penghuni
           </p>
-          <p className="mt-1 font-extrabold text-[#172033]">{row.nama}</p>
-          <p className="mt-1 text-xs font-semibold text-[#667085]">
+          <p className="mt-1 font-extrabold text-content">{row.nama}</p>
+          <p className="mt-1 text-xs font-semibold text-content-muted">
             {row.noGajiNoKp} · RM {row.amaunRm}
           </p>
         </div>
@@ -47,14 +47,14 @@ export default function BayaranDeleteDialog({
         <div className="mt-6 flex justify-end gap-3">
           <button
             type="button"
-            className="h-11 rounded-lg border border-[#DCE2F1] bg-white px-5 text-xs font-extrabold text-[#344054] shadow-sm transition hover:bg-[#F8FAFF]"
+            className="h-11 rounded-lg border border-border bg-surface px-5 text-xs font-extrabold text-content shadow-sm transition hover:bg-surface-muted"
             onClick={onCancel}
           >
             Batal
           </button>
           <button
             type="button"
-            className="h-11 rounded-lg bg-red px-5 text-xs font-extrabold text-white shadow-sm transition hover:bg-[#B42318]"
+            className="h-11 rounded-lg bg-red px-5 text-xs font-extrabold text-white shadow-sm transition hover:bg-red/90"
             onClick={onConfirm}
           >
             Ya, Padam

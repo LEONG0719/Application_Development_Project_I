@@ -424,7 +424,7 @@ export default function KuartersUnitsPanel({
       <div className="flex flex-col gap-3 px-3">
         <div className="flex flex-row justify-between pt-3">
           <div>
-            <div className="text-lg font-bold text-dark-grey">
+            <div className="text-lg font-bold text-content">
               Senarai Unit Kuarters
             </div>
             <div className="text-xs text-grey">
@@ -500,7 +500,7 @@ export default function KuartersUnitsPanel({
                 <th className="w-[0%] p-3 text-center whitespace-nowrap">Tindakan</th>
               </tr>
             </thead>
-            <tbody className="bg-white">
+            <tbody className="bg-surface">
               {isLoading ? (
                 loadingTableRows({
                   mode: "loading",
@@ -649,7 +649,7 @@ export default function KuartersUnitsPanel({
                     }}
                   >
                     <td
-                      className={`overflow-hidden text-sm font-semibold text-dark-grey align-middle w-min whitespace-nowrap
+                      className={`overflow-hidden text-sm font-semibold text-content align-middle w-min whitespace-nowrap
                         ${getRowAccentClass(isEditing ? hasOccupantDraft ? "OCCUPIED" : "VACANT" : unit.status,)}
                         ${isEditing ? "px-3 py-4" : "px-3 py-2"}`
                       }
@@ -663,10 +663,10 @@ export default function KuartersUnitsPanel({
                           onChange={(value) => onDraftChange("unitCode", value)}
                         />
                       ) : (
-                        <span className="text-sm font-semibold text-dark-grey">{unit.unitCode}</span>
+                        <span className="text-sm font-semibold text-content">{unit.unitCode}</span>
                       )}
                     </td>
-                    <td className={`overflow-hidden align-middle text-sm font-semibold text-dark-grey w-min whitespace-nowrap ${isEditing ? "px-3 py-4" : "px-3 py-2"}`}>
+                    <td className={`overflow-hidden align-middle text-sm font-semibold text-content w-min whitespace-nowrap ${isEditing ? "px-3 py-4" : "px-3 py-2"}`}>
                       {isEditing ? (
                         <TablePickerField
                           value={formatIcNumber(editor.draft.occupantIcNumber)}
@@ -681,7 +681,7 @@ export default function KuartersUnitsPanel({
                         </span>
                       )}
                     </td>
-                    <td className={`overflow-hidden align-middle text-sm font-semibold text-dark-grey w-min whitespace-nowrap ${isEditing ? "px-3 py-4" : "px-3 py-2"}`}>
+                    <td className={`overflow-hidden align-middle text-sm font-semibold text-content w-min whitespace-nowrap ${isEditing ? "px-3 py-4" : "px-3 py-2"}`}>
                       {isEditing ? (
                         <p
                           className={`${
@@ -689,7 +689,7 @@ export default function KuartersUnitsPanel({
                               ? "font-semibold text-grey"
                               : isVacant
                                 ? "text-grey"
-                                : "text-dark-grey"
+                                : "text-content"
                           }`}
                         >
                           {hasOccupantChanged
@@ -699,12 +699,12 @@ export default function KuartersUnitsPanel({
                             : occupantName}
                         </p>
                       ) : (
-                        <span className={isVacant ? "text-grey" : "text-dark-grey"}>
+                        <span className={isVacant ? "text-grey" : "text-content"}>
                           {occupantName}
                         </span>
                       )}
                     </td>
-                    <td className={`overflow-hidden text-center align-middle text-sm font-semibold text-dark-grey w-min whitespace-nowrap ${isEditing ? "px-3 py-4" : "px-3 py-2"}`}>
+                    <td className={`overflow-hidden text-center align-middle text-sm font-semibold text-content w-min whitespace-nowrap ${isEditing ? "px-3 py-4" : "px-3 py-2"}`}>
                       {isEditing && hasOccupantDraft ? (
                         <KuartersUnitDatePicker
                           fieldType="moveInDate"
@@ -718,14 +718,14 @@ export default function KuartersUnitsPanel({
                       ) : (
                         <span
                           className={
-                            unit.moveInDate ? "text-dark-grey" : "text-grey"
+                            unit.moveInDate ? "text-content" : "text-grey"
                           }
                         >
                           {formatDisplayDate(unit.moveInDate)}
                         </span>
                       )}
                     </td>
-                    <td className={`overflow-hidden text-center align-middle text-sm font-semibold text-dark-grey w-min whitespace-nowrap ${isEditing ? "px-3 py-4" : "px-3 py-2"}`}>
+                    <td className={`overflow-hidden text-center align-middle text-sm font-semibold text-content w-min whitespace-nowrap ${isEditing ? "px-3 py-4" : "px-3 py-2"}`}>
                       {isEditing && hasOccupantDraft ? (
                         <KuartersUnitDatePicker
                           fieldType="moveOutDate"
@@ -739,7 +739,7 @@ export default function KuartersUnitsPanel({
                       ) : (
                         <span
                           className={
-                            unit.moveOutDate ? "text-dark-grey" : "text-grey"
+                            unit.moveOutDate ? "text-content" : "text-grey"
                           }
                         >
                           {formatDisplayDate(unit.moveOutDate)}
@@ -758,7 +758,7 @@ export default function KuartersUnitsPanel({
           </table>
         </div>
 
-        <div className="flex flex-col gap-3 border-t bg-white border-light-grey/20 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+        <div className="flex flex-col gap-3 border-t bg-surface border-light-grey/20 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
           <PaginationControls
             currentPage={currentPage}
             totalPages={totalPages}

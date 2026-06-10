@@ -38,7 +38,7 @@ export default function ButtonHelp() {
             </button>
 
             {isHelpOpen ? (
-                <div className="flex flex-col absolute right-0 top-full z-100 w-max whitespace-nowrap border border-light-blue rounded-lg bg-white p-4 text-sm shadow-2xl mt-2">
+                <div className="flex flex-col absolute right-0 top-full z-100 w-max whitespace-nowrap border border-light-blue rounded-lg bg-surface p-4 text-sm shadow-2xl mt-2">
                     <div className="font-medium text-grey mb-1">Sebarang Kemusykilan & Pertanyaan, Sila Hubungi:</div>
                     <div className="flex flex-row gap-1 font-bold text-dark-blue">
                         <Icon icon="email" size={16} />

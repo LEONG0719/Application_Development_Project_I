@@ -141,13 +141,13 @@ export default function TransaksiAdjustModal({ isOpen, onClose, transaction, onS
                 label="NAMA PENGHUNI"
                 value={transaction.resident?.fullName || "Tiada"}
                 state="inactive"
-                inactiveBackgroundClass="bg-[#EEF4FF]"
+                inactiveBackgroundClass="bg-surface-muted"
               />
               <InputField
                 label="NO. KAD PENGENALAN"
                 value={formatIcNumber(transaction.resident?.icNumber)}
                 state="inactive"
-                inactiveBackgroundClass="bg-[#EEF4FF]"
+                inactiveBackgroundClass="bg-surface-muted"
               />
             </div>
 
@@ -157,9 +157,9 @@ export default function TransaksiAdjustModal({ isOpen, onClose, transaction, onS
                 value={formatRM(currentNet)}
                 state="inactive"
                 inputTextClassName={isDebitOriginal ? "text-red font-bold" : "text-green font-bold"}
-                inactiveBackgroundClass="bg-[#EEF4FF]"
+                inactiveBackgroundClass="bg-surface-muted"
               />
-              <Icon icon="arrow_forward" size={20} className="text-gray-400 mt-5" />
+              <Icon icon="arrow_forward" size={20} className="text-content-subtle mt-5" />
               <InputField
                 label={`${isDebitOriginal ? "DEBIT" : "KREDIT"} BARU (RM)`}
                 value={newAmount}
@@ -168,7 +168,7 @@ export default function TransaksiAdjustModal({ isOpen, onClose, transaction, onS
                 placeholder={currentNet.toString()}
                 onChange={setNewAmount}
                 inputTextClassName={isDebitOriginal ? "text-red font-bold" : "text-green font-bold"}
-                activeBackgroundClass="bg-white"
+                activeBackgroundClass="bg-surface"
               />
             </div>
 
@@ -179,7 +179,7 @@ export default function TransaksiAdjustModal({ isOpen, onClose, transaction, onS
               onChange={setRemarks}
               error={Boolean(error)}
               errorMessage={error}
-              activeBackgroundClass="bg-white"
+              activeBackgroundClass="bg-surface"
             />
           </div>
 
@@ -187,7 +187,7 @@ export default function TransaksiAdjustModal({ isOpen, onClose, transaction, onS
           <div className="flex flex-col gap-4">
             <Topic content="PRATONTON TRANSAKSI BERKAITAN" />
             
-            <div className="overflow-x-auto overflow-y-auto rounded-lg border border-light-grey/20 bg-white">
+            <div className="overflow-x-auto overflow-y-auto rounded-lg border border-light-grey/20 bg-surface">
               <table className="w-full min-w-220 text-left">
                 <thead className="bg-background text-xs font-bold text-grey">
                   <tr>
@@ -199,13 +199,13 @@ export default function TransaksiAdjustModal({ isOpen, onClose, transaction, onS
                     <th className="w-min whitespace-nowrap p-3 text-right">Kredit (RM)</th>
                   </tr>
                 </thead>
-                <tbody className="bg-white">
+                <tbody className="bg-surface">
                   
                   {/* Original Row */}
                   <tr className="border-b border-light-grey/20 text-sm transition-colors">
-                    <td className="w-min whitespace-nowrap p-3 text-dark-grey">{new Date(transaction.transactionDate).toLocaleDateString("en-GB")}</td>
+                    <td className="w-min whitespace-nowrap p-3 text-content">{new Date(transaction.transactionDate).toLocaleDateString("en-GB")}</td>
                     <td className="w-min whitespace-nowrap p-3 font-bold">{transaction.transactionNo}</td>
-                    <td className="w-min whitespace-nowrap p-3"><span className="rounded-[5px] bg-[#FEF3C7] px-2 py-0.5 text-[10px] font-bold uppercase text-[#92400E]">Dilaraskan</span></td>
+                    <td className="w-min whitespace-nowrap p-3"><span className="rounded-[5px] bg-warning-surface px-2 py-0.5 text-[10px] font-bold uppercase text-warning">Dilaraskan</span></td>
                     <td className="max-w-80 truncate p-3 text-grey">{transaction.description || "-"}</td>
                     <td className={`w-min whitespace-nowrap p-3 text-right ${Number(transaction.debitAmount) > 0 ? "font-bold text-red" : "font-normal"}`}>
                       {Number(transaction.debitAmount) > 0 ? formatRM(Number(transaction.debitAmount)) : "-"}
@@ -218,9 +218,9 @@ export default function TransaksiAdjustModal({ isOpen, onClose, transaction, onS
                   {/* Past Adjustments (If Any) */}
                   {pastPelarasans.map((p: any) => (
                      <tr key={p.id} className="border-b border-light-grey/20 text-sm transition-colors">
-                        <td className="w-min whitespace-nowrap p-3 text-dark-grey">{new Date(p.transactionDate).toLocaleDateString("en-GB")}</td>
+                        <td className="w-min whitespace-nowrap p-3 text-content">{new Date(p.transactionDate).toLocaleDateString("en-GB")}</td>
                         <td className="w-min whitespace-nowrap p-3 font-bold">{p.transactionNo}</td>
-                        <td className="w-min whitespace-nowrap p-3"><span className="rounded-[5px] bg-[#FEF3C7] px-2 py-0.5 text-[10px] font-bold uppercase text-[#92400E]">Pelarasan</span></td>
+                        <td className="w-min whitespace-nowrap p-3"><span className="rounded-[5px] bg-warning-surface px-2 py-0.5 text-[10px] font-bold uppercase text-warning">Pelarasan</span></td>
                         <td className="max-w-80 truncate p-3 text-grey">{p.description || "-"}</td>
                         <td className={`w-min whitespace-nowrap p-3 text-right ${Number(p.debitAmount) > 0 ? "font-bold text-red" : "font-normal"}`}>
                           {Number(p.debitAmount) > 0 ? formatRM(Number(p.debitAmount)) : "-"}
@@ -234,9 +234,9 @@ export default function TransaksiAdjustModal({ isOpen, onClose, transaction, onS
                   {/* New Adjustment Row (Hari Ini) */}
                   {newAmount !== "" && delta !== 0 && (
                     <tr className="border-b border-light-grey/20 text-sm transition-colors">
-                        <td className="w-min whitespace-nowrap border-l-4 border-dark-blue p-3 text-dark-grey">Hari Ini</td>
+                        <td className="w-min whitespace-nowrap border-l-4 border-dark-blue p-3 text-content">Hari Ini</td>
                         <td className="w-min whitespace-nowrap p-3 italic text-light-grey">Diberikan Nanti</td>
-                        <td className="w-min whitespace-nowrap p-3"><span className="rounded-[5px] bg-[#FEF3C7] px-2 py-0.5 text-[10px] font-bold uppercase text-[#92400E]">Pelarasan</span></td>
+                        <td className="w-min whitespace-nowrap p-3"><span className="rounded-[5px] bg-warning-surface px-2 py-0.5 text-[10px] font-bold uppercase text-warning">Pelarasan</span></td>
                         <td className="max-w-80 truncate p-3 text-grey">{remarks || "-"}</td>
                         <td className={`w-min whitespace-nowrap p-3 text-right ${newDebit > 0 ? "font-bold text-red" : "font-normal"}`}>
                           {newDebit > 0 ? formatRM(newDebit) : "-"}

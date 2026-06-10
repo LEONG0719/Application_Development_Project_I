@@ -19,7 +19,7 @@ export default function KuartersUnitDetailsUnitTab({
   const isOccupied = unitDetails.status === "OCCUPIED";
   const occupancyLabel = isOccupied ? "Berpenghuni" : "Kosong";
   const occupancyClass = isOccupied
-    ? "bg-[#D4F0DB] text-[#157437] before:bg-[#157437]"
+    ? "bg-success-surface text-green before:bg-green"
     : "bg-pencen-datang/10 text-pencen-datang before:bg-pencen-datang";
   const categoryName =
     unitDetails.category.categoryName.trim() || "Maklumat kategori kuarters";
@@ -64,21 +64,21 @@ export default function KuartersUnitDetailsUnitTab({
               label="KATEGORI"
               value={categoryName}
               state="inactive"
-              inactiveBackgroundClass="bg-[#EEF4FF]"
+              inactiveBackgroundClass="bg-surface-muted"
               className="md:col-span-4"
             />
             <InputField
               label="ALAMAT"
               value={address}
               state="inactive"
-              inactiveBackgroundClass="bg-[#EEF4FF]"
+              inactiveBackgroundClass="bg-surface-muted"
               className="md:col-span-6"
             />
             <InputField
               label="ID UNIT"
               value={unitDetails.unitCode}
               state="inactive"
-              inactiveBackgroundClass="bg-[#EEF4FF]"
+              inactiveBackgroundClass="bg-surface-muted"
               className="md:col-span-2"
             />
           </div>
@@ -88,21 +88,21 @@ export default function KuartersUnitDetailsUnitTab({
               label="SEWA (RM)"
               value={formatRate(unitDetails.category.rates.rentalPrice)}
               state="inactive"
-              inactiveBackgroundClass="bg-[#EEF4FF]"
+              inactiveBackgroundClass="bg-surface-muted"
               className="md:col-span-4"
             />
             <InputField
               label="SENGGARA (RM)"
               value={formatRate(unitDetails.category.rates.maintenancePrice)}
               state="inactive"
-              inactiveBackgroundClass="bg-[#EEF4FF]"
+              inactiveBackgroundClass="bg-surface-muted"
               className="md:col-span-4"
             />
             <InputField
               label="PENALTI (RM)"
               value={formatRate(unitDetails.category.rates.penaltyPrice)}
               state="inactive"
-              inactiveBackgroundClass="bg-[#EEF4FF]"
+              inactiveBackgroundClass="bg-surface-muted"
               className="md:col-span-4"
             />
           </div>

@@ -173,8 +173,8 @@ export default function KuartersUnitDatePicker({
     {
       dates: unitOccupiedDates,
       note: UNIT_OCCUPIED_NOTE,
-      textColor: "#854d0e",
-      backgroundColor: "#fef9c3",
+      textColor: "var(--color-warning)",
+      backgroundColor: "var(--color-warning-surface)",
     },
   ].filter((group) => group.dates.length > 0);
 
@@ -200,12 +200,20 @@ export default function KuartersUnitDatePicker({
 
   const moveOutMinDateMeta: DisabledDateMeta | undefined =
     fieldType === "moveOutDate" && moveInDate
-      ? { note: MOVE_OUT_MIN_NOTE, textColor: "#991b1b", backgroundColor: "#fee2e2" }
+      ? {
+          note: MOVE_OUT_MIN_NOTE,
+          textColor: "var(--color-red)",
+          backgroundColor: "var(--color-danger-surface)",
+        }
       : undefined;
 
   const moveOutMaxDateMeta: DisabledDateMeta | undefined =
     fieldType === "moveOutDate" && maxDate
-      ? { note: MOVE_OUT_RANGE_NOTE, textColor: "#9a3412", backgroundColor: "#ffedd5" }
+      ? {
+          note: MOVE_OUT_RANGE_NOTE,
+          textColor: "var(--color-warning)",
+          backgroundColor: "var(--color-warning-surface)",
+        }
       : undefined;
 
   const calendarDisabledDates = fieldType === "moveInDate" ? moveInDisabledDates : [];
@@ -228,10 +236,10 @@ export default function KuartersUnitDatePicker({
         ref={buttonRef}
         type="button"
         disabled={disabled}
-        className={`flex min-h-10 w-full items-center gap-2 rounded-2xl border bg-white py-2 pl-3 pr-3 text-left text-sm font-semibold shadow-[inset_0_1px_0_rgba(255,255,255,0.8),0_3px_10px_rgba(15,23,42,0.04)] outline-none transition-colors disabled:cursor-not-allowed disabled:bg-background disabled:text-light-grey ${
+        className={`flex min-h-10 w-full items-center gap-2 rounded-2xl border bg-surface py-2 pl-3 pr-3 text-left text-sm font-semibold shadow-[inset_0_1px_0_rgba(255,255,255,0.8),0_3px_10px_rgba(15,23,42,0.04)] outline-none transition-colors disabled:cursor-not-allowed disabled:bg-background disabled:text-light-grey ${
           isOpen
             ? "border-dark-blue text-dark-blue"
-            : "border-light-grey/25 text-dark-grey hover:border-dark-blue/30"
+            : "border-light-grey/25 text-content hover:border-dark-blue/30"
         }`}
         aria-expanded={isOpen}
         aria-haspopup="dialog"

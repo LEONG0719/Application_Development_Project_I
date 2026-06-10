@@ -168,7 +168,7 @@ export default function AuthRegister({ onSwitchToLogin }: AuthRegisterProps) {
 								<div 
 									className={`
 										flex flex-row flex-1 items-center gap-3 rounded-lg border bg-light-blue p-3 
-                                        ${!isEmailValid && email.length > 0 ? "border-red focus-within:border-red" : "border-transparent focus-within:border-black"}
+                                        ${!isEmailValid && email.length > 0 ? "border-red focus-within:border-red" : "border-transparent focus-within:border-content"}
 									`}
 								> 	
 									{/* Email Icon */}
@@ -214,8 +214,8 @@ export default function AuthRegister({ onSwitchToLogin }: AuthRegisterProps) {
 							<div className="flex flex-col gap-1">
 								<div className="font-bold text-sm text-grey">Kod Pengesahan</div>
 								<div className={`
-										flex flex-row items-center gap-3 border rounded-lg bg-light-blue p-3 focus-within:border-black
-										${!isOtpValid && otp.length > 0 ? "border-red focus-within:border-red" : "border-transparent focus-within:border-black"}
+										flex flex-row items-center gap-3 border rounded-lg bg-light-blue p-3 focus-within:border-content
+										${!isOtpValid && otp.length > 0 ? "border-red focus-within:border-red" : "border-transparent focus-within:border-content"}
 									`}
 								>
 									{/* OTP Icon */}
@@ -246,7 +246,7 @@ export default function AuthRegister({ onSwitchToLogin }: AuthRegisterProps) {
 							{/* Full Name */}
 							<div className="flex flex-col gap-1">
 								<div className="font-bold text-sm text-grey">Nama Penuh</div>
-								<div className="flex flex-row items-center gap-3 rounded-lg border border-transparent bg-light-blue p-3 focus-within:border-black">
+								<div className="flex flex-row items-center gap-3 rounded-lg border border-transparent bg-light-blue p-3 focus-within:border-content">
 									{/* Full Name Icon */}
 									<Icon icon="person"></Icon>
 
@@ -270,7 +270,7 @@ export default function AuthRegister({ onSwitchToLogin }: AuthRegisterProps) {
 									<div 
 										className={`
 											flex flex-row items-center gap-3 rounded-lg border bg-light-blue p-3 
-		                                    ${!isPasswordValid && password.length > 0 ? "border-red focus-within:border-red" : "border-transparent focus-within:border-black"}
+		                                    ${!isPasswordValid && password.length > 0 ? "border-red focus-within:border-red" : "border-transparent focus-within:border-content"}
 		                                `}
 									>
 										{/* Password Icon */}   
@@ -307,7 +307,7 @@ export default function AuthRegister({ onSwitchToLogin }: AuthRegisterProps) {
 									<div
 										className={`
 											flex flex-row items-center gap-3 rounded-lg border bg-light-blue p-3 
-		                                    ${!isPasswordMatch && confirmPassword.length > 0 ? "border-red focus-within:border-red" : "border-transparent focus-within:border-black"}
+		                                    ${!isPasswordMatch && confirmPassword.length > 0 ? "border-red focus-within:border-red" : "border-transparent focus-within:border-content"}
 		                                `}
 									>
 										{/* Confirm Password Icon */}

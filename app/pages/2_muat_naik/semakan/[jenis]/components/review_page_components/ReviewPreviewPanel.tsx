@@ -64,7 +64,7 @@ type ReviewPreviewPanelProps = {
 
 export default function ReviewPreviewPanel(props: ReviewPreviewPanelProps) {
   return (
-    <div className="overflow-hidden rounded-xl border border-[#DCE7FF] bg-light-blue shadow-sm">
+    <div className="overflow-hidden rounded-xl border border-border bg-light-blue shadow-sm">
       <ReviewTable {...props} />
     </div>
   );

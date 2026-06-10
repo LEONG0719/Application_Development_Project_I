@@ -203,11 +203,11 @@ export default function TransaksiFilterPanel({
       <div className="flex flex-col gap-3 pt-3 px-3">
         <div className="flex items-start justify-between">
           <div>
-            <h2 className="text-lg font-bold text-dark-grey">Senarai Transaksi</h2>
+            <h2 className="text-lg font-bold text-content">Senarai Transaksi</h2>
             <p className="text-xs text-grey/70">Rekod transaksi terkini.</p>
           </div>
 
-          <div className="flex items-center gap-4 text-[#607083]">
+          <div className="flex items-center gap-4 text-content-muted">
             <SearchBarToggleButton
               label="Cari rekod transaksi"
               isOpen={isSearchOpen}
@@ -265,7 +265,7 @@ export default function TransaksiFilterPanel({
         ) : null}
       </div>
       
-      <div className="overflow-hidden rounded-lg bg-white shadow">{children}</div>
+      <div className="overflow-hidden rounded-lg bg-surface shadow">{children}</div>
     </section>
   );
 }

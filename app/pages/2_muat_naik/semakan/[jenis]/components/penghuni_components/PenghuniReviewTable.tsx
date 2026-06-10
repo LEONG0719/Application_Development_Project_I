@@ -337,7 +337,7 @@ export default function PenghuniReviewTable({
         <div className="flex flex-row justify-between pt-3">
           {/* Header */}
           <div>
-            <div className="text-lg font-bold text-dark-grey">Pratinjau Data Penghuni</div>
+            <div className="text-lg font-bold text-content">Pratinjau Data Penghuni</div>
             <div className="text-xs text-grey">Sila semak maklumat sebelum pengesahan.</div>
           </div>
 
@@ -424,7 +424,7 @@ export default function PenghuniReviewTable({
               <th className="w-[0%] p-3 text-center whitespace-nowrap bg-background">Tindakan</th>
             </tr>
           </thead>
-          <tbody className="bg-white">
+          <tbody className="bg-surface">
             {isLoading ? (
               loadingTableRows({
                 mode: "loading",
@@ -485,7 +485,7 @@ export default function PenghuniReviewTable({
                         />
                       </div>
                       {resident.isExisted ? (
-                        <p className="mt-1 text-[10px] font-semibold text-[#B54708]">
+                        <p className="mt-1 text-[10px] font-semibold text-warning">
                           Rekod penghuni ini telah wujud dalam sistem.
                         </p>
                       ) : null}
@@ -559,7 +559,7 @@ export default function PenghuniReviewTable({
             )}
           </tbody>
           <tfoot>
-            <tr className="border-t border-light-grey/20 bg-white">
+            <tr className="border-t border-light-grey/20 bg-surface">
               <td colSpan={7} className="px-4 py-4 sm:px-5">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <PaginationControls

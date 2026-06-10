@@ -64,15 +64,15 @@ export default function TransaksiViewRelated({ records, transactionNo }: Transak
     
     switch (displayStatus) {
       case "NORMAL":
-        return <span className={`bg-normal text-[#0E7490] ${baseClass}`}>Normal</span>;
+        return <span className={`bg-normal text-info ${baseClass}`}>Normal</span>;
       case "DIBALIKAN":
         return <span className={`bg-red text-white ${baseClass}`}>Dibalikkan</span>;
       case "DILARASKAN":
-        return <span className={`bg-[#FEF3C7] text-[#92400E] ${baseClass}`}>Dilaraskan</span>;
+        return <span className={`bg-warning-surface text-warning ${baseClass}`}>Dilaraskan</span>;
       case "PEMBALIKAN":
         return <span className={`bg-red text-white ${baseClass}`}>Pembalikan</span>;
       case "PELARASAN":
-        return <span className={`bg-[#FEF3C7] text-[#92400E] ${baseClass}`}>Pelarasan</span>;
+        return <span className={`bg-warning-surface text-warning ${baseClass}`}>Pelarasan</span>;
       default:
         return <span className={`bg-light-blue text-grey ${baseClass}`}>{displayStatus}</span>;
     }
@@ -97,7 +97,7 @@ export default function TransaksiViewRelated({ records, transactionNo }: Transak
       </div>
 
       {/* Table */}
-      <div className="overflow-x-auto overflow-y-auto rounded-lg border border-light-grey/20 bg-white">
+      <div className="overflow-x-auto overflow-y-auto rounded-lg border border-light-grey/20 bg-surface">
         <table className="w-full min-w-220 text-left">
           <thead className="bg-background text-xs font-bold text-grey">
             <tr>
@@ -109,7 +109,7 @@ export default function TransaksiViewRelated({ records, transactionNo }: Transak
               <th className="w-min whitespace-nowrap p-3 text-right">Kredit (RM)</th>
             </tr>
           </thead>
-          <tbody className="bg-white">
+          <tbody className="bg-surface">
             {filteredRecords.length === 0 ? (
               <tr className="border-b border-light-grey/20 text-sm">
                 <td className="p-4 text-center font-medium text-grey" colSpan={6}>
@@ -127,7 +127,7 @@ export default function TransaksiViewRelated({ records, transactionNo }: Transak
 
                 return (
                   <tr key={row.id} className="border-b border-light-grey/20 text-sm transition-colors">
-                    <td className={`w-min whitespace-nowrap p-3 text-dark-grey ${
+                    <td className={`w-min whitespace-nowrap p-3 text-content ${
                       isCurrentRecord 
                         ? "border-l-4 border-dark-blue" // Highlight untuk rekod semasa
                         : null

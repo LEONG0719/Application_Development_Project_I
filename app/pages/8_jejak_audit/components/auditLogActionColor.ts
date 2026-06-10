@@ -34,8 +34,8 @@ const AUDIT_ACTION_COLOR_MAP: Record<string, { dot: string; badge: string }> = {
 };
 
 const FALLBACK_AUDIT_ACTION_COLOR = {
-  dot: "bg-slate-400",
-  badge: "bg-slate-100 text-slate-800",
+  dot: "bg-content-subtle",
+  badge: "bg-surface-muted text-content",
 };
 
 export function getAuditActionDotColor(actionType: string) {

@@ -139,7 +139,7 @@ export default function ProcessingQueueTable({
       <div className="flex items-center justify-between gap-4 px-3 mt-3">
         <div className="flex flex-col">
           {/* Header */}
-            <div className="text-lg font-bold text-dark-grey">Barisan Pemprosesan</div>
+            <div className="text-lg font-bold text-content">Barisan Pemprosesan</div>
             <div className="text-xs text-grey">Sila pilih document yang ingin disemak.</div>
         </div>
 
@@ -183,7 +183,7 @@ export default function ProcessingQueueTable({
       {/* Search Input Panel */}
       {isSearchOpen ? (
         <div className="px-3">
-          <div className="rounded-xl border border-[#DCE2F1] bg-white p-4 shadow-sm">
+          <div className="rounded-xl border border-border bg-surface p-4 shadow-sm">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
               <div ref={searchInputRef} className="flex-1">
                 <SharedInputField
@@ -209,7 +209,7 @@ export default function ProcessingQueueTable({
               <div className="flex items-center gap-3 self-start lg:self-end">
                 <button
                   type="button"
-                  className="inline-flex min-h-10 items-center rounded-xl border border-light-grey/25 bg-white px-4 py-2 text-sm font-semibold text-grey transition-colors hover:border-dark-blue hover:text-dark-blue disabled:cursor-not-allowed disabled:opacity-40"
+                  className="inline-flex min-h-10 items-center rounded-xl border border-light-grey/25 bg-surface px-4 py-2 text-sm font-semibold text-grey transition-colors hover:border-dark-blue hover:text-dark-blue disabled:cursor-not-allowed disabled:opacity-40"
                   disabled={searchQuery.trim().length === 0}
                   onClick={handleClearSearch}
                 >
@@ -231,7 +231,7 @@ export default function ProcessingQueueTable({
               <th className="w-[0%] p-3 text-center whitespace-nowrap bg-background">Tindakan</th>
             </tr>
           </thead>
-          <tbody className="bg-white">
+          <tbody className="bg-surface">
             {isLoading ? (
               loadingTableRows({
                 mode: "loading",
@@ -259,14 +259,14 @@ export default function ProcessingQueueTable({
                   className="border-t border-light-grey/20 transition-colors hover:bg-background/60 cursor-auto select-text"
                   onDoubleClick={() => onContinueDraft(row)}
                 >
-                  <td className="overflow-hidden text-sm font-semibold text-dark-grey px-3 py-2 text-left">
+                  <td className="overflow-hidden text-sm font-semibold text-content px-3 py-2 text-left">
                     <div className="flex min-w-0 items-center gap-3">
                       <span
                         className={[
                           "flex h-7 w-7 shrink-0 items-center justify-center rounded",
                           getDraftTone(row) === "green"
-                            ? "bg-[#EAF8EF] text-green"
-                            : "bg-[#FFF0F0] text-red",
+                            ? "bg-success-surface text-green"
+                            : "bg-danger-surface text-red",
                         ].join(" ")}
                       >
                         <Icon
@@ -276,15 +276,15 @@ export default function ProcessingQueueTable({
                           weight={600}
                         />
                       </span>
-                      <span className="truncate font-semibold text-dark-grey" title={row.fileName}>
+                      <span className="truncate font-semibold text-content" title={row.fileName}>
                         {row.fileName}
                       </span>
                     </div>
                   </td>
-                  <td className="overflow-hidden text-sm font-semibold text-dark-grey px-3 py-2 text-left">
+                  <td className="overflow-hidden text-sm font-semibold text-content px-3 py-2 text-left">
                     {row.uploadedBy}
                   </td>
-                  <td className="overflow-hidden text-sm font-semibold text-dark-grey px-3 py-2 text-left">
+                  <td className="overflow-hidden text-sm font-semibold text-content px-3 py-2 text-left">
                     {formatDraftDateTime(row.uploadedAt)}
                   </td>
                   <td className="w-[0%] px-3 py-2 text-center whitespace-nowrap">
@@ -318,7 +318,7 @@ export default function ProcessingQueueTable({
             )}
           </tbody>
           <tfoot>
-            <tr className="border-t border-light-grey/20 bg-white">
+            <tr className="border-t border-light-grey/20 bg-surface">
               <td colSpan={4} className="px-4 py-4 sm:px-5">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <PaginationControls

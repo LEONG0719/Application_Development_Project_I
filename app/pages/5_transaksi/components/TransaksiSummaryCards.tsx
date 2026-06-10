@@ -20,9 +20,9 @@ export default function TransaksiSummaryCards({ totalCount, totalDebit, totalCre
 
   return (
     <section className="grid gap-3 md:grid-cols-3">
-      <article className="flex flex-col gap-1 rounded-lg border-l-4 border-l-dark-blue bg-white p-4 shadow">
+      <article className="flex flex-col gap-1 rounded-lg border-l-4 border-l-dark-blue bg-surface p-4 shadow">
         <p className="text-xs font-semibold text-grey/70">JUMLAH TRANSAKSI</p>
-        <p className="text-3xl font-bold text-dark-grey">
+        <p className="text-3xl font-bold text-content">
           {isLoading ? "0" : totalCount.toLocaleString("ms-MY")}
         </p>
         <div className="flex items-center gap-1">
@@ -31,9 +31,9 @@ export default function TransaksiSummaryCards({ totalCount, totalDebit, totalCre
         </div>
       </article>
 
-      <article className="flex flex-col gap-1 rounded-lg border-l-4 border-l-red bg-white p-4 shadow">
+      <article className="flex flex-col gap-1 rounded-lg border-l-4 border-l-red bg-surface p-4 shadow">
         <p className="text-xs font-semibold text-grey/70">AMAUN DEBIT</p>
-        <p className="text-3xl font-bold text-dark-grey">
+        <p className="text-3xl font-bold text-content">
           {isLoading ? "RM 0.00" : formatRM(totalDebit).replace("RM", "RM")}
         </p>
         <div className="flex items-center gap-1">
@@ -42,9 +42,9 @@ export default function TransaksiSummaryCards({ totalCount, totalDebit, totalCre
         </div>
       </article>
 
-      <article className="flex flex-col gap-1 rounded-lg border-l-4 border-l-green bg-white p-4 shadow">
+      <article className="flex flex-col gap-1 rounded-lg border-l-4 border-l-green bg-surface p-4 shadow">
         <p className="text-xs font-semibold text-grey/70">AMAUN KREDIT</p>
-        <p className="text-3xl font-bold text-dark-grey">
+        <p className="text-3xl font-bold text-content">
           {isLoading ? "RM 0.00" : formatRM(totalCredit).replace("RM", "RM")}
         </p>
         <div className="flex items-center gap-1">

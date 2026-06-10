@@ -659,7 +659,7 @@ export default function KuartersReviewTable({
         <div className="flex flex-row justify-between pt-3">
           {/* Header */}
           <div>
-            <div className="text-lg font-bold text-dark-grey">Pratinjau Kategori & Unit Kuarters</div>
+            <div className="text-lg font-bold text-content">Pratinjau Kategori & Unit Kuarters</div>
             <div className="text-xs text-grey">Sila semak maklumat sebelum pengesahan.</div>
           </div>
 
@@ -693,7 +693,7 @@ export default function KuartersReviewTable({
         ) : null}
       </div>
 
-      <div className="grid overflow-hidden rounded-lg border border-light-grey/20 bg-white lg:grid-cols-[1fr_260px]">
+      <div className="grid overflow-hidden rounded-lg border border-light-grey/20 bg-surface lg:grid-cols-[1fr_260px]">
         <KuartersCategoryTable
           categories={savedRecords}
           pageCategories={pageCategories}

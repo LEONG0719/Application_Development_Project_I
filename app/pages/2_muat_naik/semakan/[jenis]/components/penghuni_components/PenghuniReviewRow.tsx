@@ -26,8 +26,8 @@ export default function PenghuniReviewRow({
         />
       </td>
       <td className="px-4 py-4">
-        <p className="font-extrabold text-[#172033]">{resident.nama}</p>
-        <p className="text-[10px] font-semibold text-[#667085]">
+        <p className="font-extrabold text-content">{resident.nama}</p>
+        <p className="text-[10px] font-semibold text-content-muted">
           {resident.noKadPengenalan}
         </p>
       </td>

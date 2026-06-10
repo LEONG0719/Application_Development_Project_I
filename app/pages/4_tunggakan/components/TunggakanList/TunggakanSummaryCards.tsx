@@ -16,9 +16,9 @@ export default function TunggakanSummaryCards({
 }: TunggakanSummaryCardsProps) {
   return (
     <section className="flex flex-col gap-3 md:flex-row">
-      <article className="flex flex-col flex-1 gap-1 rounded-lg border-l-4 border-l-dark-blue bg-white p-4 shadow">
+      <article className="flex flex-col flex-1 gap-1 rounded-lg border-l-4 border-l-dark-blue bg-surface p-4 shadow">
         <p className="text-xs font-semibold text-grey/70">JUMLAH REKOD</p>
-        <p className="text-3xl font-bold text-dark-grey">
+        <p className="text-3xl font-bold text-content">
           {isLoading ? "0" : summary.jumlahRekod.toLocaleString("ms-MY")}
         </p>
         <div className="flex items-center gap-1">
@@ -27,9 +27,9 @@ export default function TunggakanSummaryCards({
         </div>
       </article>
 
-      <article className="flex flex-col flex-1 gap-1 rounded-lg border-l-4 border-l-green bg-white p-4 shadow">
+      <article className="flex flex-col flex-1 gap-1 rounded-lg border-l-4 border-l-green bg-surface p-4 shadow">
         <p className="text-xs font-semibold text-grey/70">JUMLAH KUTIPAN</p>
-        <p className="text-3xl font-bold text-dark-grey">
+        <p className="text-3xl font-bold text-content">
           {isLoading ? "RM 0.00" : formatRM(summary.jumlahKutipan)}
         </p>
         <div className="flex items-center gap-1">
@@ -38,9 +38,9 @@ export default function TunggakanSummaryCards({
         </div>
       </article>
 
-      <article className="flex flex-col flex-1 gap-1 rounded-lg border-l-4 border-l-red bg-white p-4 shadow">
+      <article className="flex flex-col flex-1 gap-1 rounded-lg border-l-4 border-l-red bg-surface p-4 shadow">
         <p className="text-xs font-semibold text-grey/70">JUMLAH TUNGGAKAN</p>
-        <p className="text-3xl font-bold text-dark-grey">
+        <p className="text-3xl font-bold text-content">
           {isLoading ? "RM 0.00" : formatRM(summary.jumlahTunggakan)}
         </p>
         <div className="flex items-center gap-1">

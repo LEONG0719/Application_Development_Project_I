@@ -222,16 +222,16 @@ export default function PenghuniDetail(props?: PenghuniDetailWithCloseProps) {
                     </div>
 
                     {/* Tabs */}
-                    <nav className="flex items-center justify-center gap-6 bg-white">
+                    <nav className="flex items-center justify-center gap-6 bg-surface">
                         <button
                             onClick={() => setTab("info")}
-                            className={`py-4 text-sm font-medium -mb-px ${tab === "info" ? "border-b-4 border-dark-blue text-dark-blue" : "text-gray-500"}`}
+                            className={`py-4 text-sm font-medium -mb-px ${tab === "info" ? "border-b-4 border-dark-blue text-dark-blue" : "text-content-muted"}`}
                         >
                             <span className="font-bold">MAKLUMAT PENGHUNI</span>
                         </button>
                         <button
                             onClick={() => setTab("history")}
-                            className={`py-4 text-sm font-medium -mb-px ${tab === "history" ? "border-b-4 border-dark-blue text-dark-blue font-bold" : "text-gray-500"}`}
+                            className={`py-4 text-sm font-medium -mb-px ${tab === "history" ? "border-b-4 border-dark-blue text-dark-blue font-bold" : "text-content-muted"}`}
                         >
                             <span className="font-bold">SEJARAH TRANSAKSI</span>
                         </button>

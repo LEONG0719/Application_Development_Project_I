@@ -58,7 +58,7 @@ export default function Sidebar() {
     const loginTime = formatLoginTime(profile?.sessionLoginAt ?? null);
 
     return (
-        <aside className="h-full bg-dark-grey px-4 pt-6 pb-4">
+        <aside className="h-full bg-sidebar px-4 pt-6 pb-4">
             <nav className="flex h-full flex-col gap-4">
                 <div className="flex flex-col gap-6">
                     {/* Logo */}

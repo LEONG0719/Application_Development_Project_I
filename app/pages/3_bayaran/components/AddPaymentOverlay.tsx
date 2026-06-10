@@ -161,7 +161,7 @@ export default function AddPaymentOverlay({
                 <Topic content="BAYARAN DITAMBAH" />
                 <button
                   type="button"
-                  className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md bg-[#E5ECFA] px-4 py-2 text-xs font-bold uppercase text-dark-blue transition hover:bg-dark-blue hover:text-white"
+                  className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md bg-surface-muted px-4 py-2 text-xs font-bold uppercase text-dark-blue transition hover:bg-dark-blue hover:text-white"
                   onClick={handleAddDraft}
                 >
                   <Icon icon="add" size={17} />
@@ -170,12 +170,12 @@ export default function AddPaymentOverlay({
               </div>
 
               {drafts.length === 0 ? (
-                <div className="rounded-lg border border-dashed border-light-grey/50 bg-white/70 px-5 py-8 text-center text-sm font-semibold text-grey">
+                <div className="rounded-lg border border-dashed border-light-grey/50 bg-surface/70 px-5 py-8 text-center text-sm font-semibold text-grey">
                   Tiada bayaran ditambah.
                 </div>
               ) : (
                 <div className="flex flex-col gap-3">
-                  <div className="grid grid-cols-[184px_226px_1fr_184px_36px] gap-4 px-1 text-[10px] font-bold uppercase tracking-widest text-gray-500">
+                  <div className="grid grid-cols-[184px_226px_1fr_184px_36px] gap-4 px-1 text-[10px] font-bold uppercase tracking-widest text-content-muted">
                     <div>Tarikh</div>
                     <div>No. Resit</div>
                     <div>Catatan</div>
@@ -219,7 +219,7 @@ export default function AddPaymentOverlay({
                   {/* Arrears Left */}
                   <div className="flex flex-col gap-1">
                     <div className="text-xs font-bold uppercase text-light-grey">BAKI TUNGGAKAN</div>
-                    <div className="text-2xl font-bold text-[#70A9FF]">{formatSignedMoney(remainingBalance)}</div>
+                    <div className="text-2xl font-bold text-info">{formatSignedMoney(remainingBalance)}</div>
                   </div>
 
                   {/* Icon */}
@@ -235,7 +235,7 @@ export default function AddPaymentOverlay({
             </section>
 
             {errorMessage ? (
-              <div className="rounded-lg border border-red/20 bg-white px-4 py-3 text-sm font-semibold text-red">
+              <div className="rounded-lg border border-red/20 bg-surface px-4 py-3 text-sm font-semibold text-red">
                 {errorMessage}
               </div>
             ) : null}

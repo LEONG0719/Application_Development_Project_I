@@ -92,7 +92,7 @@ export function TableInputField({
             disabled={disabled}
             onChange={(event) => onChange(event.target.value)}
             placeholder={placeholder}
-            className={`min-h-9 rounded-xl border border-light-grey/35 bg-white px-4 py-2 text-sm font-semibold text-dark-blue outline-none transition-colors placeholder:text-light-grey focus:border-dark-blue ${align === "start"
+            className={`min-h-9 rounded-xl border border-light-grey/35 bg-surface px-4 py-2 text-sm font-semibold text-dark-blue outline-none transition-colors placeholder:text-light-grey focus:border-dark-blue ${align === "start"
                 ? "w-full min-w-35 text-left"
                 : align === "end"
                     ? "w-full min-w-32 text-right"
@@ -125,7 +125,7 @@ export function TableInputFieldFormat({
             disabled={disabled}
             onValueChange={(values) => onChange(values.value)}
             placeholder={placeholder}
-            className={`min-h-9 rounded-xl border border-light-grey/35 bg-white px-4 py-2 text-sm font-semibold text-dark-blue outline-none transition-colors placeholder:text-light-grey focus:border-dark-blue ${align === "start"
+            className={`min-h-9 rounded-xl border border-light-grey/35 bg-surface px-4 py-2 text-sm font-semibold text-dark-blue outline-none transition-colors placeholder:text-light-grey focus:border-dark-blue ${align === "start"
                 ? "w-full min-w-35 text-left"
                 : align === "end"
                     ? "w-full min-w-32 text-right"
@@ -153,7 +153,7 @@ export function TablePickerField({
         <button
             type="button"
             disabled={disabled}
-            className={`flex w-full items-center justify-between gap-3 rounded-xl border border-light-grey/35 bg-white px-4 py-2 text-left text-sm font-semibold text-dark-blue outline-none transition-colors hover:border-dark-blue disabled:cursor-not-allowed disabled:bg-background disabled:opacity-60 ${align === "start"
+            className={`flex w-full items-center justify-between gap-3 rounded-xl border border-light-grey/35 bg-surface px-4 py-2 text-left text-sm font-semibold text-dark-blue outline-none transition-colors hover:border-dark-blue disabled:cursor-not-allowed disabled:bg-background disabled:opacity-60 ${align === "start"
                 ? "text-left"
                 : align === "end"
                     ? "text-right"
@@ -190,7 +190,7 @@ export function InputField({
     inputFontSize,
     inputMinHeight,
     inputTextClassName,
-    activeBackgroundClass = "bg-white",
+    activeBackgroundClass = "bg-surface",
     inactiveBackgroundClass = "bg-transparent",
 }: {
     label: string;
@@ -205,11 +205,11 @@ export function InputField({
     return (
         <div className={`flex flex-col gap-2 tracking-widest ${className || ""}`}>
             {showLabel && (
-                <label className="font-bold text-gray-500 pl-1" style={{ fontSize: labelFontSize }}>{label}</label>
+                <label className="font-bold text-content-muted pl-1" style={{ fontSize: labelFontSize }}>{label}</label>
             )}
             <div className="relative flex items-center">
                 {leadingIcon && (
-                    <div className="absolute left-3 flex items-center text-gray-400 pointer-events-none">
+                    <div className="absolute left-3 flex items-center text-content-subtle pointer-events-none">
                         {leadingIcon}
                     </div>
                 )}
@@ -229,7 +229,7 @@ export function InputField({
                     style={{ textAlign: textAlign, fontSize: inputFontSize, minHeight: inputMinHeight }}
                 />
                 {trailingIcon && (
-                    <div className="absolute right-3 flex items-center text-gray-400 pointer-events-none">
+                    <div className="absolute right-3 flex items-center text-content-subtle pointer-events-none">
                         {trailingIcon}
                     </div>
                 )}
@@ -256,7 +256,7 @@ export function DateField({
     labelFontSize = 10,
     inputFontSize,
     inputMinHeight,
-    activeBackgroundClass = "bg-white",
+    activeBackgroundClass = "bg-surface",
     inactiveBackgroundClass = "bg-transparent",
     minDate,
     maxDate,
@@ -355,7 +355,7 @@ export function DateField({
             {isOpen && typeof document !== "undefined"
                 ? createPortal(
                     <div
-                        className="fixed z-50 rounded-3xl border border-light-grey/20 bg-white shadow-[0_18px_45px_rgba(13,47,86,0.16)]"
+                        className="fixed z-50 rounded-3xl border border-light-grey/20 bg-surface shadow-[0_18px_45px_rgba(13,47,86,0.16)]"
                         style={{
                             left: `${pickerPosition.left}px`,
                             top: `${pickerPosition.top}px`,
@@ -405,7 +405,7 @@ export function InputFieldPassword({
     labelFontSize = 10,
     inputFontSize,
     inputMinHeight,
-    activeBackgroundClass = "bg-white",
+    activeBackgroundClass = "bg-surface",
     inactiveBackgroundClass = "bg-transparent",
     toggleButtonClassName = "text-grey",
 }: {
@@ -422,11 +422,11 @@ export function InputFieldPassword({
     return (
         <div className={`flex flex-col gap-2 tracking-widest ${className || ""}`}>
             {showLabel && (
-                <label className="font-bold text-gray-500 pl-1" style={{ fontSize: labelFontSize }}>{label}</label>
+                <label className="font-bold text-content-muted pl-1" style={{ fontSize: labelFontSize }}>{label}</label>
             )}
             <div className="relative flex items-center">
                 {leadingIcon && (
-                    <div className="absolute left-3 flex items-center text-gray-400 pointer-events-none">
+                    <div className="absolute left-3 flex items-center text-content-subtle pointer-events-none">
                         {leadingIcon}
                     </div>
                 )}
@@ -478,7 +478,7 @@ export function InputFieldFormat({
     labelFontSize = 10,
     inputFontSize,
     inputMinHeight,
-    activeBackgroundClass = "bg-white",
+    activeBackgroundClass = "bg-surface",
     inactiveBackgroundClass = "bg-transparent",
 }: {
     label: string;
@@ -494,11 +494,11 @@ export function InputFieldFormat({
     return (
         <div className={`flex flex-col gap-2 tracking-widest ${className || ""}`}>
             {showLabel && (
-                <label className="font-bold text-gray-500 pl-1" style={{ fontSize: labelFontSize }}>{label}</label>
+                <label className="font-bold text-content-muted pl-1" style={{ fontSize: labelFontSize }}>{label}</label>
             )}
             <div className="relative flex items-center">
                 {leadingIcon && (
-                    <div className="absolute left-3 flex items-center text-gray-400 pointer-events-none">
+                    <div className="absolute left-3 flex items-center text-content-subtle pointer-events-none">
                         {leadingIcon}
                     </div>
                 )}
@@ -523,7 +523,7 @@ export function InputFieldFormat({
                     />
                 )}
                 {trailingIcon && (
-                    <div className="absolute right-3 flex items-center text-gray-400 pointer-events-none">
+                    <div className="absolute right-3 flex items-center text-content-subtle pointer-events-none">
                         {trailingIcon}
                     </div>
                 )}
@@ -551,7 +551,7 @@ export function InputBox({
     labelFontSize = 10,
     inputFontSize,
     inputMinHeight,
-    activeBackgroundClass = "bg-white",
+    activeBackgroundClass = "bg-surface",
     inactiveBackgroundClass = "bg-transparent",
 }: {
     label: string;
@@ -563,11 +563,11 @@ export function InputBox({
     return (
         <div className={`flex flex-col gap-2 tracking-widest ${className || ""}`}>
             {showLabel && (
-                <label className="font-bold text-gray-500 pl-1" style={{ fontSize: labelFontSize }}>{label}</label>
+                <label className="font-bold text-content-muted pl-1" style={{ fontSize: labelFontSize }}>{label}</label>
             )}
             <div className="relative">
                 {leadingIcon && (
-                    <div className="absolute left-3 top-3 flex items-center text-gray-400 pointer-events-none">
+                    <div className="absolute left-3 top-3 flex items-center text-content-subtle pointer-events-none">
                         {leadingIcon}
                     </div>
                 )}
@@ -586,7 +586,7 @@ export function InputBox({
                     }}
                 />
                 {trailingIcon && (
-                    <div className="absolute right-3 top-3 flex items-center text-gray-400 pointer-events-none">
+                    <div className="absolute right-3 top-3 flex items-center text-content-subtle pointer-events-none">
                         {trailingIcon}
                     </div>
                 )}
@@ -621,7 +621,7 @@ export function DropdownField({
     labelFontSize = 10,
     inputFontSize,
     inputMinHeight,
-    activeBackgroundClass = "bg-white",
+    activeBackgroundClass = "bg-surface",
     inactiveBackgroundClass = "bg-transparent",
 }: {
     label: string;
@@ -642,7 +642,7 @@ export function DropdownField({
     return (
         <div className={`flex flex-col gap-2 tracking-widest ${className || ""}`}>
             {showLabel && (
-                <label className="font-bold text-gray-500 pl-1" style={{ fontSize: labelFontSize }}>{label}</label>
+                <label className="font-bold text-content-muted pl-1" style={{ fontSize: labelFontSize }}>{label}</label>
             )}
             <div className="relative">
                 {/* Dropdown Button */}
@@ -661,7 +661,7 @@ export function DropdownField({
                 >
                     {/* Leading Icon */}
                     {leadingIcon && (
-                        <div className="absolute left-3 flex items-center text-gray-400 pointer-events-none">
+                        <div className="absolute left-3 flex items-center text-content-subtle pointer-events-none">
                             {leadingIcon}
                         </div>
                     )}
@@ -672,7 +672,7 @@ export function DropdownField({
                     {/* Trailing Icon + Chevron */}
                     <div className="flex items-center gap-1">
                         {trailingIcon && (
-                            <div className="flex items-center text-gray-400">
+                            <div className="flex items-center text-content-subtle">
                                 {trailingIcon}
                             </div>
                         )}
@@ -689,7 +689,7 @@ export function DropdownField({
 
                 {/* Dropdown Menu */}
                 {isOpen && state === "active" && (
-                    <div className="absolute top-full left-0 right-0 bg-white border border-light-grey/40 rounded-md shadow-lg z-50 overflow-hidden">
+                    <div className="absolute top-full left-0 right-0 bg-surface border border-light-grey/40 rounded-md shadow-lg z-50 overflow-hidden">
                         {normalizedOptions.map((option, index) => (
                             <button
                                 key={option.label}

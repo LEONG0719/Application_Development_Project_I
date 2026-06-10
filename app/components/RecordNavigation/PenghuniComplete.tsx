@@ -136,7 +136,7 @@ export default function PenghuniComplete({
           label="NAMA PENGHUNI"
           value={currentOccupancy?.occupantName ?? "N/A"}
           state="inactive"
-          inactiveBackgroundClass="bg-[#EEF4FF]"
+          inactiveBackgroundClass="bg-surface-muted"
           className="md:col-span-4"
         />
         <InputField
@@ -147,7 +147,7 @@ export default function PenghuniComplete({
               : "N/A"
           }
           state="inactive"
-          inactiveBackgroundClass="bg-[#EEF4FF]"
+          inactiveBackgroundClass="bg-surface-muted"
           className="md:col-span-2"
         />
         <InputField
@@ -158,7 +158,7 @@ export default function PenghuniComplete({
               : "N/A"
           }
           state="inactive"
-          inactiveBackgroundClass="bg-[#EEF4FF]"
+          inactiveBackgroundClass="bg-surface-muted"
           className="md:col-span-2"
         />
       </div>
@@ -168,21 +168,21 @@ export default function PenghuniComplete({
           label="TARIKH MASUK"
           value={formatDate(currentOccupancy?.moveInDate ?? null)}
           state="inactive"
-          inactiveBackgroundClass="bg-[#EEF4FF]"
+          inactiveBackgroundClass="bg-surface-muted"
           className="md:col-span-1"
         />
         <InputField
           label="TARIKH KELUAR"
           value={formatDate(currentOccupancy?.moveOutDate ?? null)}
           state="inactive"
-          inactiveBackgroundClass="bg-[#EEF4FF]"
+          inactiveBackgroundClass="bg-surface-muted"
           className="md:col-span-1"
         />
         <InputField
           label="STATUS"
           value={statusLabel}
           state="inactive"
-          inactiveBackgroundClass={`bg-[#EEF4FF] ${statusClass}`}
+          inactiveBackgroundClass={`bg-surface-muted ${statusClass}`}
           className="md:col-span-2"
         />
       </div>
