@@ -13,9 +13,6 @@ import {
 import { getCurrentAdmin } from "@/lib/auth/current-admin";
 import { prisma } from "@/lib/prisma";
 import { createPendingBayaranRows } from "@/lib/uploaded-document/bayaran/import";
-import {
-  mapUploadedDocumentForReview,
-} from "@/lib/uploaded-document/documents";
 import { createPendingKuartersRows } from "@/lib/uploaded-document/kuarters/import";
 import { createPendingPenghuniRows } from "@/lib/uploaded-document/penghuni/import";
 import { createPendingTunggakanRows } from "@/lib/uploaded-document/tunggakan/import";
@@ -82,7 +79,7 @@ export async function createUploadedDocumentForKind({
     throw new Error(`Jenis data ekstrak tidak sepadan dengan route ${kind}.`);
   }
 
-  const document = await prisma.$transaction(
+  const { document, extractResult } = await prisma.$transaction(
     async (tx: Prisma.TransactionClient) => {
       const createdDocument = await tx.uploadedDocument.create({
         data: {
@@ -101,20 +98,33 @@ export async function createUploadedDocumentForKind({
         },
       });
 
-      if (kind === "bayaran") {
-        await createPendingBayaranRows(tx, createdDocument.id, payload.extractResult);
-      } else if (kind === "tunggakan") {
-        await createPendingTunggakanRows(tx, createdDocument.id, payload.extractResult);
-      } else if (kind === "penghuni") {
-        await createPendingPenghuniRows(tx, createdDocument.id, payload.extractResult);
-      } else {
-        await createPendingKuartersRows(tx, createdDocument.id, payload.extractResult);
-      }
+      let savedExtractResult: ExtractResult;
 
-      const updatedDocument = await tx.uploadedDocument.findUniqueOrThrow({
-        where: { id: createdDocument.id },
-        include: { uploadedBy: { select: { fullName: true } } },
-      });
+      if (kind === "bayaran") {
+        savedExtractResult = await createPendingBayaranRows(
+          tx,
+          createdDocument.id,
+          payload.extractResult,
+        );
+      } else if (kind === "tunggakan") {
+        savedExtractResult = await createPendingTunggakanRows(
+          tx,
+          createdDocument.id,
+          payload.extractResult,
+        );
+      } else if (kind === "penghuni") {
+        savedExtractResult = await createPendingPenghuniRows(
+          tx,
+          createdDocument.id,
+          payload.extractResult,
+        );
+      } else {
+        savedExtractResult = await createPendingKuartersRows(
+          tx,
+          createdDocument.id,
+          payload.extractResult,
+        );
+      }
 
       await recordDataAuditLog(tx, {
         actor: currentAdmin,
@@ -130,12 +140,24 @@ export async function createUploadedDocumentForKind({
         ],
       });
 
-      return updatedDocument;
+      return {
+        document: createdDocument,
+        extractResult: savedExtractResult,
+      };
     },
     uploadedDocumentTransactionOptions,
   );
 
-  return mapUploadedDocumentForReview(document);
+  return {
+    id: document.id,
+    kind,
+    fileName: document.originalName ?? document.fileName,
+    fileType: document.fileType,
+    fileSize: document.fileSize,
+    uploadedBy: currentAdmin?.profile.fullName ?? "Username",
+    uploadedAt: document.uploadedAt.toISOString(),
+    extractResult,
+  } satisfies ProcessingDraft;
 }
 
 export function createUploadedDocumentImportHandler(kind: ImportKind) {

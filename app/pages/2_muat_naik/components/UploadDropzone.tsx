@@ -8,7 +8,7 @@ type UploadDropzoneProps = {
   isProcessing: boolean;
   processingStep: string;
   processingStage: string;
-  processingProgress: number;
+  processingProgress: number | null;
   processingError: string;
   onFileChange: (event: ChangeEvent<HTMLInputElement>) => void;
   onUploadAction: () => void;
@@ -63,18 +63,37 @@ export default function UploadDropzone({
         </div>
         
           <div className="w-full max-w-md">
-            {/* Processing Stage and Percentage */}
+            {/* Processing Stage and Measured Upload Percentage */}
             <div className="flex items-center justify-between gap-4 text-xs font-bold text-content">
               <span className="min-w-0 truncate">{processingStage}</span>
-              <span>{Math.min(processingProgress, 99)}%</span>
+              {processingProgress !== null ? (
+                <span>{Math.min(processingProgress, 100)}%</span>
+              ) : (
+                <span>Sedang diproses</span>
+              )}
             </div>
 
             {/* Progress Bar */}
-            <div className="mt-2 h-2 overflow-hidden rounded-full bg-surface-muted">
-              <div
-                className="h-full rounded-full bg-green transition-all duration-500"
-                style={{ width: `${Math.min(processingProgress, 99)}%` }}
-              />
+            <div
+              className="mt-2 h-2 overflow-hidden rounded-full bg-surface-muted"
+              role="progressbar"
+              aria-label={
+                processingProgress !== null
+                  ? "Kemajuan muat naik fail"
+                  : "Dokumen sedang diproses"
+              }
+              aria-valuemin={processingProgress !== null ? 0 : undefined}
+              aria-valuemax={processingProgress !== null ? 100 : undefined}
+              aria-valuenow={processingProgress ?? undefined}
+            >
+              {processingProgress !== null ? (
+                <div
+                  className="h-full rounded-full bg-green transition-[width] duration-150"
+                  style={{ width: `${Math.min(processingProgress, 100)}%` }}
+                />
+              ) : (
+                <div className="h-full w-1/3 animate-[upload-processing_1.2s_ease-in-out_infinite] rounded-full bg-green" />
+              )}
             </div>
           </div>
 

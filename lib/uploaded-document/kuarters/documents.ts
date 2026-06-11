@@ -5,9 +5,8 @@ import type {
 } from "@/app/pages/2_muat_naik/components/extract-review-shared";
 import { prisma } from "@/lib/prisma";
 import {
-  findQuarterCategoryByDetails,
-  findQuarterCategoryByNameAddress,
-  findUnitByCategoryIdAndCode,
+  findKuartersCategoryMatches,
+  findKuartersUnitMatches,
 } from "@/lib/uploaded-document/kuarters/queries";
 
 export async function buildKuartersExtractResultFromDraftRows(
@@ -23,44 +22,37 @@ export async function buildKuartersExtractResultFromDraftRows(
     return null;
   }
 
-  const records: ExtractedQuarterRecord[] = [];
+  const categoryMatches = await findKuartersCategoryMatches(prisma, categories);
+  const unitMatches = await findKuartersUnitMatches(
+    prisma,
+    categories.flatMap((category) => {
+      const categoryId = categoryMatches.get(category.id)?.categoryId;
 
-  for (const category of categories) {
+      return categoryId
+        ? category.units.map((unit) => ({ unit, categoryId }))
+        : [];
+    }),
+  );
+  const records: ExtractedQuarterRecord[] = categories.map((category) => {
     const address = category.address ?? "N/A";
-    const originalCategoryId = await findQuarterCategoryByNameAddress(
-      prisma,
-      category.categoryName,
-      address,
-    );
-    const exactCategoryId = await findQuarterCategoryByDetails(
-      prisma,
-      category.categoryName,
-      address,
-      category.rentalPrice.toFixed(2),
-      category.maintenancePrice.toFixed(2),
-      category.penaltyPrice.toFixed(2),
-    );
-    const units: ExtractedQuarterUnit[] = [];
+    const categoryMatch = categoryMatches.get(category.id);
+    const units: ExtractedQuarterUnit[] = category.units.map((unit) => {
+      const originalUnitId = unitMatches.get(unit.id)?.unitId;
 
-    for (const unit of category.units) {
-      const originalUnitId = originalCategoryId
-        ? await findUnitByCategoryIdAndCode(prisma, originalCategoryId, unit.unitCode)
-        : "";
-
-      units.push({
+      return {
         unitId: unit.id,
-        originalUnitId: originalUnitId || undefined,
+        originalUnitId,
         unitCode: unit.unitCode,
         address,
         isExisted: Boolean(originalUnitId),
-      });
-    }
+      };
+    });
 
-    records.push({
+    return {
       id: category.id,
       categoryId: category.id,
-      categoryIsExisted: Boolean(exactCategoryId),
-      originalCategoryId: originalCategoryId || undefined,
+      categoryIsExisted: categoryMatch?.isExact ?? false,
+      originalCategoryId: categoryMatch?.categoryId,
       categoryName: category.categoryName,
       address,
       rentalPrice: category.rentalPrice.toFixed(2),
@@ -68,8 +60,8 @@ export async function buildKuartersExtractResultFromDraftRows(
       penaltyPrice: category.penaltyPrice.toFixed(2),
       unitCount: category.units.length,
       units,
-    });
-  }
+    };
+  });
 
   return {
     documentType: "kuarters",

@@ -1,3 +1,5 @@
+import { randomUUID } from "node:crypto";
+
 import type { Prisma } from "@prisma/client";
 
 import type {
@@ -5,8 +7,12 @@ import type {
   ExtractResult,
 } from "@/app/pages/2_muat_naik/components/extract-review-shared";
 import { getBayaranPaymentDate } from "@/lib/uploaded-document/bayaran/documents";
-import { findExistingBayaranPayment } from "@/lib/uploaded-document/bayaran/queries";
-import { findResidentByNormalizedIc } from "@/lib/uploaded-document/shared";
+import {
+  findExistingBayaranPaymentKeys,
+  getBayaranPaymentKey,
+} from "@/lib/uploaded-document/bayaran/queries";
+import { createOrderedTimestamps } from "@/lib/uploaded-document/import-utils";
+import { findResidentsByNormalizedIcs } from "@/lib/uploaded-document/shared";
 
 export async function createPendingBayaranRows(
   tx: Prisma.TransactionClient,
@@ -18,7 +24,7 @@ export async function createPendingBayaranRows(
   }
 
   const paymentDate = getBayaranPaymentDate(extractResult.paymentMonth);
-  const records: ExtractedBayaranRecord[] = [];
+  const normalizedRecords: ExtractedBayaranRecord[] = [];
   const seen = new Set<string>();
 
   for (const record of extractResult.records) {
@@ -32,39 +38,65 @@ export async function createPendingBayaranRows(
     }
 
     seen.add(normalizedRecord.noGajiNoKp);
+    normalizedRecords.push(normalizedRecord);
+  }
 
-    const residentId = await findResidentByNormalizedIc(
-      tx,
-      normalizedRecord.noGajiNoKp,
-    );
-    const existingPayment = await findExistingBayaranPayment(tx, {
+  const residentIdByIc = await findResidentsByNormalizedIcs(
+    tx,
+    normalizedRecords.map((record) => record.noGajiNoKp),
+  );
+  const timestamps = createOrderedTimestamps(normalizedRecords.length);
+  const preparedRecords = normalizedRecords.map((record, index) => ({
+    record,
+    draftId: randomUUID(),
+    createdAt: timestamps[index],
+    residentId: residentIdByIc.get(record.noGajiNoKp) ?? null,
+  }));
+  const existingPaymentKeys = await findExistingBayaranPaymentKeys(
+    tx,
+    preparedRecords.map(({ record, residentId }) => ({
       residentId,
       paymentDate,
-      receiptNo: normalizedRecord.noRujukan,
-      amount: normalizedRecord.amaunRm,
-    });
-    const draft = await tx.paymentDraft.create({
-      data: {
-        residentName: normalizedRecord.nama,
-        residentIcNumber: normalizedRecord.noGajiNoKp,
-        department: normalizedRecord.jabatanName || null,
+      receiptNo: record.noRujukan,
+      amount: record.amaunRm,
+    })),
+  );
+
+  if (preparedRecords.length > 0) {
+    await tx.paymentDraft.createMany({
+      data: preparedRecords.map(({ record, draftId, residentId, createdAt }) => ({
+        id: draftId,
+        residentName: record.nama,
+        residentIcNumber: record.noGajiNoKp,
+        department: record.jabatanName || null,
         paymentDate,
-        receiptNo: normalizedRecord.noRujukan || null,
-        referenceNo: normalizedRecord.noRujukan || null,
-        amount: normalizedRecord.amaunRm || "0",
-        description: normalizedRecord.catatan || "bayaran",
+        receiptNo: record.noRujukan || null,
+        referenceNo: record.noRujukan || null,
+        amount: record.amaunRm || "0",
+        description: record.catatan || "bayaran",
         uploadedDocumentId,
         originalResidentId: residentId || null,
-      },
-    });
-
-    records.push({
-      ...normalizedRecord,
-      paymentId: draft.id,
-      residentId: residentId || undefined,
-      isExisted: Boolean(existingPayment),
+        createdAt,
+        updatedAt: createdAt,
+      })),
     });
   }
+
+  const records = preparedRecords.map(({ record, draftId, residentId }) => {
+    const paymentKey = getBayaranPaymentKey({
+      residentId,
+      paymentDate,
+      receiptNo: record.noRujukan,
+      amount: record.amaunRm,
+    });
+
+    return {
+      ...record,
+      paymentId: draftId,
+      residentId: residentId || undefined,
+      isExisted: Boolean(paymentKey && existingPaymentKeys.has(paymentKey)),
+    };
+  });
 
   return {
     ...extractResult,

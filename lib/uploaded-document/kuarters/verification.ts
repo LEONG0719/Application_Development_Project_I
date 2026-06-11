@@ -3,21 +3,14 @@ import { randomUUID } from "crypto";
 import { Prisma } from "@prisma/client";
 
 import type { VerifyResult } from "@/lib/uploaded-document/verification";
+import {
+  findKuartersCategoryMatches,
+  findKuartersUnitMatches,
+} from "@/lib/uploaded-document/kuarters/queries";
 
 type KuartersCategoryDraft = Prisma.QuarterCategoryDraftGetPayload<{
   include: { units: true };
 }>;
-
-type CategoryMatch = {
-  draftId: string;
-  categoryId: string;
-  isExact: boolean;
-};
-
-type UnitMatch = {
-  draftId: string;
-  unitId: string;
-};
 
 export async function verifyKuartersDrafts(
   tx: Prisma.TransactionClient,
@@ -208,54 +201,6 @@ export async function verifyKuartersDrafts(
   return { verifiedRows, failedMessages };
 }
 
-async function findKuartersCategoryMatches(
-  tx: Prisma.TransactionClient,
-  drafts: KuartersCategoryDraft[],
-) {
-  if (drafts.length === 0) {
-    return new Map<string, CategoryMatch>();
-  }
-
-  const payload = drafts.map((draft) => ({
-    draftId: draft.id,
-    categoryName: draft.categoryName,
-    address: draft.address ?? "",
-    rentalPrice: draft.rentalPrice.toFixed(2),
-    maintenancePrice: draft.maintenancePrice.toFixed(2),
-    penaltyPrice: draft.penaltyPrice.toFixed(2),
-  }));
-  const matches = await tx.$queryRaw<CategoryMatch[]>`
-    WITH input AS (
-      SELECT *
-      FROM jsonb_to_recordset(${JSON.stringify(payload)}::jsonb) AS x(
-        "draftId" text,
-        "categoryName" text,
-        "address" text,
-        "rentalPrice" numeric,
-        "maintenancePrice" numeric,
-        "penaltyPrice" numeric
-      )
-    )
-    SELECT DISTINCT ON (input."draftId")
-      input."draftId",
-      category."id" AS "categoryId",
-      (
-        category."rentalPrice" = input."rentalPrice"
-        AND category."maintenancePrice" = input."maintenancePrice"
-        AND category."penaltyPrice" = input."penaltyPrice"
-      ) AS "isExact"
-    FROM input
-    INNER JOIN "QuarterCategory" category
-      ON UPPER(TRIM(regexp_replace(category."categoryName", '\\s+', ' ', 'g'))) =
-        UPPER(TRIM(regexp_replace(input."categoryName", '\\s+', ' ', 'g')))
-      AND UPPER(TRIM(regexp_replace(COALESCE(category."address", ''), '\\s+', ' ', 'g'))) =
-        UPPER(TRIM(regexp_replace(COALESCE(input."address", ''), '\\s+', ' ', 'g')))
-    ORDER BY input."draftId", "isExact" DESC, category."createdAt" ASC
-  `;
-
-  return new Map(matches.map((match) => [match.draftId, match]));
-}
-
 async function createKuartersCategories(
   tx: Prisma.TransactionClient,
   rows: {
@@ -347,42 +292,6 @@ async function updateKuartersCategoryDraftReferences(
     ) AS updates("id", "categoryId")
     WHERE draft."id" = updates."id"
   `;
-}
-
-async function findKuartersUnitMatches(
-  tx: Prisma.TransactionClient,
-  selectedUnitDrafts: { unit: KuartersCategoryDraft["units"][number]; categoryId: string }[],
-) {
-  if (selectedUnitDrafts.length === 0) {
-    return new Map<string, UnitMatch>();
-  }
-
-  const payload = selectedUnitDrafts.map(({ unit, categoryId }) => ({
-    draftId: unit.id,
-    categoryId,
-    unitCode: unit.unitCode,
-  }));
-  const matches = await tx.$queryRaw<UnitMatch[]>`
-    WITH input AS (
-      SELECT *
-      FROM jsonb_to_recordset(${JSON.stringify(payload)}::jsonb) AS x(
-        "draftId" text,
-        "categoryId" uuid,
-        "unitCode" text
-      )
-    )
-    SELECT DISTINCT ON (input."draftId")
-      input."draftId",
-      unit."id" AS "unitId"
-    FROM input
-    INNER JOIN "Unit" unit
-      ON unit."categoryId" = input."categoryId"
-      AND UPPER(TRIM(regexp_replace(unit."unitCode", '\\s+', ' ', 'g'))) =
-        UPPER(TRIM(regexp_replace(input."unitCode", '\\s+', ' ', 'g')))
-    ORDER BY input."draftId", unit."createdAt" ASC
-  `;
-
-  return new Map(matches.map((match) => [match.draftId, match]));
 }
 
 async function updateKuartersUnitDraftReferences(

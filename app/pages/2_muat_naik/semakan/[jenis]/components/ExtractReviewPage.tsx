@@ -812,6 +812,13 @@ export default function ExtractReviewPage({
       {isLoadingDraft && (
         <SearchingDataOverlay message="Memuatkan draf..." isFixed />
       )}
+      {verifyingMode ? (
+        <SearchingDataOverlay
+          message={`Mengesahkan ${selectedRecordKeys.length} rekod...`}
+          isFixed
+          showElapsedTime
+        />
+      ) : null}
       <div className="flex w-full flex-col gap-4 mb-10">
         <ReviewHeader
           fileName={isLoadingDraft ? "Memuatkan draf..." : content.fileName}

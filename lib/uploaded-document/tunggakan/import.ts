@@ -1,3 +1,5 @@
+import { randomUUID } from "node:crypto";
+
 import type { Prisma } from "@prisma/client";
 
 import type {
@@ -8,7 +10,8 @@ import {
   getTodayDateInAppTimeZone,
   parseDateOnlyInAppTimeZone,
 } from "@/lib/date-time";
-import { findResidentByNormalizedIc } from "@/lib/uploaded-document/shared";
+import { createOrderedTimestamps } from "@/lib/uploaded-document/import-utils";
+import { findResidentsByNormalizedIcs } from "@/lib/uploaded-document/shared";
 
 function tunggakanIdentityKey(name: string, icNumber: string) {
   return [normalizeExtractText(name), icNumber.replace(/\D/g, "")].join("|");
@@ -29,49 +32,108 @@ export async function createPendingTunggakanRows(
 
   const lastUpdatedMonth = parseTunggakanDate(extractResult.lastUpdatedMonth);
   const seen = new Set<string>();
-  const records: ExtractedTunggakanRecord[] = [];
-
-  for (const record of extractResult.records) {
+  const timestamps = createOrderedTimestamps(extractResult.records.length);
+  const preparedRecords = extractResult.records.map((record, index) => {
     const icNumber = normalizeIc(record.noKadPengenalan);
     const jumlahTunggakan = normalizeAmount(record.jumlahTunggakan);
-    const normalizedRecord: ExtractedTunggakanRecord = {
-      ...record,
-      noKadPengenalan: icNumber,
-      jumlahTunggakan,
+    return {
+      record: {
+        ...record,
+        noKadPengenalan: icNumber,
+        jumlahTunggakan,
+      } satisfies ExtractedTunggakanRecord,
+      draftId: randomUUID(),
+      createdAt: timestamps[index],
+      identityKey: tunggakanIdentityKey(record.nama, icNumber),
     };
-    const identityKey = tunggakanIdentityKey(record.nama, icNumber);
-    const residentId = await findResidentByNormalizedIc(tx, icNumber);
-    const existingSummary = await findExistingArrearsSummary(tx, residentId);
-    const hasTransactions = await residentHasTransactions(tx, residentId);
-    const isDuplicateInDocument = seen.has(identityKey);
-    const isBlocked = Boolean(hasTransactions || isDuplicateInDocument);
-    const draft = await tx.arrearsSummaryDraft.create({
-      data: {
-        residentName: record.nama,
-        residentIcNumber: icNumber,
-        totalArrearsAmount: jumlahTunggakan,
-        lastUpdatedMonth,
-        description: "tunggakan",
-        uploadedDocumentId,
-        originalResidentId: residentId || null,
-        originalSummaryId: existingSummary?.id ?? null,
-      },
+  });
+  const residentIdByIc = await findResidentsByNormalizedIcs(
+    tx,
+    preparedRecords.map(({ record }) => record.noKadPengenalan),
+  );
+  const residentIds = [
+    ...new Set(
+      [...residentIdByIc.values()].filter((residentId) => Boolean(residentId)),
+    ),
+  ];
+  const existingSummaries = residentIds.length
+    ? await tx.arrearsSummary.findMany({
+        where: { residentId: { in: residentIds } },
+        select: { id: true, residentId: true },
+      })
+    : [];
+  const residentsWithTransactions = residentIds.length
+    ? await tx.transaction.findMany({
+        where: { residentId: { in: residentIds } },
+        select: { residentId: true },
+        distinct: ["residentId"],
+      })
+    : [];
+  const summaryIdByResidentId = new Map(
+    existingSummaries.map((summary) => [summary.residentId, summary.id]),
+  );
+  const transactionResidentIds = new Set(
+    residentsWithTransactions
+      .map((transaction) => transaction.residentId)
+      .filter((residentId): residentId is string => Boolean(residentId)),
+  );
+
+  if (preparedRecords.length > 0) {
+    await tx.arrearsSummaryDraft.createMany({
+      data: preparedRecords.map(({ record, draftId, createdAt }) => {
+        const residentId =
+          residentIdByIc.get(record.noKadPengenalan) ?? null;
+
+        return {
+          id: draftId,
+          residentName: record.nama,
+          residentIcNumber: record.noKadPengenalan,
+          totalArrearsAmount: record.jumlahTunggakan,
+          lastUpdatedMonth,
+          description: "tunggakan",
+          uploadedDocumentId,
+          originalResidentId: residentId,
+          originalSummaryId: residentId
+            ? summaryIdByResidentId.get(residentId) ?? null
+            : null,
+          createdAt,
+          updatedAt: createdAt,
+        };
+      }),
     });
+  }
+
+  const records = preparedRecords.map(({ record, draftId, identityKey }) => {
+    const residentId =
+      residentIdByIc.get(record.noKadPengenalan) ?? null;
+    const existingSummaryId = residentId
+      ? summaryIdByResidentId.get(residentId)
+      : undefined;
+    const hasTransactions = Boolean(
+      residentId && transactionResidentIds.has(residentId),
+    );
+    const isDuplicateInDocument = seen.has(identityKey);
+    const isBlocked = Boolean(
+      hasTransactions || existingSummaryId || isDuplicateInDocument,
+    );
 
     seen.add(identityKey);
-    records.push({
-      ...normalizedRecord,
-      arrearsSummaryId: draft.id,
+
+    return {
+      ...record,
+      arrearsSummaryId: draftId,
       residentId: residentId || undefined,
       isExisted: isBlocked,
       importStatus: isBlocked ? "IGNORED" : "PENDING",
-      importMessage: isBlocked
-        ? isDuplicateInDocument
-          ? "Rekod tunggakan pendua dalam fail ini."
-          : "Penghuni ini sudah mempunyai transaksi dalam sistem."
-        : undefined,
-    });
-  }
+      importMessage: isDuplicateInDocument
+        ? "Rekod tunggakan pendua dalam fail ini."
+        : hasTransactions
+          ? "Penghuni ini sudah mempunyai transaksi dalam sistem."
+          : existingSummaryId
+            ? "Rekod tunggakan telah wujud dalam sistem."
+            : undefined,
+    } satisfies ExtractedTunggakanRecord;
+  });
 
   const acceptedRecords = records.filter((record) => record.importStatus !== "IGNORED");
 
@@ -136,32 +198,4 @@ function parseTunggakanDate(value: string | undefined) {
 
 function normalizeIc(value: string) {
   return value.replace(/\D/g, "");
-}
-
-async function findExistingArrearsSummary(
-  tx: Prisma.TransactionClient,
-  residentId: string | null,
-) {
-  return residentId
-    ? tx.arrearsSummary.findUnique({
-        where: { residentId },
-        select: { id: true },
-      })
-    : null;
-}
-
-async function residentHasTransactions(
-  tx: Prisma.TransactionClient,
-  residentId: string | null,
-) {
-  if (!residentId) {
-    return false;
-  }
-
-  const transaction = await tx.transaction.findFirst({
-    where: { residentId },
-    select: { id: true },
-  });
-
-  return Boolean(transaction);
 }

@@ -4,15 +4,13 @@ from dataclasses import dataclass
 from io import BytesIO
 import json
 import re
-import urllib.error
-import urllib.request
 
 from pypdf import PdfReader
 
 from extractors.shared import (
     build_header_map_for,
+    call_gemini_json,
     clean_header,
-    gemini_api_keys,
     get_cell,
     normalize_fee,
     normalize_unit,
@@ -522,103 +520,44 @@ def _pdf_page_category(text: str) -> str:
     return ""
 
 
-def _gemini_api_keys() -> list[str]:
-    return list(gemini_api_keys())
-
-
-def _call_gemini_kuarters_parser(api_key: str, prompt: dict) -> dict:
-    request = urllib.request.Request(
-        "https://generativelanguage.googleapis.com/v1beta/models/"
-        f"gemini-2.5-flash:generateContent?key={api_key}",
-        data=json.dumps(prompt).encode("utf-8"),
-        headers={"Content-Type": "application/json"},
-        method="POST",
-    )
-
-    try:
-        with urllib.request.urlopen(request, timeout=45) as response:
-            payload = json.loads(response.read().decode("utf-8"))
-    except urllib.error.HTTPError as error:
-        error_body = error.read().decode("utf-8", errors="replace")
-        raise ValueError(f"HTTP {error.code}: {_compact_error_body(error_body)}") from error
-    except urllib.error.URLError as error:
-        raise ValueError(str(error.reason)) from error
-
-    text = (
-        payload.get("candidates", [{}])[0]
-        .get("content", {})
-        .get("parts", [{}])[0]
-        .get("text", "")
-    )
-    if not text:
-        raise ValueError("respons AI kosong")
-
-    return json.loads(text)
-
-
-def _compact_error_body(value: str) -> str:
-    if not value:
-        return "tiada butiran ralat"
-
-    try:
-        parsed = json.loads(value)
-        message = parsed.get("error", {}).get("message")
-        status = parsed.get("error", {}).get("status")
-        if message and status:
-            return f"{status} - {message}"
-        if message:
-            return str(message)
-    except json.JSONDecodeError:
-        pass
-
-    return re.sub(r"\s+", " ", value).strip()[:300]
-
-
 def _repair_kuarters_with_gemini(response: dict, validation_error: str) -> dict:
     invalid_records = _invalid_records_for_ai(response)
     if not invalid_records:
         raise ValueError(validation_error)
 
-    api_keys = _gemini_api_keys()
-    if not api_keys:
-        return _apply_default_repairs(response, invalid_records)
-
-    prompt = {
-        "contents": [
+    try:
+        parsed = call_gemini_json(
             {
-                "parts": [
+                "contents": [
                     {
-                        "text": (
-                            "You are validating Malaysian quarters extraction rows. "
-                            "Only analyze the provided invalid records, not the full file. "
-                            "Return only JSON with a 'repairs' array. Each repair must include "
-                            "index, categoryName, address, rentalPrice, maintenancePrice, "
-                            "penaltyPrice, and units. Each unit must include unitCode and address. "
-                            "Rules: categoryName and unitCode are required business values and "
-                            "must never be 'N/A'. If categoryName cannot be confidently repaired, "
-                            "use 'Kategori Tidak Dikenal'. If unitCode cannot be repaired, use "
-                            "a unique 'UNIT-TIDAK-DIKENAL-{index}-{number}'. Optional string "
-                            "fields such as address may be 'N/A'. Invalid or missing prices "
-                            "must be '0'. Use money strings only. Do not invent extra rows.\n\n"
-                            f"Validation error: {validation_error}\n\n"
-                            f"Invalid records JSON:\n{json.dumps(invalid_records, ensure_ascii=False)}"
-                        )
+                        "parts": [
+                            {
+                                "text": (
+                                    "You are validating Malaysian quarters extraction rows. "
+                                    "Only analyze the provided invalid records, not the full file. "
+                                    "Return only JSON with a 'repairs' array. Each repair must include "
+                                    "index, categoryName, address, rentalPrice, maintenancePrice, "
+                                    "penaltyPrice, and units. Each unit must include unitCode and address. "
+                                    "Rules: categoryName and unitCode are required business values and "
+                                    "must never be 'N/A'. If categoryName cannot be confidently repaired, "
+                                    "use 'Kategori Tidak Dikenal'. If unitCode cannot be repaired, use "
+                                    "a unique 'UNIT-TIDAK-DIKENAL-{index}-{number}'. Optional string "
+                                    "fields such as address may be 'N/A'. Invalid or missing prices "
+                                    "must be '0'. Use money strings only. Do not invent extra rows.\n\n"
+                                    f"Validation error: {validation_error}\n\n"
+                                    f"Invalid records JSON:\n{json.dumps(invalid_records, ensure_ascii=False)}"
+                                )
+                            }
+                        ]
                     }
                 ]
             }
-        ],
-        "generationConfig": {"responseMimeType": "application/json"},
-    }
+        )
+    except Exception:
+        return _apply_default_repairs(response, invalid_records)
 
-    for api_key in api_keys:
-        try:
-            parsed = _call_gemini_kuarters_parser(api_key, prompt)
-            repaired = _merge_ai_repairs(response, parsed.get("repairs", []))
-            return _apply_default_repairs(repaired, _invalid_records_for_ai(repaired))
-        except Exception:
-            continue
-
-    return _apply_default_repairs(response, invalid_records)
+    repaired = _merge_ai_repairs(response, parsed.get("repairs", []))
+    return _apply_default_repairs(repaired, _invalid_records_for_ai(repaired))
 
 
 def _invalid_records_for_ai(response: dict) -> list[dict]:

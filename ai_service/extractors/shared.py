@@ -3,9 +3,13 @@ from __future__ import annotations
 from datetime import datetime, timedelta
 from functools import lru_cache
 from io import BytesIO
+import json
 import os
 import posixpath
 import re
+import threading
+import urllib.error
+import urllib.request
 import zipfile
 import xml.etree.ElementTree as ET
 
@@ -14,6 +18,16 @@ SPREADSHEET_NS = {
     "a": "http://schemas.openxmlformats.org/spreadsheetml/2006/main",
     "r": "http://schemas.openxmlformats.org/officeDocument/2006/relationships",
 }
+SPREADSHEET_MAIN_NS = SPREADSHEET_NS["a"]
+CELL_TAG = f"{{{SPREADSHEET_MAIN_NS}}}c"
+INLINE_STRING_TAG = f"{{{SPREADSHEET_MAIN_NS}}}is"
+ROW_TAG = f"{{{SPREADSHEET_MAIN_NS}}}row"
+TEXT_TAG = f"{{{SPREADSHEET_MAIN_NS}}}t"
+VALUE_TAG = f"{{{SPREADSHEET_MAIN_NS}}}v"
+DEFAULT_GEMINI_MODEL = "gemini-2.5-flash-lite"
+DEFAULT_GEMINI_TIMEOUT_SECONDS = 30.0
+_GEMINI_KEY_LOCK = threading.Lock()
+_preferred_gemini_key_index = 0
 
 
 def read_xlsx(file_bytes: bytes) -> dict:
@@ -59,9 +73,20 @@ def canonical_field_for_header(
 
 
 def build_alias_lookup(aliases_by_field: dict[str, tuple[str, ...]]) -> dict[str, str]:
+    signature = tuple(
+        (field, tuple(aliases))
+        for field, aliases in aliases_by_field.items()
+    )
+    return _build_alias_lookup_cached(signature)
+
+
+@lru_cache(maxsize=32)
+def _build_alias_lookup_cached(
+    aliases_by_field: tuple[tuple[str, tuple[str, ...]], ...],
+) -> dict[str, str]:
     alias_lookup: dict[str, str] = {}
 
-    for field, aliases in aliases_by_field.items():
+    for field, aliases in aliases_by_field:
         for alias in aliases:
             clean_alias = clean_header(alias)
             if clean_alias:
@@ -124,7 +149,7 @@ def _read_shared_strings(archive: zipfile.ZipFile) -> list[str]:
     strings = []
     for item in root.findall("a:si", SPREADSHEET_NS):
         strings.append(
-            "".join(text.text or "" for text in item.findall(".//a:t", SPREADSHEET_NS))
+            "".join(text.text or "" for text in item.iter(TEXT_TAG))
         )
     return strings
 
@@ -177,9 +202,12 @@ def _read_sheet_rows(
     root = ET.fromstring(archive.read(sheet_path))
     rows: list[list[str]] = []
 
-    for row in root.findall("a:sheetData/a:row", SPREADSHEET_NS):
+    for row in root.iter(ROW_TAG):
         values: list[str] = []
-        for cell in row.findall("a:c", SPREADSHEET_NS):
+        for cell in row:
+            if cell.tag != CELL_TAG:
+                continue
+
             column_index = _column_index(cell.attrib.get("r", "A1"))
             while len(values) < column_index:
                 values.append("")
@@ -192,32 +220,36 @@ def _read_sheet_rows(
 
 def _cell_value(cell: ET.Element, shared_strings: list[str]) -> str:
     cell_type = cell.attrib.get("t")
-    value = cell.find("a:v", SPREADSHEET_NS)
+    value = None
+    inline = None
+
+    for child in cell:
+        if child.tag == VALUE_TAG:
+            value = child
+        elif child.tag == INLINE_STRING_TAG:
+            inline = child
 
     if cell_type == "s" and value is not None:
         return shared_strings[int(value.text or 0)].strip()
 
     if cell_type == "inlineStr":
-        inline = cell.find("a:is", SPREADSHEET_NS)
         if inline is None:
             return ""
         return "".join(
-            text.text or "" for text in inline.findall(".//a:t", SPREADSHEET_NS)
+            text.text or "" for text in inline.iter(TEXT_TAG)
         ).strip()
 
     return (value.text or "").strip() if value is not None else ""
 
 
-@lru_cache(maxsize=2048)
 def _column_index(cell_reference: str) -> int:
-    match = re.match(r"([A-Z]+)", cell_reference)
-    if not match:
-        return 1
-
     index = 0
-    for char in match.group(1):
+    for char in cell_reference:
+        if not "A" <= char <= "Z":
+            break
         index = index * 26 + ord(char) - 64
-    return index
+
+    return index or 1
 
 
 @lru_cache(maxsize=1)
@@ -235,3 +267,141 @@ def gemini_api_keys() -> tuple[str, ...]:
             seen_keys.add(key)
 
     return tuple(unique_keys)
+
+
+@lru_cache(maxsize=1)
+def gemini_model() -> str:
+    return os.getenv("GEMINI_MODEL", "").strip() or DEFAULT_GEMINI_MODEL
+
+
+@lru_cache(maxsize=1)
+def gemini_timeout_seconds() -> float:
+    raw_timeout = os.getenv("GEMINI_REQUEST_TIMEOUT_SECONDS", "").strip()
+
+    try:
+        timeout = float(raw_timeout)
+    except ValueError:
+        timeout = DEFAULT_GEMINI_TIMEOUT_SECONDS
+
+    return min(max(timeout, 5.0), 120.0)
+
+
+def call_gemini_json(prompt: dict) -> dict:
+    keys = gemini_api_keys()
+    if not keys:
+        raise ValueError("Kunci API Gemini tidak dikonfigurasi.")
+
+    model = gemini_model()
+    request_body = _gemini_request_body(prompt, model)
+    last_error: ValueError | None = None
+
+    for key_index, api_key in _ordered_gemini_keys(keys):
+        request = urllib.request.Request(
+            "https://generativelanguage.googleapis.com/v1beta/models/"
+            f"{model}:generateContent",
+            data=request_body,
+            headers={
+                "Content-Type": "application/json",
+                "x-goog-api-key": api_key,
+            },
+            method="POST",
+        )
+
+        try:
+            with urllib.request.urlopen(
+                request,
+                timeout=gemini_timeout_seconds(),
+            ) as response:
+                payload = json.loads(response.read().decode("utf-8"))
+        except urllib.error.HTTPError as error:
+            error_body = error.read().decode("utf-8", errors="replace")
+            last_error = ValueError(
+                f"HTTP {error.code}: {_compact_gemini_error(error_body)}"
+            )
+
+            if error.code in {401, 403, 429}:
+                continue
+
+            raise last_error from error
+        except (urllib.error.URLError, TimeoutError) as error:
+            reason = getattr(error, "reason", error)
+            raise ValueError(f"Gemini tidak dapat dihubungi: {reason}") from error
+
+        _remember_gemini_key(key_index)
+        return _gemini_json_payload(payload)
+
+    raise last_error or ValueError("Tiada kunci API Gemini yang boleh digunakan.")
+
+
+def _gemini_request_body(prompt: dict, model: str) -> bytes:
+    request_prompt = dict(prompt)
+    generation_config = dict(request_prompt.get("generationConfig") or {})
+    generation_config["responseMimeType"] = "application/json"
+    if model.startswith("gemini-2.5-"):
+        generation_config["thinkingConfig"] = {"thinkingBudget": 0}
+    request_prompt["generationConfig"] = generation_config
+
+    return json.dumps(request_prompt, ensure_ascii=False).encode("utf-8")
+
+
+def _ordered_gemini_keys(keys: tuple[str, ...]) -> list[tuple[int, str]]:
+    with _GEMINI_KEY_LOCK:
+        start_index = _preferred_gemini_key_index % len(keys)
+
+    return [
+        ((start_index + offset) % len(keys), keys[(start_index + offset) % len(keys)])
+        for offset in range(len(keys))
+    ]
+
+
+def _remember_gemini_key(key_index: int) -> None:
+    global _preferred_gemini_key_index
+
+    with _GEMINI_KEY_LOCK:
+        _preferred_gemini_key_index = key_index
+
+
+def _gemini_json_payload(payload: dict) -> dict:
+    candidates = payload.get("candidates")
+    if not isinstance(candidates, list) or not candidates:
+        raise ValueError("Respons AI tidak mengandungi calon jawapan.")
+
+    parts = candidates[0].get("content", {}).get("parts", [])
+    text = next(
+        (
+            str(part.get("text", "")).strip()
+            for part in parts
+            if (
+                isinstance(part, dict)
+                and not part.get("thought")
+                and str(part.get("text", "")).strip()
+            )
+        ),
+        "",
+    )
+    if not text:
+        raise ValueError("Respons AI kosong.")
+
+    parsed = json.loads(text)
+    if not isinstance(parsed, dict):
+        raise ValueError("Respons AI bukan objek JSON.")
+
+    return parsed
+
+
+def _compact_gemini_error(value: str) -> str:
+    if not value:
+        return "tiada butiran ralat"
+
+    try:
+        parsed = json.loads(value)
+        message = parsed.get("error", {}).get("message")
+        status = parsed.get("error", {}).get("status")
+        if message and status:
+            return f"{status} - {message}"
+        if message:
+            return str(message)
+    except json.JSONDecodeError:
+        pass
+
+    return re.sub(r"\s+", " ", value).strip()[:300]

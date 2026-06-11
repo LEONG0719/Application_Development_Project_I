@@ -36,6 +36,19 @@ type PreparedPaymentRow = {
   verifiedAt: Date | null;
 };
 
+type PreparedTransactionRow = {
+  id: string;
+  transactionNo: string;
+  residentId: string;
+  paymentId: string;
+  transactionDate: Date;
+  chargeMonth: Date;
+  creditAmount: number;
+  receiptNo: string | null;
+  description: string;
+  createdById: string | null;
+};
+
 type BalanceTableColumns = {
   monthlyCharge: Set<string>;
   arrearsSummary: Set<string>;
@@ -78,48 +91,42 @@ export async function createPaymentRecords(
       verifiedAt: entry.verifiedById ? new Date() : null,
     };
   });
-
-  for (const row of paymentRows) {
-    await insertPaymentRow(tx, row, paymentColumns);
-  }
-
-  for (const [index, entry] of entries.entries()) {
+  const transactionRows = entries.map((entry, index): PreparedTransactionRow => {
     const baseDescription = normalizeOptionalPaymentText(entry.description);
     const description = isUploadedPaymentEntry(entry)
       ? withUploadedPaymentSource(baseDescription)
       : baseDescription ?? MANUAL_PAYMENT_DESCRIPTION;
-    const chargeMonth = getMonthStartInAppTimeZone(entry.paymentDate);
 
-    await insertTransactionRow(
-      tx,
-      {
-        id: randomUUID(),
-        transactionNo: transactionNos[index],
-        residentId: entry.residentId,
-        paymentId: paymentRows[index].id,
-        transactionDate: entry.paymentDate,
-        chargeMonth,
-        creditAmount: normalizePaymentAmount(entry.amount),
-        receiptNo: normalizeReceiptNo(entry.receiptNo),
-        description,
-        createdById: entry.createdById ?? null,
-      },
-      transactionColumns,
-    );
-  }
+    return {
+      id: randomUUID(),
+      transactionNo: transactionNos[index],
+      residentId: entry.residentId,
+      paymentId: paymentRows[index].id,
+      transactionDate: entry.paymentDate,
+      chargeMonth: getMonthStartInAppTimeZone(entry.paymentDate),
+      creditAmount: normalizePaymentAmount(entry.amount),
+      receiptNo: normalizeReceiptNo(entry.receiptNo),
+      description,
+      createdById: entry.createdById ?? null,
+    };
+  });
 
-  for (const entry of entries) {
-    await applyPaymentToResidentBalance(tx, entry, balanceColumns);
-  }
+  await insertPaymentRows(tx, paymentRows, paymentColumns);
+  await insertTransactionRows(tx, transactionRows, transactionColumns);
+  await applyPaymentsToResidentBalances(tx, entries, balanceColumns);
 
   return paymentRows.map((row) => row.id);
 }
 
-async function insertPaymentRow(
+async function insertPaymentRows(
   tx: PaymentRecordClient,
-  row: PreparedPaymentRow,
+  rows: PreparedPaymentRow[],
   columns: Set<string>,
 ) {
+  if (rows.length === 0) {
+    return;
+  }
+
   const fields = [
     Prisma.sql`"id"`,
     Prisma.sql`"residentId"`,
@@ -130,59 +137,69 @@ async function insertPaymentRow(
     Prisma.sql`"createdAt"`,
     Prisma.sql`"updatedAt"`,
   ];
-  const values = [
-    uuidSql(row.id),
-    uuidSql(row.residentId),
-    Prisma.sql`${row.paymentDate}`,
-    Prisma.sql`${row.receiptNo}`,
-    Prisma.sql`${row.amount}`,
-    Prisma.sql`${row.description}`,
-    Prisma.sql`now()`,
-    Prisma.sql`now()`,
-  ];
 
   if (columns.has("uploadedDocumentId")) {
     fields.push(Prisma.sql`"uploadedDocumentId"`);
-    values.push(uuidSql(row.uploadedDocumentId));
   }
 
   if (columns.has("createdById")) {
     fields.push(Prisma.sql`"createdById"`);
-    values.push(uuidSql(row.createdById));
   }
 
   if (columns.has("verifiedById")) {
     fields.push(Prisma.sql`"verifiedById"`);
-    values.push(uuidSql(row.verifiedById));
   }
 
   if (columns.has("verifiedAt")) {
     fields.push(Prisma.sql`"verifiedAt"`);
-    values.push(Prisma.sql`${row.verifiedAt}`);
   }
 
   await tx.$executeRaw(Prisma.sql`
     INSERT INTO "Payment" (${Prisma.join(fields)})
-    VALUES (${Prisma.join(values)})
+    VALUES ${Prisma.join(
+      rows.map((row) => {
+        const values = [
+          uuidSql(row.id),
+          uuidSql(row.residentId),
+          Prisma.sql`${row.paymentDate}`,
+          Prisma.sql`${row.receiptNo}`,
+          Prisma.sql`${row.amount}`,
+          Prisma.sql`${row.description}`,
+          Prisma.sql`now()`,
+          Prisma.sql`now()`,
+        ];
+
+        if (columns.has("uploadedDocumentId")) {
+          values.push(uuidSql(row.uploadedDocumentId));
+        }
+
+        if (columns.has("createdById")) {
+          values.push(uuidSql(row.createdById));
+        }
+
+        if (columns.has("verifiedById")) {
+          values.push(uuidSql(row.verifiedById));
+        }
+
+        if (columns.has("verifiedAt")) {
+          values.push(Prisma.sql`${row.verifiedAt}`);
+        }
+
+        return Prisma.sql`(${Prisma.join(values)})`;
+      }),
+    )}
   `);
 }
 
-async function insertTransactionRow(
+async function insertTransactionRows(
   tx: PaymentRecordClient,
-  row: {
-    id: string;
-    transactionNo: string;
-    residentId: string;
-    paymentId: string;
-    transactionDate: Date;
-    chargeMonth: Date;
-    creditAmount: number;
-    receiptNo: string | null;
-    description: string;
-    createdById: string | null;
-  },
+  rows: PreparedTransactionRow[],
   columns: Set<string>,
 ) {
+  if (rows.length === 0) {
+    return;
+  }
+
   const fields = [
     Prisma.sql`"id"`,
     Prisma.sql`"transactionNo"`,
@@ -198,84 +215,106 @@ async function insertTransactionRow(
     Prisma.sql`"createdAt"`,
     Prisma.sql`"updatedAt"`,
   ];
-  const values = [
-    uuidSql(row.id),
-    Prisma.sql`${row.transactionNo}`,
-    uuidSql(row.residentId),
-    uuidSql(row.paymentId),
-    Prisma.sql`${row.transactionDate}`,
-    Prisma.sql`'BAYARAN'::"TransactionCategory"`,
-    Prisma.sql`'NORMAL'::"TransactionStatus"`,
-    Prisma.sql`0`,
-    Prisma.sql`${row.creditAmount}`,
-    Prisma.sql`${row.receiptNo}`,
-    Prisma.sql`${row.description}`,
-    Prisma.sql`now()`,
-    Prisma.sql`now()`,
-  ];
 
   if (columns.has("createdById")) {
     fields.push(Prisma.sql`"createdById"`);
-    values.push(uuidSql(row.createdById));
   }
 
   if (columns.has("chargeMonth")) {
     fields.push(Prisma.sql`"chargeMonth"`);
-    values.push(Prisma.sql`${row.chargeMonth}`);
   }
 
   await tx.$executeRaw(Prisma.sql`
     INSERT INTO "Transaction" (${Prisma.join(fields)})
-    VALUES (${Prisma.join(values)})
+    VALUES ${Prisma.join(
+      rows.map((row) => {
+        const values = [
+          uuidSql(row.id),
+          Prisma.sql`${row.transactionNo}`,
+          uuidSql(row.residentId),
+          uuidSql(row.paymentId),
+          Prisma.sql`${row.transactionDate}`,
+          Prisma.sql`'BAYARAN'::"TransactionCategory"`,
+          Prisma.sql`'NORMAL'::"TransactionStatus"`,
+          Prisma.sql`0`,
+          Prisma.sql`${row.creditAmount}`,
+          Prisma.sql`${row.receiptNo}`,
+          Prisma.sql`${row.description}`,
+          Prisma.sql`now()`,
+          Prisma.sql`now()`,
+        ];
+
+        if (columns.has("createdById")) {
+          values.push(uuidSql(row.createdById));
+        }
+
+        if (columns.has("chargeMonth")) {
+          values.push(Prisma.sql`${row.chargeMonth}`);
+        }
+
+        return Prisma.sql`(${Prisma.join(values)})`;
+      }),
+    )}
   `);
 }
 
-async function applyPaymentToResidentBalance(
+async function applyPaymentsToResidentBalances(
   tx: PaymentRecordClient,
-  entry: CreatePaymentRecordInput,
+  entries: CreatePaymentRecordInput[],
   columns: BalanceTableColumns,
 ) {
-  const amount = normalizePaymentAmount(entry.amount);
-  const chargeMonth = getMonthStartInAppTimeZone(entry.paymentDate);
-  const activeOccupancy = await tx.unitOccupancy.findFirst({
+  if (entries.length === 0) {
+    return;
+  }
+
+  const residentIds = [...new Set(entries.map((entry) => entry.residentId))];
+  const activeOccupancies = await tx.unitOccupancy.findMany({
     where: {
-      residentId: entry.residentId,
+      residentId: { in: residentIds },
       status: "CURRENT",
     },
-    orderBy: { moveInDate: "desc" },
-    select: { unitId: true },
+    orderBy: [{ residentId: "asc" }, { moveInDate: "desc" }],
+    select: { residentId: true, unitId: true },
   });
+  const activeUnitIdByResidentId = new Map<string, string>();
 
-  await upsertMonthlyChargePayment(tx, {
-    residentId: entry.residentId,
-    unitId: activeOccupancy?.unitId ?? null,
-    chargeMonth,
-    amount,
-    createdById: entry.createdById ?? null,
-    verifiedById: entry.verifiedById ?? null,
-  }, columns.monthlyCharge);
+  for (const occupancy of activeOccupancies) {
+    if (!activeUnitIdByResidentId.has(occupancy.residentId)) {
+      activeUnitIdByResidentId.set(occupancy.residentId, occupancy.unitId);
+    }
+  }
 
-  await upsertArrearsSummaryPayment(tx, {
-    residentId: entry.residentId,
-    chargeMonth,
-    amount,
-    createdById: entry.createdById ?? null,
-    verifiedById: entry.verifiedById ?? null,
-  }, columns.arrearsSummary);
+  const monthlyRows = aggregateMonthlyPaymentRows(
+    entries,
+    activeUnitIdByResidentId,
+  );
+  const arrearsRows = aggregateArrearsPaymentRows(entries);
+
+  await upsertMonthlyChargePayments(tx, monthlyRows, columns.monthlyCharge);
+  await upsertArrearsSummaryPayments(tx, arrearsRows, columns.arrearsSummary);
 }
 
-async function upsertMonthlyChargePayment(
+type MonthlyPaymentBalanceRow = {
+  residentId: string;
+  unitId: string | null;
+  chargeMonth: Date;
+  amount: number;
+  createdById: string | null;
+  verifiedById: string | null;
+  verifiedAt: Date | null;
+};
+
+type ArrearsPaymentBalanceRow = Omit<MonthlyPaymentBalanceRow, "unitId">;
+
+async function upsertMonthlyChargePayments(
   tx: PaymentRecordClient,
-  input: {
-    residentId: string;
-    unitId: string | null;
-    chargeMonth: Date;
-    amount: number;
-    createdById: string | null;
-    verifiedById: string | null;
-  },
+  rows: MonthlyPaymentBalanceRow[],
   columns: Set<string>,
 ) {
+  if (rows.length === 0) {
+    return;
+  }
+
   const fields = [
     Prisma.sql`"id"`,
     Prisma.sql`"residentId"`,
@@ -286,16 +325,6 @@ async function upsertMonthlyChargePayment(
     Prisma.sql`"createdAt"`,
     Prisma.sql`"updatedAt"`,
   ];
-  const values = [
-    uuidSql(randomUUID()),
-    uuidSql(input.residentId),
-    uuidSql(input.unitId),
-    Prisma.sql`${input.chargeMonth}`,
-    Prisma.sql`${input.amount}`,
-    Prisma.sql`${-input.amount}`,
-    Prisma.sql`now()`,
-    Prisma.sql`now()`,
-  ];
   const updates = [
     Prisma.sql`"paymentReceived" = "MonthlyCharge"."paymentReceived" + EXCLUDED."paymentReceived"`,
     Prisma.sql`"balanceForMonth" = "MonthlyCharge"."balanceForMonth" - EXCLUDED."paymentReceived"`,
@@ -304,46 +333,66 @@ async function upsertMonthlyChargePayment(
 
   if (columns.has("createdById")) {
     fields.push(Prisma.sql`"createdById"`);
-    values.push(uuidSql(input.createdById));
   }
 
   if (columns.has("verifiedById")) {
     fields.push(Prisma.sql`"verifiedById"`);
-    values.push(uuidSql(input.verifiedById));
-
-    if (input.verifiedById) {
-      updates.push(Prisma.sql`"verifiedById" = EXCLUDED."verifiedById"`);
-    }
+    updates.push(
+      Prisma.sql`"verifiedById" = COALESCE(EXCLUDED."verifiedById", "MonthlyCharge"."verifiedById")`,
+    );
   }
 
   if (columns.has("verifiedAt")) {
     fields.push(Prisma.sql`"verifiedAt"`);
-    values.push(Prisma.sql`${input.verifiedById ? new Date() : null}`);
-
-    if (input.verifiedById) {
-      updates.push(Prisma.sql`"verifiedAt" = EXCLUDED."verifiedAt"`);
-    }
+    updates.push(
+      Prisma.sql`"verifiedAt" = COALESCE(EXCLUDED."verifiedAt", "MonthlyCharge"."verifiedAt")`,
+    );
   }
 
   await tx.$executeRaw(Prisma.sql`
     INSERT INTO "MonthlyCharge" (${Prisma.join(fields)})
-    VALUES (${Prisma.join(values)})
+    VALUES ${Prisma.join(
+      rows.map((row) => {
+        const values = [
+          uuidSql(randomUUID()),
+          uuidSql(row.residentId),
+          uuidSql(row.unitId),
+          Prisma.sql`${row.chargeMonth}`,
+          Prisma.sql`${row.amount}`,
+          Prisma.sql`${-row.amount}`,
+          Prisma.sql`now()`,
+          Prisma.sql`now()`,
+        ];
+
+        if (columns.has("createdById")) {
+          values.push(uuidSql(row.createdById));
+        }
+
+        if (columns.has("verifiedById")) {
+          values.push(uuidSql(row.verifiedById));
+        }
+
+        if (columns.has("verifiedAt")) {
+          values.push(Prisma.sql`${row.verifiedAt}`);
+        }
+
+        return Prisma.sql`(${Prisma.join(values)})`;
+      }),
+    )}
     ON CONFLICT ("residentId", "chargeMonth") DO UPDATE SET
       ${Prisma.join(updates)}
   `);
 }
 
-async function upsertArrearsSummaryPayment(
+async function upsertArrearsSummaryPayments(
   tx: PaymentRecordClient,
-  input: {
-    residentId: string;
-    chargeMonth: Date;
-    amount: number;
-    createdById: string | null;
-    verifiedById: string | null;
-  },
+  rows: ArrearsPaymentBalanceRow[],
   columns: Set<string>,
 ) {
+  if (rows.length === 0) {
+    return;
+  }
+
   const fields = [
     Prisma.sql`"id"`,
     Prisma.sql`"residentId"`,
@@ -351,14 +400,6 @@ async function upsertArrearsSummaryPayment(
     Prisma.sql`"lastUpdatedMonth"`,
     Prisma.sql`"createdAt"`,
     Prisma.sql`"updatedAt"`,
-  ];
-  const values = [
-    uuidSql(randomUUID()),
-    uuidSql(input.residentId),
-    Prisma.sql`${-input.amount}`,
-    Prisma.sql`${input.chargeMonth}`,
-    Prisma.sql`now()`,
-    Prisma.sql`now()`,
   ];
   const updates = [
     Prisma.sql`"totalArrearsAmount" = "ArrearsSummary"."totalArrearsAmount" + EXCLUDED."totalArrearsAmount"`,
@@ -368,33 +409,117 @@ async function upsertArrearsSummaryPayment(
 
   if (columns.has("createdById")) {
     fields.push(Prisma.sql`"createdById"`);
-    values.push(uuidSql(input.createdById));
   }
 
   if (columns.has("verifiedById")) {
     fields.push(Prisma.sql`"verifiedById"`);
-    values.push(uuidSql(input.verifiedById));
-
-    if (input.verifiedById) {
-      updates.push(Prisma.sql`"verifiedById" = EXCLUDED."verifiedById"`);
-    }
+    updates.push(
+      Prisma.sql`"verifiedById" = COALESCE(EXCLUDED."verifiedById", "ArrearsSummary"."verifiedById")`,
+    );
   }
 
   if (columns.has("verifiedAt")) {
     fields.push(Prisma.sql`"verifiedAt"`);
-    values.push(Prisma.sql`${input.verifiedById ? new Date() : null}`);
-
-    if (input.verifiedById) {
-      updates.push(Prisma.sql`"verifiedAt" = EXCLUDED."verifiedAt"`);
-    }
+    updates.push(
+      Prisma.sql`"verifiedAt" = COALESCE(EXCLUDED."verifiedAt", "ArrearsSummary"."verifiedAt")`,
+    );
   }
 
   await tx.$executeRaw(Prisma.sql`
     INSERT INTO "ArrearsSummary" (${Prisma.join(fields)})
-    VALUES (${Prisma.join(values)})
+    VALUES ${Prisma.join(
+      rows.map((row) => {
+        const values = [
+          uuidSql(randomUUID()),
+          uuidSql(row.residentId),
+          Prisma.sql`${-row.amount}`,
+          Prisma.sql`${row.chargeMonth}`,
+          Prisma.sql`now()`,
+          Prisma.sql`now()`,
+        ];
+
+        if (columns.has("createdById")) {
+          values.push(uuidSql(row.createdById));
+        }
+
+        if (columns.has("verifiedById")) {
+          values.push(uuidSql(row.verifiedById));
+        }
+
+        if (columns.has("verifiedAt")) {
+          values.push(Prisma.sql`${row.verifiedAt}`);
+        }
+
+        return Prisma.sql`(${Prisma.join(values)})`;
+      }),
+    )}
     ON CONFLICT ("residentId") DO UPDATE SET
       ${Prisma.join(updates)}
   `);
+}
+
+function aggregateMonthlyPaymentRows(
+  entries: CreatePaymentRecordInput[],
+  activeUnitIdByResidentId: Map<string, string>,
+) {
+  const rowsByResidentMonth = new Map<string, MonthlyPaymentBalanceRow>();
+
+  for (const entry of entries) {
+    const chargeMonth = getMonthStartInAppTimeZone(entry.paymentDate);
+    const key = `${entry.residentId}|${chargeMonth.toISOString()}`;
+    const existing = rowsByResidentMonth.get(key);
+    const amount = normalizePaymentAmount(entry.amount);
+
+    if (existing) {
+      existing.amount += amount;
+      existing.createdById = entry.createdById ?? existing.createdById;
+      existing.verifiedById = entry.verifiedById ?? existing.verifiedById;
+      existing.verifiedAt = entry.verifiedById ? new Date() : existing.verifiedAt;
+      continue;
+    }
+
+    rowsByResidentMonth.set(key, {
+      residentId: entry.residentId,
+      unitId: activeUnitIdByResidentId.get(entry.residentId) ?? null,
+      chargeMonth,
+      amount,
+      createdById: entry.createdById ?? null,
+      verifiedById: entry.verifiedById ?? null,
+      verifiedAt: entry.verifiedById ? new Date() : null,
+    });
+  }
+
+  return [...rowsByResidentMonth.values()];
+}
+
+function aggregateArrearsPaymentRows(entries: CreatePaymentRecordInput[]) {
+  const rowsByResident = new Map<string, ArrearsPaymentBalanceRow>();
+
+  for (const entry of entries) {
+    const chargeMonth = getMonthStartInAppTimeZone(entry.paymentDate);
+    const existing = rowsByResident.get(entry.residentId);
+    const amount = normalizePaymentAmount(entry.amount);
+
+    if (existing) {
+      existing.amount += amount;
+      existing.chargeMonth = chargeMonth;
+      existing.createdById = entry.createdById ?? existing.createdById;
+      existing.verifiedById = entry.verifiedById ?? existing.verifiedById;
+      existing.verifiedAt = entry.verifiedById ? new Date() : existing.verifiedAt;
+      continue;
+    }
+
+    rowsByResident.set(entry.residentId, {
+      residentId: entry.residentId,
+      chargeMonth,
+      amount,
+      createdById: entry.createdById ?? null,
+      verifiedById: entry.verifiedById ?? null,
+      verifiedAt: entry.verifiedById ? new Date() : null,
+    });
+  }
+
+  return [...rowsByResident.values()];
 }
 
 async function getBalanceTableColumns(client: SchemaClient) {

@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server";
 
+import type { ExtractResult } from "@/app/pages/2_muat_naik/components/extract-review-shared";
+import { getCurrentAdmin } from "@/lib/auth/current-admin";
+import { createUploadedDocumentForKind } from "@/lib/uploaded-document/import";
+
 const MAX_UPLOAD_SIZE = 25 * 1024 * 1024;
 
 const supportedTypesByKind = {
@@ -90,9 +94,50 @@ export async function handleExtractRequest(request: Request, kind: ExtractKind) 
       );
     }
 
+    const extractResult = result as ExtractResult;
+    const shouldCreateDraft = formData.get("createDraft") === "true";
+
+    if (shouldCreateDraft) {
+      const lastUpdatedMonth = formData.get("tunggakanDate");
+      const extractResultToSave: ExtractResult =
+        kind === "tunggakan" && extractResult.documentType === "tunggakan"
+          ? {
+              ...extractResult,
+              lastUpdatedMonth:
+                typeof lastUpdatedMonth === "string" ? lastUpdatedMonth : "",
+            }
+          : extractResult;
+      const currentAdmin = await getCurrentAdmin();
+      const document = await createUploadedDocumentForKind({
+        kind,
+        currentAdmin,
+        payload: {
+          fileName: file.name,
+          fileType:
+            file.type || extension.replace(/^\./, "") || "file",
+          fileSize: file.size,
+          extractResult: extractResultToSave,
+        },
+      });
+      const documentSummary = {
+        id: document.id,
+        kind: document.kind,
+        fileName: document.fileName,
+        fileType: document.fileType,
+        fileSize: document.fileSize,
+        uploadedBy: document.uploadedBy,
+        uploadedAt: document.uploadedAt,
+      };
+
+      return NextResponse.json({
+        success: true,
+        data: { document: documentSummary },
+      });
+    }
+
     return NextResponse.json({
       success: true,
-      data: { extractResult: result },
+      data: { extractResult },
     });
   } catch (error) {
     return NextResponse.json(

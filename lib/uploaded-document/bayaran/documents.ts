@@ -1,11 +1,12 @@
+import { Prisma } from "@prisma/client";
+
 import type { ExtractedBayaranRecord } from "@/app/pages/2_muat_naik/components/extract-review-shared";
 import {
   getAppTimeZoneDateParts,
   parseDateOnlyInAppTimeZone,
 } from "@/lib/date-time";
 import { prisma } from "@/lib/prisma";
-import { findResidentByNormalizedIc } from "@/lib/uploaded-document/shared";
-import { findExistingBayaranPayment } from "@/lib/uploaded-document/bayaran/queries";
+import { findResidentsByNormalizedIcs } from "@/lib/uploaded-document/shared";
 
 export function getBayaranPaymentDate(paymentMonth: string) {
   if (/^\d{4}-\d{2}-\d{2}/.test(paymentMonth)) {
@@ -60,29 +61,37 @@ export async function buildBayaranExtractResultFromDraftRows(
     return null;
   }
 
-  const records = await Promise.all(
-    rows.map(async (row) => {
-      const residentId = normalizeOptionalUuid(
-        await findResidentByNormalizedIc(prisma, row.residentIcNumber),
-      );
-      const existingPayment = await findExistingBayaranPayment(prisma, {
-        residentId,
-        paymentDate: row.paymentDate,
-        receiptNo: row.receiptNo ?? row.referenceNo,
-        amount: row.amount,
-      });
+  const residentIdByIc = await findResidentsByNormalizedIcs(
+    prisma,
+    rows.map((row) => row.residentIcNumber),
+  );
+  const preparedRows = rows.map((row) => ({
+    row,
+    residentId:
+      residentIdByIc.get(normalizeIc(row.residentIcNumber)) ?? null,
+    receiptNo: normalizeReceiptNo(row.receiptNo ?? row.referenceNo),
+  }));
+  const existingPaymentKeys = await findExistingPaymentKeys(preparedRows);
 
-      if (row.originalResidentId !== residentId) {
-        await prisma.paymentDraft.update({
-          where: { id: row.id },
-          data: {
-            originalResidentId: residentId,
-          },
-        });
-      }
+  await updatePaymentDraftResidentReferences(
+    preparedRows
+      .filter(({ row, residentId }) => row.originalResidentId !== residentId)
+      .map(({ row, residentId }) => ({ draftId: row.id, residentId })),
+  );
 
-      return buildBayaranRecord(row, residentId, Boolean(existingPayment));
-    }),
+  const records = preparedRows.map(({ row, residentId, receiptNo }) =>
+    buildBayaranRecord(
+      row,
+      residentId,
+      existingPaymentKeys.has(
+        getPaymentKey({
+          residentId,
+          paymentDate: row.paymentDate,
+          receiptNo,
+          amount: row.amount,
+        }),
+      ),
+    ),
   );
 
   const totalAmount = records
@@ -127,6 +136,111 @@ function buildBayaranRecord(
   } satisfies ExtractedBayaranRecord;
 }
 
-function normalizeOptionalUuid(value: string | null | undefined) {
-  return value?.trim() ? value : null;
+type PreparedBayaranDraftRow = {
+  row: BayaranDraftRow;
+  residentId: string | null;
+  receiptNo: string | null;
+};
+
+async function findExistingPaymentKeys(rows: PreparedBayaranDraftRow[]) {
+  const residentIds = [
+    ...new Set(
+      rows
+        .map((row) => row.residentId)
+        .filter((residentId): residentId is string => Boolean(residentId)),
+    ),
+  ];
+  const receiptNos = [
+    ...new Set(
+      rows
+        .map((row) => row.receiptNo)
+        .filter((receiptNo): receiptNo is string => Boolean(receiptNo)),
+    ),
+  ];
+  const paymentDates = [
+    ...new Map(
+      rows.map((row) => [
+        row.row.paymentDate.toISOString(),
+        row.row.paymentDate,
+      ]),
+    ).values(),
+  ];
+
+  if (
+    residentIds.length === 0 ||
+    receiptNos.length === 0 ||
+    paymentDates.length === 0
+  ) {
+    return new Set<string>();
+  }
+
+  const payments = await prisma.payment.findMany({
+    where: {
+      residentId: { in: residentIds },
+      receiptNo: { in: receiptNos },
+      paymentDate: { in: paymentDates },
+    },
+    select: {
+      residentId: true,
+      paymentDate: true,
+      receiptNo: true,
+      amount: true,
+    },
+  });
+
+  return new Set(payments.map(getPaymentKey).filter(Boolean));
+}
+
+async function updatePaymentDraftResidentReferences(
+  updates: { draftId: string; residentId: string | null }[],
+) {
+  if (updates.length === 0) {
+    return;
+  }
+
+  await prisma.$executeRaw`
+    UPDATE "PaymentDraft" AS draft
+    SET
+      "originalResidentId" = updates."residentId",
+      "updatedAt" = NOW()
+    FROM (
+      VALUES ${Prisma.join(
+        updates.map(
+          (update) =>
+            Prisma.sql`(${update.draftId}::uuid, ${update.residentId}::uuid)`,
+        ),
+      )}
+    ) AS updates("id", "residentId")
+    WHERE draft."id" = updates."id"
+  `;
+}
+
+function getPaymentKey(input: {
+  residentId: string | null | undefined;
+  paymentDate: Date | null | undefined;
+  receiptNo: string | null | undefined;
+  amount: Prisma.Decimal | string | number | null | undefined;
+}) {
+  const receiptNo = normalizeReceiptNo(input.receiptNo);
+
+  if (!input.residentId || !input.paymentDate || !receiptNo || input.amount == null) {
+    return "";
+  }
+
+  return [
+    input.residentId,
+    input.paymentDate.toISOString(),
+    receiptNo,
+    Number(input.amount).toFixed(2),
+  ].join("|");
+}
+
+function normalizeIc(value: string | null | undefined) {
+  return String(value ?? "").replace(/\D/g, "");
+}
+
+function normalizeReceiptNo(value: string | null | undefined) {
+  const normalized = String(value ?? "").replace(/\s+/g, " ").trim();
+
+  return normalized || null;
 }

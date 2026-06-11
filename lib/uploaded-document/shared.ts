@@ -1,4 +1,4 @@
-import type { Prisma } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 
 export type QueryClient = Pick<Prisma.TransactionClient, "$queryRaw">;
 
@@ -6,31 +6,43 @@ export async function findResidentByNormalizedIc(
   tx: QueryClient,
   icNumber: string,
 ) {
-  const normalizedIc = icNumber.replace(/\D/g, "");
+  const normalizedIc = normalizeIc(icNumber);
+  const residentIdByIc = await findResidentsByNormalizedIcs(tx, [normalizedIc]);
 
-  if (normalizedIc) {
-    const exactResidents = await tx.$queryRaw<{ id: string }[]>`
-      SELECT "id"
-      FROM "Resident"
-      WHERE "icNumber" = ${normalizedIc}
-      LIMIT 1
-    `;
+  return residentIdByIc.get(normalizedIc) ?? "";
+}
 
-    if (exactResidents[0]?.id) {
-      return exactResidents[0].id;
-    }
+export async function findResidentsByNormalizedIcs(
+  tx: QueryClient,
+  icNumbers: string[],
+) {
+  const normalizedIcs = [
+    ...new Set(icNumbers.map(normalizeIc).filter(Boolean)),
+  ];
+  const residentIdByIc = new Map<string, string>();
+
+  if (normalizedIcs.length === 0) {
+    return residentIdByIc;
   }
 
-  const residents = await tx.$queryRaw<{ id: string }[]>`
-    SELECT "id"
+  const residents = await tx.$queryRaw<
+    { id: string; normalizedIc: string }[]
+  >`
+    SELECT DISTINCT ON (regexp_replace("icNumber", '\\D', '', 'g'))
+      "id",
+      regexp_replace("icNumber", '\\D', '', 'g') AS "normalizedIc"
     FROM "Resident"
-    WHERE regexp_replace("icNumber", '\\D', '', 'g') =
-      regexp_replace(${icNumber}, '\\D', '', 'g')
-    ORDER BY "createdAt" ASC
-    LIMIT 1
+    WHERE regexp_replace("icNumber", '\\D', '', 'g') IN (${Prisma.join(normalizedIcs)})
+    ORDER BY
+      regexp_replace("icNumber", '\\D', '', 'g'),
+      "createdAt" ASC
   `;
 
-  return residents[0]?.id ?? "";
+  for (const resident of residents) {
+    residentIdByIc.set(resident.normalizedIc, resident.id);
+  }
+
+  return residentIdByIc;
 }
 
 export async function ensureResidentFromDraft(
@@ -63,4 +75,8 @@ export async function ensureResidentFromDraft(
   });
 
   return resident.id;
+}
+
+function normalizeIc(value: string | null | undefined) {
+  return String(value ?? "").replace(/\D/g, "");
 }

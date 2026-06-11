@@ -26,14 +26,10 @@ export async function verifyTunggakanDrafts(
       .map((draft) => residentByIc.get(normalizeIc(draft.residentIcNumber))?.id)
       .filter((residentId): residentId is string => Boolean(residentId)),
   );
-  const residentIdsWithTransactions = await findResidentIdsWithTransactions(
-    tx,
-    residentIds,
-  );
-  const summaryIdByResidentId = await findArrearsSummaryIdsByResidentId(
-    tx,
-    residentIds,
-  );
+  const [residentIdsWithTransactions, summaryIdByResidentId] = await Promise.all([
+    findResidentIdsWithTransactions(tx, residentIds),
+    findArrearsSummaryIdsByResidentId(tx, residentIds),
+  ]);
   const failedDraftUpdates = [];
   const rowsToVerify = [];
   const residentIdsQueuedForVerification = new Set<string>();

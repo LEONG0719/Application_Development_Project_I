@@ -2,7 +2,6 @@
 
 import { ChangeEvent, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import Icon from "@/app/components/Icon/Icon";
 import { ROUTES } from "../../constants/routes";
 import CategoryTabs from "./components/CategoryTabs";
 import DemoDocumentButton from "./components/DemoDocumentButton";
@@ -15,7 +14,6 @@ import {
   reviewRoutes,
 } from "./components/constants";
 import {
-  type ExtractResult,
   type ProcessingDraft,
   type ProcessingDraftSummary,
 } from "./components/extract-review-shared";
@@ -28,13 +26,6 @@ function getCategoryFromParam(categoryParam: string | null): Category {
 
   return categoryByDraftKind[categoryParam as ProcessingDraft["kind"]] ?? "Bayaran";
 }
-
-const uploadRouteByKind: Record<ProcessingDraft["kind"], string> = {
-  bayaran: "/api/uploaded-documents/bayaran/upload",
-  tunggakan: "/api/uploaded-documents/tunggakan/upload",
-  penghuni: "/api/uploaded-documents/penghuni/upload",
-  kuarters: "/api/uploaded-documents/kuarters/upload",
-};
 
 export default function MuatNaikPage() {
   return (
@@ -65,7 +56,7 @@ function MuatNaikPageContent() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [processingStep, setProcessingStep] = useState("");
   const [processingError, setProcessingError] = useState("");
-  const [processingProgress, setProcessingProgress] = useState(0);
+  const [processingProgress, setProcessingProgress] = useState<number | null>(0);
   const [processingStage, setProcessingStage] = useState("");
   const [processingDrafts, setProcessingDrafts] = useState<ProcessingDraftSummary[]>(
     [],
@@ -168,75 +159,55 @@ function MuatNaikPageContent() {
     const abortController = new AbortController();
     abortControllerRef.current = abortController;
     setIsProcessing(true);
-    setProcessingStep("Mengekstrak data daripada dokumen...");
+    setProcessingStep("Memuat naik dokumen...");
     setProcessingError("");
-    setProcessingProgress(8);
-    setProcessingStage("Menyediakan fail untuk kenal pasti...");
-
-    const progressTimer = window.setInterval(() => {
-      setProcessingProgress((currentProgress) => {
-        if (currentProgress >= 99) {
-          return currentProgress;
-        }
-
-        return currentProgress + (currentProgress < 55 ? 4 : 2);
-      });
-    }, 700);
+    setProcessingProgress(0);
+    setProcessingStage("Menghantar fail ke pelayan...");
 
     try {
       const formData = new FormData();
       formData.append("file", selectedFile);
       formData.append("parsingMode", parsingMode);
+      formData.append("createDraft", "true");
 
-      setProcessingProgress(18);
-      setProcessingStage(`Mengekstrak data ${extractKind}...`);
-      const response = await fetch(`/api/extract/${extractKind}`, {
-        method: "POST",
-        body: formData,
+      if (extractKind === "tunggakan") {
+        formData.append("tunggakanDate", tunggakanDate);
+      }
+
+      const { status, body: uploadResult } = await uploadDocumentWithProgress({
+        url: `/api/extract/${extractKind}`,
+        formData,
         signal: abortController.signal,
-      });
-
-      if (!response.ok) {
-        const errorBody = await response.json().catch(() => null);
-        throw new Error(
-          errorBody?.message ?? `Gagal mengekstrak data ${extractKind}.`,
-        );
-      }
-
-      const extractionResult = await response.json();
-      const extractedData = extractionResult.data?.extractResult;
-      if (!extractedData) {
-        throw new Error(`Gagal mengekstrak data ${extractKind}.`);
-      }
-
-      const extractResultToSave: ExtractResult =
-        extractKind === "tunggakan" && extractedData.documentType === "tunggakan"
-          ? { ...extractedData, lastUpdatedMonth: tunggakanDate }
-          : (extractedData as ExtractResult);
-
-      const saveResponse = await fetch(uploadRouteByKind[extractKind], {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+        onUploadProgress(progress) {
+          setProcessingProgress(progress);
+          setProcessingStage(
+            progress < 100
+              ? "Menghantar fail ke pelayan..."
+              : "Fail selesai dimuat naik.",
+          );
         },
-        body: JSON.stringify({
-          fileName: selectedFile.name,
-          fileType: selectedFile.type || selectedFile.name.split(".").pop() || "file",
-          fileSize: selectedFile.size,
-          extractResult: extractResultToSave,
-        }),
-        signal: abortController.signal,
+        onUploadComplete() {
+          setProcessingProgress(null);
+          setProcessingStep("Mengekstrak data daripada dokumen...");
+          setProcessingStage(`Mengekstrak dan menyimpan data ${extractKind}...`);
+        },
       });
-      const saveResult = await saveResponse.json();
 
-      if (!saveResponse.ok || !saveResult.data?.document) {
+      if (status < 200 || status >= 300) {
         throw new Error(
-          saveResult?.message ?? "Gagal menyimpan dokumen ke pangkalan data.",
+          uploadResult?.message ?? `Gagal memproses data ${extractKind}.`,
         );
       }
 
-      const draft = saveResult.data.document as ProcessingDraft;
-      setProcessingProgress(96);
+      if (!uploadResult?.data?.document) {
+        throw new Error(
+          uploadResult?.message ?? "Gagal menyimpan dokumen ke pangkalan data.",
+        );
+      }
+
+      const draft = uploadResult.data.document as ProcessingDraftSummary;
+      setProcessingProgress(100);
+      setProcessingStep("Dokumen selesai diproses.");
       setProcessingStage("Membuka halaman semakan...");
       setProcessingDrafts((currentDrafts) => [draft, ...currentDrafts]);
       router.push(
@@ -257,7 +228,6 @@ function MuatNaikPageContent() {
           : `Gagal mengekstrak data ${extractKind}.`,
       );
     } finally {
-      window.clearInterval(progressTimer);
       abortControllerRef.current = null;
       setIsProcessing(false);
       setProcessingStep("");
@@ -396,4 +366,75 @@ function isDateAfter(value: string, maxDate: Date) {
   const date = parseDateInput(value);
 
   return Boolean(date && startOfDay(date) > startOfDay(maxDate));
+}
+
+function uploadDocumentWithProgress({
+  url,
+  formData,
+  signal,
+  onUploadProgress,
+  onUploadComplete,
+}: {
+  url: string;
+  formData: FormData;
+  signal: AbortSignal;
+  onUploadProgress: (progress: number) => void;
+  onUploadComplete: () => void;
+}) {
+  return new Promise<{
+    status: number;
+    body: {
+      message?: string;
+      data?: { document?: ProcessingDraftSummary };
+    } | null;
+  }>((resolve, reject) => {
+    const request = new XMLHttpRequest();
+
+    function handleAbort() {
+      request.abort();
+    }
+
+    function cleanup() {
+      signal.removeEventListener("abort", handleAbort);
+    }
+
+    request.open("POST", url);
+    request.responseType = "json";
+    request.upload.addEventListener("progress", (event) => {
+      if (!event.lengthComputable || event.total <= 0) {
+        return;
+      }
+
+      onUploadProgress(
+        Math.min(100, Math.round((event.loaded / event.total) * 100)),
+      );
+    });
+    request.upload.addEventListener("load", () => {
+      onUploadProgress(100);
+      onUploadComplete();
+    });
+    request.addEventListener("load", () => {
+      cleanup();
+      resolve({
+        status: request.status,
+        body: request.response,
+      });
+    });
+    request.addEventListener("error", () => {
+      cleanup();
+      reject(new Error("Sambungan gagal semasa memuat naik dokumen."));
+    });
+    request.addEventListener("abort", () => {
+      cleanup();
+      reject(new DOMException("Upload aborted.", "AbortError"));
+    });
+    signal.addEventListener("abort", handleAbort, { once: true });
+
+    if (signal.aborted) {
+      handleAbort();
+      return;
+    }
+
+    request.send(formData);
+  });
 }

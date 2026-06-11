@@ -5,12 +5,15 @@ from datetime import datetime
 from io import BytesIO
 import json
 import re
-import urllib.error
-import urllib.request
 
 from pypdf import PdfReader
 
-from extractors.shared import build_header_map_for, gemini_api_keys, get_cell, read_xlsx
+from extractors.shared import (
+    build_header_map_for,
+    call_gemini_json,
+    get_cell,
+    read_xlsx,
+)
 
 
 PARSING_MODE_STRICT = "strict"
@@ -94,6 +97,7 @@ def extract_bayaran_from_xlsx(
     normalized_mode = _normalize_parsing_mode(parsing_mode)
     workbook = read_xlsx(file_bytes)
     records: list[ExtractedPayment] = []
+    seen_record_keys: set[str] = set()
     repair_candidates: list[dict] = []
     global_payment_date = ""
 
@@ -130,8 +134,12 @@ def extract_bayaran_from_xlsx(
                 )
                 continue
 
+            if record.noGajiNoKp in seen_record_keys:
+                continue
+
+            seen_record_keys.add(record.noGajiNoKp)
             records.append(record)
-            if limit is not None and len(_dedupe_records(records)) >= limit:
+            if limit is not None and len(records) >= limit:
                 return _with_metadata(
                     _build_response(records, global_payment_date, limit),
                     normalized_mode,
@@ -154,6 +162,7 @@ def extract_bayaran_from_pdf(
     normalized_mode = _normalize_parsing_mode(parsing_mode)
     reader = PdfReader(BytesIO(file_bytes))
     records: list[ExtractedPayment] = []
+    seen_record_keys: set[str] = set()
     repair_candidates: list[dict] = []
     global_payment_date = ""
 
@@ -191,8 +200,12 @@ def extract_bayaran_from_pdf(
                 )
                 continue
 
+            if record.noGajiNoKp in seen_record_keys:
+                continue
+
+            seen_record_keys.add(record.noGajiNoKp)
             records.append(record)
-            if limit is not None and len(_dedupe_records(records)) >= limit:
+            if limit is not None and len(records) >= limit:
                 return _with_metadata(
                     _build_response(records, global_payment_date, limit),
                     normalized_mode,
@@ -488,68 +501,32 @@ def _repair_candidate(
 
 
 def _repair_bayaran_with_gemini(candidates: list[dict]) -> list[ExtractedPayment]:
-    api_keys = _gemini_api_keys()
-    if not api_keys:
-        return _fallback_candidate_records(candidates)
-
-    prompt = {
-        "contents": [
+    try:
+        parsed = call_gemini_json(
             {
-                "parts": [
+                "contents": [
                     {
-                        "text": (
-                            "Repair Malaysian payment extraction rows. Return only JSON with a records array. "
-                            "Each record must include nama, noGajiNoKp, jabatanName, noRujukan, amaunRm, and tarikh. "
-                            "noGajiNoKp must be the resident IC only: 12 digits, no symbols. If it is a staff number/no gaji "
-                            "or cannot be confidently repaired to a 12-digit IC, omit that row. amaunRm must be a decimal string. "
-                            "tarikh must be yyyy-mm-dd. Do not invent extra rows.\n\n"
-                            f"Rows JSON:\n{json.dumps(candidates, ensure_ascii=False)}"
-                        )
+                        "parts": [
+                            {
+                                "text": (
+                                    "Repair Malaysian payment extraction rows. Return only JSON with a records array. "
+                                    "Each record must include nama, noGajiNoKp, jabatanName, noRujukan, amaunRm, and tarikh. "
+                                    "noGajiNoKp must be the resident IC only: 12 digits, no symbols. If it is a staff number/no gaji "
+                                    "or cannot be confidently repaired to a 12-digit IC, omit that row. amaunRm must be a decimal string. "
+                                    "tarikh must be yyyy-mm-dd. Do not invent extra rows.\n\n"
+                                    f"Rows JSON:\n{json.dumps(candidates, ensure_ascii=False)}"
+                                )
+                            }
+                        ]
                     }
                 ]
             }
-        ],
-        "generationConfig": {"responseMimeType": "application/json"},
-    }
+        )
+    except Exception:
+        return _fallback_candidate_records(candidates)
 
-    for api_key in api_keys:
-        try:
-            parsed = _call_gemini_parser(api_key, prompt)
-            repaired = _records_from_ai(parsed.get("records", []))
-            return repaired or _fallback_candidate_records(candidates)
-        except Exception:
-            continue
-
-    return _fallback_candidate_records(candidates)
-
-
-def _gemini_api_keys() -> list[str]:
-    return list(gemini_api_keys())
-
-
-def _call_gemini_parser(api_key: str, prompt: dict) -> dict:
-    request = urllib.request.Request(
-        "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
-        f"?key={api_key}",
-        data=json.dumps(prompt).encode("utf-8"),
-        headers={"Content-Type": "application/json"},
-        method="POST",
-    )
-    try:
-        with urllib.request.urlopen(request, timeout=45) as response:
-            payload = json.loads(response.read().decode("utf-8"))
-    except urllib.error.HTTPError as error:
-        raise ValueError(error.read().decode("utf-8", errors="replace")) from error
-
-    text = (
-        payload.get("candidates", [{}])[0]
-        .get("content", {})
-        .get("parts", [{}])[0]
-        .get("text", "")
-    )
-    if not text:
-        raise ValueError("respons AI kosong")
-    return json.loads(text)
+    repaired = _records_from_ai(parsed.get("records", []))
+    return repaired or _fallback_candidate_records(candidates)
 
 
 def _records_from_ai(records: list) -> list[ExtractedPayment]:

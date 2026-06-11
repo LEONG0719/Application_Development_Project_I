@@ -6,15 +6,13 @@ from io import BytesIO
 import json
 import re
 from typing import Iterable
-import urllib.error
-import urllib.request
 
 from pypdf import PdfReader
 
 from extractors.shared import (
     build_header_map_for,
+    call_gemini_json,
     clean_header,
-    gemini_api_keys,
     get_cell,
     normalize_date,
     normalize_unit,
@@ -189,6 +187,7 @@ def extract_penghuni_from_xlsx(
     normalized_mode = _normalize_parsing_mode(parsing_mode)
     workbook = read_xlsx(file_bytes)
     residents: list[ExtractedResident] = []
+    seen_resident_keys: set[str] = set()
     repair_candidates: list[dict] = []
 
     for sheet in workbook["sheets"]:
@@ -228,6 +227,11 @@ def extract_penghuni_from_xlsx(
                 )
                 continue
 
+            resident_key = _resident_dedupe_key(resident)
+            if resident_key in seen_resident_keys:
+                continue
+
+            seen_resident_keys.add(resident_key)
             residents.append(resident)
             if limit is not None and len(residents) >= limit:
                 return _with_parsing_metadata(
@@ -253,6 +257,7 @@ def extract_penghuni_from_pdf(
     normalized_mode = _normalize_parsing_mode(parsing_mode)
     reader = PdfReader(BytesIO(file_bytes))
     residents: list[ExtractedResident] = []
+    seen_resident_keys: set[str] = set()
     repair_candidates: list[dict] = []
     sheet_names: list[str] = []
 
@@ -298,6 +303,11 @@ def extract_penghuni_from_pdf(
                 )
                 continue
 
+            resident_key = _resident_dedupe_key(resident)
+            if resident_key in seen_resident_keys:
+                continue
+
+            seen_resident_keys.add(resident_key)
             residents.append(resident)
             if limit is not None and len(residents) >= limit:
                 return _with_parsing_metadata(
@@ -566,97 +576,38 @@ def _repair_candidate(
 
 
 def _repair_penghuni_with_gemini(candidates: list[dict]) -> list[ExtractedResident]:
-    api_keys = _gemini_api_keys()
-    if not api_keys:
-        return _fallback_candidate_residents(candidates)
-
-    prompt = {
-        "contents": [
+    try:
+        parsed = call_gemini_json(
             {
-                "parts": [
+                "contents": [
                     {
-                        "text": (
-                            "You are repairing Malaysian resident extraction rows. "
-                            "Only analyze the provided rows, not the full file. "
-                            "Return only JSON with a 'records' array. Each record must include "
-                            "nama, noKadPengenalan, perhubungan, gmail, pekerjaan, jabatan, "
-                            "tarafPerkhidmatan, kuarters, alamatKuarters, unit, tarikhMasuk, "
-                            "tarikhKeluar, and catatan. Rules: noKadPengenalan must contain "
-                            "12 digits only, removing dashes and spaces. Phone numbers should "
-                            "remove dashes and spaces. Email must be a valid email or empty. "
-                            "Dates must be DD/MM/YYYY or empty. Do not invent extra rows. "
-                            "If a required nama or noKadPengenalan cannot be confidently repaired, "
-                            "omit that row.\n\n"
-                            f"Rows JSON:\n{json.dumps(candidates, ensure_ascii=False)}"
-                        )
+                        "parts": [
+                            {
+                                "text": (
+                                    "You are repairing Malaysian resident extraction rows. "
+                                    "Only analyze the provided rows, not the full file. "
+                                    "Return only JSON with a 'records' array. Each record must include "
+                                    "nama, noKadPengenalan, perhubungan, gmail, pekerjaan, jabatan, "
+                                    "tarafPerkhidmatan, kuarters, alamatKuarters, unit, tarikhMasuk, "
+                                    "tarikhKeluar, and catatan. Rules: noKadPengenalan must contain "
+                                    "12 digits only, removing dashes and spaces. Phone numbers should "
+                                    "remove dashes and spaces. Email must be a valid email or empty. "
+                                    "Dates must be DD/MM/YYYY or empty. Do not invent extra rows. "
+                                    "If a required nama or noKadPengenalan cannot be confidently repaired, "
+                                    "omit that row.\n\n"
+                                    f"Rows JSON:\n{json.dumps(candidates, ensure_ascii=False)}"
+                                )
+                            }
+                        ]
                     }
                 ]
             }
-        ],
-        "generationConfig": {"responseMimeType": "application/json"},
-    }
+        )
+    except Exception:
+        return _fallback_candidate_residents(candidates)
 
-    for api_key in api_keys:
-        try:
-            parsed = _call_gemini_penghuni_parser(api_key, prompt)
-            repaired = _residents_from_ai_records(parsed.get("records", []))
-            return repaired or _fallback_candidate_residents(candidates)
-        except Exception:
-            continue
-
-    return _fallback_candidate_residents(candidates)
-
-
-def _gemini_api_keys() -> list[str]:
-    return list(gemini_api_keys())
-
-
-def _call_gemini_penghuni_parser(api_key: str, prompt: dict) -> dict:
-    request = urllib.request.Request(
-        "https://generativelanguage.googleapis.com/v1beta/models/"
-        f"gemini-2.5-flash:generateContent?key={api_key}",
-        data=json.dumps(prompt).encode("utf-8"),
-        headers={"Content-Type": "application/json"},
-        method="POST",
-    )
-
-    try:
-        with urllib.request.urlopen(request, timeout=45) as response:
-            payload = json.loads(response.read().decode("utf-8"))
-    except urllib.error.HTTPError as error:
-        error_body = error.read().decode("utf-8", errors="replace")
-        raise ValueError(f"HTTP {error.code}: {_compact_error_body(error_body)}") from error
-    except urllib.error.URLError as error:
-        raise ValueError(str(error.reason)) from error
-
-    text = (
-        payload.get("candidates", [{}])[0]
-        .get("content", {})
-        .get("parts", [{}])[0]
-        .get("text", "")
-    )
-    if not text:
-        raise ValueError("respons AI kosong")
-
-    return json.loads(text)
-
-
-def _compact_error_body(value: str) -> str:
-    if not value:
-        return "tiada butiran ralat"
-
-    try:
-        parsed = json.loads(value)
-        message = parsed.get("error", {}).get("message")
-        status = parsed.get("error", {}).get("status")
-        if message and status:
-            return f"{status} - {message}"
-        if message:
-            return str(message)
-    except json.JSONDecodeError:
-        pass
-
-    return re.sub(r"\s+", " ", value).strip()[:300]
+    repaired = _residents_from_ai_records(parsed.get("records", []))
+    return repaired or _fallback_candidate_residents(candidates)
 
 
 def _residents_from_ai_records(records: list) -> list[ExtractedResident]:
@@ -720,16 +671,20 @@ def _dedupe_residents(residents: list[ExtractedResident]) -> list[ExtractedResid
     seen: set[str] = set()
 
     for resident in residents:
-        key = "|".join(
-            _normalize_dedupe_value(str(value))
-            for value in resident.to_response().values()
-        )
+        key = _resident_dedupe_key(resident)
         if key in seen:
             continue
         seen.add(key)
         deduped.append(resident)
 
     return deduped
+
+
+def _resident_dedupe_key(resident: ExtractedResident) -> str:
+    return "|".join(
+        _normalize_dedupe_value(str(value))
+        for value in resident.to_response().values()
+    )
 
 
 def _normalize_dedupe_value(value: str) -> str:

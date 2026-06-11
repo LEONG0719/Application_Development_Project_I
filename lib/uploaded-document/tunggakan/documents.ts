@@ -1,6 +1,8 @@
+import { Prisma } from "@prisma/client";
+
 import type { ExtractedTunggakanRecord } from "@/app/pages/2_muat_naik/components/extract-review-shared";
 import { prisma } from "@/lib/prisma";
-import { findResidentByNormalizedIc } from "@/lib/uploaded-document/shared";
+import { findResidentsByNormalizedIcs } from "@/lib/uploaded-document/shared";
 
 export async function buildTunggakanExtractResultFromDraftRows(
   uploadedDocumentId: string,
@@ -14,44 +16,62 @@ export async function buildTunggakanExtractResultFromDraftRows(
     return null;
   }
 
-  const records = await Promise.all(
-    rows.map(async (row) => {
-      const residentId = normalizeOptionalUuid(
-        row.originalResidentId ??
-          (await findResidentByNormalizedIc(prisma, row.residentIcNumber)),
-      );
-      const hasTransactions = await residentHasTransactions(residentId);
-      const existingSummary = await findExistingArrearsSummary(residentId);
-      const isBlocked = Boolean(hasTransactions || existingSummary);
-      const importMessage = hasTransactions
-        ? "Penghuni ini sudah mempunyai transaksi dalam sistem."
-        : existingSummary
-          ? "Rekod tunggakan telah wujud dalam sistem."
-          : undefined;
-
-      if (
-        row.originalResidentId !== residentId ||
-        row.originalSummaryId !== (existingSummary?.id ?? null)
-      ) {
-        await prisma.arrearsSummaryDraft.update({
-          where: { id: row.id },
-          data: {
-            originalResidentId: residentId,
-            originalSummaryId: existingSummary?.id ?? null,
-          },
-        });
-      }
-
-      const record = buildTunggakanRecord(
-        row,
-        residentId,
-        isBlocked,
-        importMessage,
-      );
-
-      return record;
-    }),
+  const residentIdByIc = await findResidentsByNormalizedIcs(
+    prisma,
+    rows.map((row) => row.residentIcNumber),
   );
+  const preparedRows = rows.map((row) => ({
+    row,
+    residentId:
+      normalizeOptionalUuid(row.originalResidentId) ??
+      residentIdByIc.get(normalizeIc(row.residentIcNumber)) ??
+      null,
+  }));
+  const residentIds = [
+    ...new Set(
+      preparedRows
+        .map((row) => row.residentId)
+        .filter((residentId): residentId is string => Boolean(residentId)),
+    ),
+  ];
+  const [transactionResidentIds, summaryIdByResidentId] = await Promise.all([
+    findTransactionResidentIds(residentIds),
+    findSummaryIdsByResidentId(residentIds),
+  ]);
+  const referenceUpdates: {
+    draftId: string;
+    residentId: string | null;
+    summaryId: string | null;
+  }[] = [];
+  const records = preparedRows.map(({ row, residentId }) => {
+    const summaryId = residentId
+      ? summaryIdByResidentId.get(residentId) ?? null
+      : null;
+    const hasTransactions = Boolean(
+      residentId && transactionResidentIds.has(residentId),
+    );
+    const isBlocked = Boolean(hasTransactions || summaryId);
+    const importMessage = hasTransactions
+      ? "Penghuni ini sudah mempunyai transaksi dalam sistem."
+      : summaryId
+        ? "Rekod tunggakan telah wujud dalam sistem."
+        : undefined;
+
+    if (
+      row.originalResidentId !== residentId ||
+      row.originalSummaryId !== summaryId
+    ) {
+      referenceUpdates.push({
+        draftId: row.id,
+        residentId,
+        summaryId,
+      });
+    }
+
+    return buildTunggakanRecord(row, residentId, isBlocked, importMessage);
+  });
+
+  await updateTunggakanDraftReferences(referenceUpdates);
   const acceptedRecords = records.filter((record) => record.importStatus !== "IGNORED");
 
   return {
@@ -85,30 +105,78 @@ function buildTunggakanRecord(
   } satisfies ExtractedTunggakanRecord;
 }
 
-async function residentHasTransactions(residentId: string | null) {
-  if (!residentId) {
-    return false;
+async function findTransactionResidentIds(residentIds: string[]) {
+  if (residentIds.length === 0) {
+    return new Set<string>();
   }
 
-  const transaction = await prisma.transaction.findFirst({
-    where: { residentId },
-    select: { id: true },
+  const transactions = await prisma.transaction.findMany({
+    where: { residentId: { in: residentIds } },
+    select: { residentId: true },
+    distinct: ["residentId"],
   });
 
-  return Boolean(transaction);
+  return new Set(
+    transactions
+      .map((transaction) => transaction.residentId)
+      .filter((residentId): residentId is string => Boolean(residentId)),
+  );
 }
 
-async function findExistingArrearsSummary(residentId: string | null) {
-  return residentId
-    ? prisma.arrearsSummary.findUnique({
-        where: { residentId },
-        select: { id: true },
-      })
-    : null;
+async function findSummaryIdsByResidentId(residentIds: string[]) {
+  if (residentIds.length === 0) {
+    return new Map<string, string>();
+  }
+
+  const summaries = await prisma.arrearsSummary.findMany({
+    where: { residentId: { in: residentIds } },
+    select: { id: true, residentId: true },
+  });
+
+  return new Map(
+    summaries.map((summary) => [summary.residentId, summary.id]),
+  );
+}
+
+async function updateTunggakanDraftReferences(
+  updates: {
+    draftId: string;
+    residentId: string | null;
+    summaryId: string | null;
+  }[],
+) {
+  if (updates.length === 0) {
+    return;
+  }
+
+  await prisma.$executeRaw`
+    UPDATE "ArrearsSummaryDraft" AS draft
+    SET
+      "originalResidentId" = updates."residentId",
+      "originalSummaryId" = updates."summaryId",
+      "updatedAt" = NOW()
+    FROM (
+      VALUES ${Prisma.join(
+        updates.map(
+          (update) =>
+            Prisma.sql`(
+              ${update.draftId}::uuid,
+              ${update.residentId}::uuid,
+              ${update.summaryId}::uuid
+            )`,
+        ),
+      )}
+    ) AS updates("id", "residentId", "summaryId")
+    WHERE draft."id" = updates."id"
+  `;
 }
 
 function normalizeOptionalUuid(value: string | null | undefined) {
   return value?.trim() ? value : null;
+}
+
+function normalizeIc(value: string | null | undefined) {
+  return String(value ?? "").replace(/\D/g, "");
 }
 
 function formatSignedDecimal(value: { toString: () => string }) {

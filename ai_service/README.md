@@ -60,9 +60,19 @@ The AI service owns its own environment config in `ai_service/.env`:
 
 ```txt
 AI_SERVICE_ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
+GEMINI_MODEL=gemini-2.5-flash-lite
+GEMINI_REQUEST_TIMEOUT_SECONDS=30
 ```
 
 For deployment, add the deployed frontend URL to this comma-separated list.
+
+`GEMINI_MODEL` controls assisted extraction only. The default
+`gemini-2.5-flash-lite` is optimized for lower latency. Set it to
+`gemini-2.5-flash` when a document requires stronger repair quality.
+
+`GEMINI_REQUEST_TIMEOUT_SECONDS` accepts values from 5 to 120 seconds. Network
+failures stop immediately, while exhausted or invalid API keys automatically
+advance to the next configured key.
 
 <br />
 
