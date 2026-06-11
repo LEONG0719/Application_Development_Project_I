@@ -150,8 +150,8 @@ export default function LamanUtamaAnalysis({
         {/* Left Arrow */}
         {totalPages > 1 && (
           <div
-            className={`flex-shrink-0 flex items-center justify-start transition-colors duration-500 z-10 ${
-              hoverRegion === 'left' ? "bg-gradient-to-r from-dark-blue/5 to-transparent" : "pointer-events-none"
+            className={`shrink-0 flex items-center justify-start transition-colors duration-500 z-10 ${
+              hoverRegion === 'left' ? "bg-linear-to-r from-dark-blue/5 to-transparent" : "pointer-events-none"
             }`}
             title="Halaman Sebelumnya"
           >
@@ -165,7 +165,7 @@ export default function LamanUtamaAnalysis({
 
         {/* Main Content */}
         <div className={`flex-1 flex flex-col relative z-0 overflow-hidden ${totalPages > 1 ? "" : "px-8"}`}>
-          <div className="relative w-full flex-grow overflow-hidden">
+          <div className="relative w-full grow overflow-hidden">
             {isLoading ? (
               <div className="flex flex-col gap-6 w-full pt-2 pb-8">
                 {Array.from({ length: 5 }).map((_, i) => (
@@ -204,7 +204,7 @@ export default function LamanUtamaAnalysis({
                   return (
                     <div
                       key={pageIdx}
-                      className="w-full flex-shrink-0 flex flex-col gap-6"
+                      className="w-full shrink-0 flex flex-col gap-6"
                     >
                       {pageItems.map((item, index) => {
                         const outstandingRate = item.amount === "Loading..." || item.amount.includes(" 0.00") ? 0 : (100 - item.settlementRate);
@@ -220,7 +220,7 @@ export default function LamanUtamaAnalysis({
                               </span>
                             </div>
 
-                            <div className="relative w-full h-3.5 bg-surface-muted rounded-full overflow-hidden">
+                            <div className="relative w-full h-3.5 bg-gauge-primary rounded-full overflow-hidden">
                               <div
                                 className="absolute top-0 bottom-0 left-0 rounded-full transition-all duration-500 ease-out"
                                 style={{
@@ -247,8 +247,8 @@ export default function LamanUtamaAnalysis({
         {/* Right Arrow */}
         {totalPages > 1 && (
           <div
-            className={`flex-shrink-0 flex items-center justify-end transition-colors duration-500 z-10 ${
-              hoverRegion === 'right' ? "bg-gradient-to-l from-dark-blue/5 to-transparent" : "pointer-events-none"
+            className={`shrink-0 flex items-center justify-end transition-colors duration-500 z-10 ${
+              hoverRegion === 'right' ? "bg-linear-to-l from-dark-blue/5 to-transparent" : "pointer-events-none"
             }`}
             title="Halaman Seterusnya"
           >
@@ -273,8 +273,8 @@ export default function LamanUtamaAnalysis({
               }}
               className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer pointer-events-auto ${
                 currentPage === idx
-                  ? "bg-dark-blue w-4"
-                  : "bg-dark-blue/20 hover:bg-dark-blue/50 w-1.5"
+                  ? "bg-brand-accent w-4"
+                  : "bg-brand-accent/35 hover:bg-brand-accent/70 w-1.5"
               }`}
               aria-label={`Tunjukkan Halaman ${idx + 1}`}
               title={`Halaman ${idx + 1}`}

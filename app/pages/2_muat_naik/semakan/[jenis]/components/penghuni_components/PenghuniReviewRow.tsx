@@ -1,4 +1,5 @@
 import Icon from "../../../../../../components/Icon/Icon";
+import { VIEW_ICON_BUTTON_CLASS } from "@/app/components/ViewIconButton";
 import type { ExtractedPenghuniRecord } from "../../../../components/extract-review-shared";
 import { getPenghuniRecordKey } from "./helpers";
 
@@ -43,7 +44,9 @@ export default function PenghuniReviewRow({
         {[resident.pekerjaan, resident.jabatan].filter(Boolean).join("\n")}
       </td>
       <td className="px-4 py-4 text-center">
-        <Icon icon="visibility" size={17} weight={700} className="text-dark-blue" />
+        <span className={VIEW_ICON_BUTTON_CLASS}>
+          <Icon icon="visibility" size={18} />
+        </span>
       </td>
     </tr>
   );

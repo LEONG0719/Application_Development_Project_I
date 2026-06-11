@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect, useRef } from "react";
 
 import { useSearchParams } from "next/navigation";
 
-import Icon from "@/app/components/Icon/Icon";
+import ViewIconButton from "@/app/components/ViewIconButton";
 import SearchBar, { SearchBarToggleButton, searchRecords, useSearchBarLogic } from "@/app/components/SearchBar";
 import { loadingTableRows } from "@/app/components/Loading/LoadingTableRows";
 import SearchingDataOverlay from "@/app/components/Loading/SearchingDataOverlay";
@@ -286,18 +286,13 @@ export default function PenghuniTable({
                                     {/* Tindakan */}
                                     <td className="px-3 py-2 text-center align-middle w-min whitespace-nowrap">
                                         <div className="flex items-center justify-center">
-                                            <button
-                                                type="button"
-                                                aria-label={`Lihat butiran ${resident.fullName}`}
-                                                title={`Lihat butiran ${resident.fullName}`}
+                                            <ViewIconButton
+                                                label={`Lihat butiran ${resident.fullName}`}
                                                 onClick={(e) => {
                                                     e.stopPropagation();
                                                     setSelectedResident(resident);
                                                 }}
-                                                className="inline-flex items-center justify-center rounded-lg p-2 text-dark-blue transition-colors hover:bg-background"
-                                            >
-                                                <Icon icon="eye" size={18} />
-                                            </button>
+                                            />
                                         </div>
                                     </td>
                                 </tr>

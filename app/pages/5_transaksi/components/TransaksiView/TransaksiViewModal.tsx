@@ -8,6 +8,7 @@ import SearchingDetailDataOverlay from "@/app/components/Loading/SearchingDetail
 import PenghuniComplete from "@/app/components/RecordNavigation/PenghuniComplete";
 
 import TransaksiViewRelated from "./TransaksiViewRelated";
+import TransactionStatusBadge from "../TransactionStatusBadge";
 
 type TransactionRecord = {
   id: string;
@@ -98,23 +99,6 @@ function formatRM(value: number | string) {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
-}
-
-function getStatusBadge(status: string) {
-  switch (status) {
-    case "NORMAL":
-      return <span className="bg-normal px-2 py-0.5 text-[10px] font-bold uppercase text-info">Normal</span>;
-    case "DIBALIKAN":
-      return <span className="rounded-[5px] bg-red px-2 py-0.5 text-[10px] font-bold uppercase text-white">Dibalikkan</span>;
-    case "DILARASKAN":
-      return <span className="rounded-[5px] bg-warning-surface px-2 py-0.5 text-[10px] font-bold uppercase text-warning">Dilaraskan</span>;
-    case "PEMBALIKAN":
-      return <span className="rounded-[5px] bg-red px-2 py-0.5 text-[10px] font-bold uppercase text-white">Pembalikan</span>;
-    case "PELARASAN":
-      return <span className="rounded-[5px] bg-warning-surface px-2 py-0.5 text-[10px] font-bold uppercase text-warning">Pelarasan</span>;
-    default:
-      return <span className="rounded-[5px] bg-light-blue px-2 py-0.5 text-[10px] font-bold uppercase text-grey">{status}</span>;
-  }
 }
 
 export default function TransaksiViewModal({ isOpen, onClose, transaction }: TransaksiViewModalProps) {
@@ -346,7 +330,7 @@ export default function TransaksiViewModal({ isOpen, onClose, transaction }: Tra
                 <section className="flex flex-col gap-4">
                   <div className="flex items-center justify-between">
                     <Topic content="MAKLUMAT TRANSAKSI" />
-                    {getStatusBadge(transaction.status)}
+                    <TransactionStatusBadge status={transaction.status} />
                   </div>
 
                   <div className="grid items-start gap-4 md:grid-cols-2">

@@ -1,6 +1,6 @@
-import Icon from "../../../../../../components/Icon/Icon";
 import type { ExtractedTunggakanRecord } from "../../../../components/extract-review-shared";
 import { TableInputField, TableInputFieldFormat } from "@/app/components/InputField";
+import TableActionIconButton from "@/app/components/TableActionIconButton";
 
 type TunggakanReviewRowProps = {
   row: ExtractedTunggakanRecord;
@@ -16,33 +16,6 @@ type TunggakanReviewRowProps = {
   onDelete: () => void;
   onEdit: () => void;
 };
-
-function ActionButton({
-  icon,
-  label,
-  textClass,
-  onClick,
-}: {
-  icon: string;
-  label: string;
-  textClass: string;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      aria-label={label}
-      title={label}
-      className={`inline-flex items-center justify-center rounded-lg p-2 transition-colors hover:bg-background ${textClass}`}
-      onClick={(e) => {
-        e.stopPropagation();
-        onClick();
-      }}
-    >
-      <Icon icon={icon} size={18} />
-    </button>
-  );
-}
 
 export default function TunggakanReviewRow({
   row,
@@ -61,7 +34,7 @@ export default function TunggakanReviewRow({
       className={[
         "border-t border-light-grey/20 transition-colors cursor-auto select-text",
         row.importStatus === "IGNORED"
-          ? "bg-amber-50"
+          ? "bg-warning-surface"
           : isEditing
             ? "bg-dark-blue/3"
             : "hover:bg-background/60",
@@ -157,26 +130,34 @@ export default function TunggakanReviewRow({
         <div className="flex items-center justify-center gap-1">
           {isEditing ? (
             <div className="flex items-center justify-center gap-1">
-              <ActionButton
+              <TableActionIconButton
                 icon="save"
                 label="Simpan perubahan tunggakan"
-                textClass="text-green"
-                onClick={onSave}
+                tone="success"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onSave();
+                }}
               />
-              <ActionButton
+              <TableActionIconButton
                 icon="delete"
                 label="Padam tunggakan"
-                textClass="text-red"
-                onClick={onDelete}
+                tone="danger"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onDelete();
+                }}
               />
             </div>
           ) : (
             <div className="flex items-center justify-center gap-1">
-              <ActionButton
+              <TableActionIconButton
                 icon="edit"
                 label="Edit tunggakan"
-                textClass="text-dark-blue"
-                onClick={onEdit}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onEdit();
+                }}
               />
             </div>
           )}

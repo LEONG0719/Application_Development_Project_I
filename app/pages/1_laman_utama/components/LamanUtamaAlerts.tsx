@@ -22,7 +22,7 @@ export default function LamanUtamaAlerts({
   pendingCategory = "bayaran",
 }: LamanUtamaAlertsProps) {
   return (
-    <div className="flex flex-col gap-6 w-full h-[332px]">
+    <div className="flex flex-col gap-6 w-full h-83">
       {/* 1. Tunggakan Card */}
       <div className="flex flex-col justify-between p-6 bg-surface border border-border rounded-xl shadow-[0px_1px_2px_rgba(0,0,0,0.05)] flex-1">
         {/* Upper section */}

@@ -3,8 +3,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { PatternFormat } from "react-number-format";
 
-import Icon, { commonIcons } from "@/app/components/Icon/Icon";
+import { commonIcons } from "@/app/components/Icon/Icon";
 import ToolbarButton from "@/app/components/ToolbarIconButton";
+import ViewIconButton from "@/app/components/ViewIconButton";
 import FilterOption, {
   areAllFilterOptionsSelected,
   normalizeSelectedValuesForOptions,
@@ -451,7 +452,7 @@ export default function PenghuniReviewTable({
                     className={[
                       "border-t border-light-grey/20 transition-colors cursor-auto select-text",
                       resident.isExisted
-                        ? "bg-amber-50"
+                        ? "bg-warning-surface"
                         : "hover:bg-background/60",
                     ].join(" ")}
                     onDoubleClick={() => setSelectedResident(resident)}
@@ -539,18 +540,13 @@ export default function PenghuniReviewTable({
                     {/* Tindakan */}
                     <td className="px-3 py-2 text-center align-middle w-min whitespace-nowrap">
                       <div className="flex items-center justify-center">
-                        <button
-                          type="button"
-                          aria-label={`Lihat butiran ${resident.nama}`}
-                          title={`Lihat butiran ${resident.nama}`}
-                          className="inline-flex items-center justify-center rounded-lg p-2 text-dark-blue transition-colors hover:bg-background"
+                        <ViewIconButton
+                          label={`Lihat butiran ${resident.nama}`}
                           onClick={(event) => {
                             event.stopPropagation();
                             setSelectedResident(resident);
                           }}
-                        >
-                          <Icon icon="eye" size={18} />
-                        </button>
+                        />
                       </div>
                     </td>
                   </tr>

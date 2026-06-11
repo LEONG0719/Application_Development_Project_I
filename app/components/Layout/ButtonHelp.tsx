@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import Icon from "../Icon/Icon";
+import HeaderIconButton from "./HeaderIconButton";
 
 
 export default function ButtonHelp() {
@@ -26,16 +27,14 @@ export default function ButtonHelp() {
 
     return (
         <div className="relative" ref={helpRef}>
-            <button
-                type="button"
-                className="flex text-grey hover:cursor-pointer hover:text-dark-blue hover:scale-[0.98] active:scale-[0.86]"
+            <HeaderIconButton
+                icon="help"
+                label="Bantuan"
+                isActive={isHelpOpen}
                 onClick={() => setIsHelpOpen((value) => !value)}
                 aria-expanded={isHelpOpen}
-                aria-label="Bantuan"
-                title="Bantuan"
-            >
-                <Icon icon="help" size={24} />
-            </button>
+                aria-haspopup="dialog"
+            />
 
             {isHelpOpen ? (
                 <div className="flex flex-col absolute right-0 top-full z-100 w-max whitespace-nowrap border border-light-blue rounded-lg bg-surface p-4 text-sm shadow-2xl mt-2">

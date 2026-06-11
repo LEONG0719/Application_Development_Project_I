@@ -5,6 +5,7 @@ import Link from "next/link";
 
 import Icon from "@/app/components/Icon/Icon";
 import { loadingTableRows } from "@/app/components/Loading/LoadingTableRows";
+import { VIEW_ICON_BUTTON_CLASS } from "@/app/components/ViewIconButton";
 import AuditDownload from "./Button/AuditDownload";
 import AuditFilter from "./Button/AuditFilter";
 import AuditLogPagination from "./AuditLogPagination";
@@ -261,7 +262,7 @@ export default function AuditLogTablePanel({
                             auditId: row.id,
                           },
                         )}`}
-                        className="inline-grid h-8 w-8 place-items-center rounded-lg text-grey transition-colors hover:bg-background hover:text-dark-blue"
+                        className={VIEW_ICON_BUTTON_CLASS}
                         aria-label={`Lihat butiran audit ${row.target}`}
                       >
                         <Icon icon="eye" size={18} />

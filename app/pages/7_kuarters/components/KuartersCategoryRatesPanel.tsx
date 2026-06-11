@@ -9,6 +9,7 @@ import SearchBar, { SearchBarToggleButton, useSearchBarLogic } from "@/app/compo
 import Icon, { commonIcons } from "@/app/components/Icon/Icon";
 import { loadingTableRows } from "@/app/components/Loading/LoadingTableRows";
 import { PaginationControls, usePaginationLogic } from "@/app/components/Pagination/Pagination";
+import TableActionIconButton from "@/app/components/TableActionIconButton";
 import ToolbarButton from "@/app/components/ToolbarIconButton";
 import { downloadQuarterCategoryRates } from "@/app/pages/7_kuarters/hooks/kuartersDownloads";
 
@@ -39,36 +40,6 @@ type KuartersCategoryRatesPanelProps = {
   onSaveRow: () => void;
   onViewRow: (quarterCategory: QuarterCategoryRecord) => void;
 };
-
-function ActionButton({
-  icon,
-  label,
-  onClick,
-  textClass,
-  disabled = false,
-}: {
-  icon: string;
-  label: string;
-  onClick: () => void;
-  textClass: string;
-  disabled?: boolean;
-}) {
-  return (
-    <button
-      type="button"
-      className={`inline-flex items-center justify-center rounded-lg p-2 transition-colors hover:bg-background disabled:cursor-not-allowed disabled:opacity-40 ${textClass}`}
-      aria-label={label}
-      disabled={disabled}
-      onClick={(e) => {
-        e.stopPropagation();
-        onClick();
-      }}
-      title={label}
-    >
-      <Icon icon={icon} size={18} />
-    </button>
-  );
-}
 
 export default function KuartersCategoryRatesPanel({
   isLoading,
@@ -149,19 +120,25 @@ export default function KuartersCategoryRatesPanel({
     if (isEditing) {
       return (
         <div className="flex items-center gap-1">
-          <ActionButton
+          <TableActionIconButton
             icon={commonIcons.save}
             label="Simpan"
             disabled={Boolean(pendingAction)}
-            onClick={onSaveRow}
-            textClass="text-green"
+            tone="success"
+            onClick={(event) => {
+              event.stopPropagation();
+              onSaveRow();
+            }}
           />
-          <ActionButton
+          <TableActionIconButton
             icon={commonIcons.delete}
             label="Padam"
             disabled={Boolean(pendingAction)}
-            onClick={() => onDeleteRow(rowId)}
-            textClass="text-red"
+            tone="danger"
+            onClick={(event) => {
+              event.stopPropagation();
+              onDeleteRow(rowId);
+            }}
           />
         </div>
       );
@@ -169,31 +146,31 @@ export default function KuartersCategoryRatesPanel({
 
     return (
       <div className="flex items-center gap-1">
-        <ActionButton
+        <TableActionIconButton
           icon={commonIcons.edit}
           label="Edit"
           disabled={Boolean(pendingAction)}
-          onClick={() => {
+          onClick={(event) => {
+            event.stopPropagation();
             const selectedQuarterCategory = rates.find((item) => item.id === rowId);
 
             if (selectedQuarterCategory) {
               onEditRow(selectedQuarterCategory);
             }
           }}
-          textClass="text-dark-blue"
         />
-        <ActionButton
+        <TableActionIconButton
           icon={commonIcons.chevronRight}
           label="Lihat"
           disabled={Boolean(pendingAction)}
-          onClick={() => {
+          onClick={(event) => {
+            event.stopPropagation();
             const selectedQuarterCategory = rates.find((item) => item.id === rowId);
 
             if (selectedQuarterCategory) {
               onViewRow(selectedQuarterCategory);
             }
           }}
-          textClass="text-grey"
         />
       </div>
     );

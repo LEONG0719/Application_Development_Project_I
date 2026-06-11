@@ -81,19 +81,23 @@ export async function verifyTunggakanDrafts(
   }
 
   const transactionNos = await generateTransactionNos(tx, rowsToVerify.length);
+  const verificationRows = rowsToVerify.map((row) => ({
+    ...row,
+    posting: buildTunggakanPosting(row.draft.totalArrearsAmount),
+  }));
 
   await tx.arrearsSummary.createMany({
-    data: rowsToVerify.map((row) => ({
+    data: verificationRows.map((row) => ({
       residentId: row.residentId,
-      totalArrearsAmount: row.draft.totalArrearsAmount,
+      // ArrearsSummary stores the actual balance, including a credit balance.
+      totalArrearsAmount: row.posting.signedAmount,
       lastUpdatedMonth: row.draft.lastUpdatedMonth,
       description: row.draft.description,
     })),
   });
 
   await tx.transaction.createMany({
-    data: rowsToVerify.map((row, index) => {
-      const amount = Number(row.draft.totalArrearsAmount);
+    data: verificationRows.map((row, index) => {
       const chargeMonth = row.draft.lastUpdatedMonth
         ? getMonthStartInAppTimeZone(row.draft.lastUpdatedMonth)
         : null;
@@ -105,8 +109,8 @@ export async function verifyTunggakanDrafts(
         chargeMonth,
         category: "BAKI_AWAL",
         description: "Baki awal daripada muat naik tunggakan.",
-        debitAmount: amount >= 0 ? amount : 0,
-        creditAmount: amount < 0 ? Math.abs(amount) : 0,
+        debitAmount: row.posting.debitAmount,
+        creditAmount: row.posting.creditAmount,
       };
     }),
   });
@@ -315,4 +319,18 @@ function normalizeIc(value: string | null | undefined) {
 
 function uniqueValues(values: string[]) {
   return [...new Set(values)];
+}
+
+function buildTunggakanPosting(value: Prisma.Decimal) {
+  const signedAmount = Number(value.toString());
+
+  if (!Number.isFinite(signedAmount)) {
+    throw new Error("Jumlah tunggakan tidak sah.");
+  }
+
+  return {
+    signedAmount,
+    debitAmount: signedAmount > 0 ? signedAmount : 0,
+    creditAmount: signedAmount < 0 ? Math.abs(signedAmount) : 0,
+  };
 }

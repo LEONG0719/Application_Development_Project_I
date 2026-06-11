@@ -1,7 +1,9 @@
 "use client";
 
-import Icon from "@/app/components/Icon/Icon";
 import { loadingTableRows } from "@/app/components/Loading/LoadingTableRows";
+import TableActionIconButton from "@/app/components/TableActionIconButton";
+import ViewIconButton from "@/app/components/ViewIconButton";
+import TransactionStatusBadge from "./TransactionStatusBadge";
 
 type TransactionRow = {
   id: string;
@@ -47,23 +49,6 @@ function formatShortTransactionId(value?: string | null) {
   return value.includes("-") ? `${value.split("-")[0]}...` : value;
 }
 
-function getStatusBadge(status: string) {
-  switch (status) {
-    case "NORMAL":
-      return <span className="bg-normal px-2 py-0.5 text-[10px] font-bold uppercase text-info">Normal</span>;
-    case "DIBALIKAN":
-      return <span className="rounded-[5px] bg-red px-2 py-0.5 text-[10px] font-bold uppercase text-white">Dibalikkan</span>;
-    case "DILARASKAN":
-      return <span className="rounded-[5px] bg-warning-surface px-2 py-0.5 text-[10px] font-bold uppercase text-warning">Dilaraskan</span>;
-    case "PEMBALIKAN":
-      return <span className="rounded-[5px] bg-red/50 px-2 py-0.5 text-[10px] font-bold uppercase text-white/80">Pembalikan</span>;
-    case "PELARASAN":
-      return <span className="rounded-[5px] bg-warning-surface/50 px-2 py-0.5 text-[10px] font-bold uppercase text-warning/50">Pelarasan</span>;
-    default:
-      return <span className="rounded-[5px] bg-light-blue px-2 py-0.5 text-[10px] font-bold uppercase text-grey">{status}</span>;
-  }
-}
-
 export default function TransaksiTable({
   transactions,
   isLoading,
@@ -102,7 +87,7 @@ export default function TransaksiTable({
             <th className="w-min whitespace-nowrap p-3 text-left">Tarikh</th>
             <th className="w-min whitespace-nowrap p-3 text-left">ID Transaksi</th>
             <th className="w-min whitespace-nowrap p-3 text-left">Kategori</th>
-            <th className="w-min whitespace-nowrap p-3 text-left">Status</th>
+            <th className="w-min whitespace-nowrap p-3 text-center">Status</th>
             <th className="w-min whitespace-nowrap p-3 text-left">ID Berkaitan</th>
             <th className="w-min whitespace-nowrap p-3 text-left">Penghuni</th>
             <th className="w-min whitespace-nowrap p-3 text-left">No. Resit</th>
@@ -184,8 +169,8 @@ export default function TransaksiTable({
                   </td>
 
                   {/* Status */}
-                  <td className={`w-min whitespace-nowrap p-3 ${isMuted ? "opacity-70" : ""}`}>
-                    {getStatusBadge(tx.status)}
+                  <td className={`w-min whitespace-nowrap p-3 text-center ${isMuted ? "opacity-70" : ""}`}>
+                    <TransactionStatusBadge status={tx.status} />
                   </td>
 
                   {/* Related Transaction ID */}
@@ -267,56 +252,36 @@ export default function TransaksiTable({
                   <td className="w-min whitespace-nowrap p-3 text-center">
                     <div className="flex items-center justify-center gap-1">
                       {/* View Button - Always Enabled */}
-                      <button
-                        type="button"
+                      <ViewIconButton
+                        label="Lihat butiran"
                         onClick={(e) => {
                           e.stopPropagation();
                           onView(tx);
                         }}
-                        className="inline-grid h-8 w-8 place-items-center rounded-lg text-grey transition-colors hover:bg-background hover:text-dark-blue"
-                        title="Lihat butiran"
-                        aria-label="Lihat butiran"
-                      >
-                        <Icon icon="eye" size={18} />
-                      </button>
-
-                      {/* Reverse Button - Enabled for NORMAL and DILARASKAN statuses */}
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (canAction) onReverse(tx);
-                        }}
-                        className={`inline-grid h-8 w-8 place-items-center rounded-lg transition-colors ${
-                          canAction
-                            ? "text-grey hover:bg-background hover:text-red"
-                            : "cursor-not-allowed text-light-grey opacity-50"
-                        }`}
-                        title={canAction ? "Pembalikan" : "Tidak dibenarkan"}
-                        disabled={!canAction}
-                        aria-label="Pembalikan"
-                      >
-                        <Icon icon="undo" size={18} />
-                      </button>
+                      />
 
                       {/* Adjust Button - Enabled for NORMAL and DILARASKAN statuses */}
-                      <button
-                        type="button"
+                      <TableActionIconButton
+                        icon="tune"
+                        label={canAction ? "Pelarasan" : "Tidak dibenarkan"}
                         onClick={(e) => {
                           e.stopPropagation();
                           if (canAction) onAdjust(tx);
                         }}
-                        className={`inline-grid h-8 w-8 place-items-center rounded-lg transition-colors ${
-                          canAction
-                            ? "text-grey hover:bg-background hover:text-dark-blue"
-                            : "cursor-not-allowed text-light-grey opacity-50"
-                        }`}
-                        title={canAction ? "Pelarasan" : "Tidak dibenarkan"}
                         disabled={!canAction}
-                        aria-label="Pelarasan"
-                      >
-                        <Icon icon="tune" size={18} />
-                      </button>
+                      />
+
+                      {/* Reverse Button - Enabled for NORMAL and DILARASKAN statuses */}
+                      <TableActionIconButton
+                        icon="undo"
+                        label={canAction ? "Pembalikan" : "Tidak dibenarkan"}
+                        tone="danger"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (canAction) onReverse(tx);
+                        }}
+                        disabled={!canAction}
+                      />
                     </div>
                   </td>
                 </tr>

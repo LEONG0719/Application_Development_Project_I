@@ -53,6 +53,33 @@ html {
   --color-info-surface: #CFFAFE;
   --color-danger-surface: #FFF0F0;
   --color-success-surface: #EAF8EF;
+  --color-action-neutral: #464651;
+  --color-action-accent: #151E66;
+  --color-action-hover-neutral: #E5ECFA;
+  --color-status-normal-surface: #ECFEFF;
+  --color-status-normal-text: #0E7490;
+  --color-status-normal-border: #A5F3FC;
+  --color-status-normal-dot: #0891B2;
+  --color-status-reversed-surface: #FDECEC;
+  --color-status-reversed-text: #A51F1F;
+  --color-status-reversed-border: #F1B8B8;
+  --color-status-reversed-dot: #BA1A1A;
+  --color-status-adjusted-surface: #FFF4D6;
+  --color-status-adjusted-text: #735200;
+  --color-status-adjusted-border: #EED18A;
+  --color-status-adjusted-dot: #D99500;
+  --color-status-reversal-surface: #FFF3F3;
+  --color-status-reversal-text: #B4232E;
+  --color-status-reversal-border: #F6CDD0;
+  --color-status-reversal-dot: #E05A63;
+  --color-status-adjustment-surface: #FFF7E8;
+  --color-status-adjustment-text: #925600;
+  --color-status-adjustment-border: #F2D5A6;
+  --color-status-adjustment-dot: #E49E14;
+  --color-status-default-surface: #EFF4FF;
+  --color-status-default-text: #464651;
+  --color-status-default-border: #DCE2F1;
+  --color-status-default-dot: #94A3B8;
   --color-gauge-primary: #D3E4FE;
   --color-gauge-secondary: #E2E8F0;
   --color-brand-accent: #151E66;
@@ -80,12 +107,6 @@ html {
   /* Status Bayaran & Penghuni */
   --color-x-lengkap: #9333EA;
 
-  /* Status Transaksi */
-  --color-normal: #CFFAFE;
-  --color-dibalikan: #DC2626;
-  --color-pembalikan: #DC2626;
-  --color-dilaraskan: #FEF3C7;
-  --color-pelarasan: #FEF3C7;
 }
 
 /* --- Dark Theme --- */
@@ -107,6 +128,33 @@ html[data-theme="dark"] {
   --color-info-surface: #15313A;
   --color-danger-surface: #3A2024;
   --color-success-surface: #173326;
+  --color-action-neutral: #B3BED1;
+  --color-action-accent: #AAB9FF;
+  --color-action-hover-neutral: #263451;
+  --color-status-normal-surface: #15313A;
+  --color-status-normal-text: #8DE7F7;
+  --color-status-normal-border: #296173;
+  --color-status-normal-dot: #67E8F9;
+  --color-status-reversed-surface: #3A2024;
+  --color-status-reversed-text: #FFB0B0;
+  --color-status-reversed-border: #743B43;
+  --color-status-reversed-dot: #FF7373;
+  --color-status-adjusted-surface: #3A2D16;
+  --color-status-adjusted-text: #FFD77A;
+  --color-status-adjusted-border: #715A28;
+  --color-status-adjusted-dot: #F8C65C;
+  --color-status-reversal-surface: #321D27;
+  --color-status-reversal-text: #FF9DA6;
+  --color-status-reversal-border: #6D3546;
+  --color-status-reversal-dot: #FF7F8A;
+  --color-status-adjustment-surface: #312619;
+  --color-status-adjustment-text: #F6C46D;
+  --color-status-adjustment-border: #66502B;
+  --color-status-adjustment-dot: #F0B84B;
+  --color-status-default-surface: #253044;
+  --color-status-default-text: #C5CFDE;
+  --color-status-default-border: #46546B;
+  --color-status-default-dot: #94A3B8;
   --color-gauge-primary: #2B3E61;
   --color-gauge-secondary: #344054;
   --color-brand-accent: #AAB9FF;
@@ -127,6 +175,49 @@ html[data-theme="dark"] body {
 html[data-theme="dark"] .app-header {
   border-bottom: 1px solid rgba(132, 145, 167, 0.12);
   background-color: rgba(14, 20, 32, 0.92);
+}
+
+html[data-theme="dark"] .profile-reset-card {
+  border-color: #743B43;
+  background-color: #2A1C23;
+  color: var(--color-content);
+  box-shadow: 0 1px 2px rgba(2, 6, 15, 0.32);
+}
+
+html[data-theme="dark"] .profile-reset-description {
+  color: #C6AEB6;
+}
+
+html[data-theme="dark"] .profile-reset-action {
+  background-color: var(--color-red);
+  color: var(--color-static-white);
+}
+
+html[data-theme="dark"] .profile-reset-action:hover {
+  background-color: #D53636;
+  opacity: 1;
+}
+
+html[data-theme="dark"] .profile-reset-input {
+  border-color: rgba(255, 176, 176, 0.28);
+  background-color: rgba(14, 20, 32, 0.42);
+  color: var(--color-content);
+}
+
+html[data-theme="dark"] .profile-reset-input::placeholder {
+  color: var(--color-content-subtle);
+}
+
+html[data-theme="dark"] .profile-reset-input:focus {
+  border-color: #FF9D9D;
+}
+
+html[data-theme="dark"] .profile-reset-input-toggle {
+  color: #D7BDC4;
+}
+
+html[data-theme="dark"] .profile-reset-input-toggle:hover {
+  color: var(--color-content);
 }
 
 html[data-theme="dark"] [class~="bg-white"] {

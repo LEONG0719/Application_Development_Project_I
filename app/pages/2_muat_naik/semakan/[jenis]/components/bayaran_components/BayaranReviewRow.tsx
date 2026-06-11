@@ -1,5 +1,5 @@
-import Icon from "../../../../../../components/Icon/Icon";
 import { TableInputField, TableInputFieldFormat } from "@/app/components/InputField";
+import TableActionIconButton from "@/app/components/TableActionIconButton";
 import type { BayaranReviewRowModel } from "./types";
 
 type BayaranReviewRowProps = {
@@ -24,33 +24,6 @@ type BayaranReviewRowProps = {
   onDelete: () => void;
 };
 
-function ActionButton({
-  icon,
-  label,
-  textClass,
-  onClick,
-}: {
-  icon: string;
-  label: string;
-  textClass: string;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      aria-label={label}
-      title={label}
-      className={`inline-flex items-center justify-center rounded-lg p-2 transition-colors hover:bg-background ${textClass}`}
-      onClick={(e) => {
-        e.stopPropagation();
-        onClick();
-      }}
-    >
-      <Icon icon={icon} size={18} />
-    </button>
-  );
-}
-
 export default function BayaranReviewRow({
   row,
   draft,
@@ -68,7 +41,7 @@ export default function BayaranReviewRow({
       className={[
         "border-t border-light-grey/20 transition-colors cursor-auto select-text",
         row.isExisted
-          ? "bg-amber-50"
+          ? "bg-warning-surface"
           : isEditing
             ? "bg-dark-blue/3"
             : "hover:bg-background/60",
@@ -223,30 +196,38 @@ export default function BayaranReviewRow({
       </td>
 
       {/* Action Buttons */}
-      <td className={`w-[0%] px-3 w-min whitespace-nowrap ${isEditing ? "py-4" : "py-2"}`}>
+      <td className={`w-[0%] px-3 whitespace-nowrap ${isEditing ? "py-4" : "py-2"}`}>
         <div className="flex items-center justify-center gap-1">
           {isEditing ? (
             <div className="flex items-center justify-center gap-1">
-              <ActionButton
+              <TableActionIconButton
                 icon="save"
                 label="Simpan perubahan bayaran"
-                textClass="text-green"
-                onClick={onSave}
+                tone="success"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onSave();
+                }}
               />
-              <ActionButton
+              <TableActionIconButton
                 icon="delete"
                 label="Padam bayaran"
-                textClass="text-red"
-                onClick={onDelete}
+                tone="danger"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onDelete();
+                }}
               />
             </div>
           ) : (
             <div className="flex items-center justify-center gap-1">
-              <ActionButton
+              <TableActionIconButton
                 icon="edit"
                 label="Edit bayaran"
-                textClass="text-dark-blue"
-                onClick={onEdit}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onEdit();
+                }}
               />
             </div>
           )}

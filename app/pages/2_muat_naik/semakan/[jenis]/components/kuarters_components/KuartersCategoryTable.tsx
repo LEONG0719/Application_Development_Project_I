@@ -1,4 +1,3 @@
-import Icon from "../../../../../../components/Icon/Icon";
 import {
   type ExtractedQuarterRecord,
 } from "../../../../components/extract-review-shared";
@@ -7,6 +6,7 @@ import type { KuartersCategoryDraft, KuartersPriceField } from "./types";
 import { loadingTableRows } from "@/app/components/Loading/LoadingTableRows";
 import { PaginationControls } from "@/app/components/Pagination/Pagination";
 import { TableInputField } from "@/app/components/InputField";
+import TableActionIconButton from "@/app/components/TableActionIconButton";
 
 
 type KuartersCategoryTableProps = {
@@ -47,42 +47,6 @@ const priceFields: Array<[KuartersPriceField, string, string]> = [
   ["penaltyPrice", "Penalti (RM)", "w-min whitespace-nowrap"],
 ];
 
-
-function ActionButton({
-  icon,
-  label,
-  textClass,
-  iconClass,
-  onClick,
-  disabled = false,
-}: {
-  icon: string;
-  label: string;
-  textClass: string;
-  iconClass?: string;
-  onClick: (event: React.MouseEvent<HTMLButtonElement>) => void;
-  disabled?: boolean;
-}) {
-  return (
-    <button
-      type="button"
-      aria-label={label}
-      title={label}
-      disabled={disabled}
-      className={`inline-flex items-center justify-center rounded-lg p-2 transition-colors hover:bg-background disabled:cursor-not-allowed disabled:opacity-35 ${textClass}`}
-      onClick={(event) => {
-        if (disabled) {
-          event.stopPropagation();
-          return;
-        }
-
-        onClick(event);
-      }}
-    >
-      <Icon icon={icon} size={18} className={iconClass} />
-    </button>
-  );
-}
 
 function formatPrice(value: string) {
   const amount = Number(value);
@@ -184,7 +148,7 @@ export default function KuartersCategoryTable({
                     className={[
                       "border-t border-light-grey/20 transition-colors cursor-pointer select-text",
                       category.categoryIsExisted
-                        ? "bg-amber-50"
+                        ? "bg-warning-surface"
                         : isSelected
                           ? "bg-dark-blue/3"
                           : "hover:bg-background/60",
@@ -273,25 +237,25 @@ export default function KuartersCategoryTable({
                       <div className="flex items-center justify-center gap-1">
                         {isEditing ? (
                           <>
-                            <ActionButton
+                            <TableActionIconButton
                               icon={isSavingCategory ? "progress_activity" : "save"}
                               label={
                                 isSavingCategory
                                   ? "Menyimpan perubahan kategori"
                                   : "Simpan perubahan kategori"
                               }
-                              textClass={isSavingCategory ? "text-dark-blue" : "text-green"}
-                              iconClass={isSavingCategory ? "animate-spin" : undefined}
+                              tone={isSavingCategory ? "neutral" : "success"}
+                              iconClassName={isSavingCategory ? "animate-spin" : undefined}
                               disabled={isSaving && !isSavingCategory}
                               onClick={(event) => {
                                 event.stopPropagation();
                                 void onSaveCategory(category.id);
                               }}
                             />
-                            <ActionButton
+                            <TableActionIconButton
                               icon="delete"
                               label="Padam kategori"
-                              textClass="text-red"
+                              tone="danger"
                               disabled={isSaving}
                               onClick={(event) => {
                                 event.stopPropagation();
@@ -300,14 +264,13 @@ export default function KuartersCategoryTable({
                             />
                           </>
                         ) : (
-                          <ActionButton
+                          <TableActionIconButton
                             icon="edit"
                             label={
                               canEditCategory
                                 ? "Edit kategori"
                                 : "Edit kategori"
                             }
-                            textClass={canEditCategory ? "text-dark-blue" : "text-grey"}
                             disabled={!canEditCategory || isSaving}
                             onClick={(event) => {
                               event.stopPropagation();

@@ -2,6 +2,7 @@
 
 import { useTransaksiViewRelatedFilter } from "./TransaksiViewRelatedFilter";
 import TransaksiViewRelatedDownload from "./TransaksiViewRelatedDownload";
+import TransactionStatusBadge from "../TransactionStatusBadge";
 
 type RelatedRecord = {
   id: string;
@@ -47,35 +48,6 @@ export default function TransaksiViewRelated({ records, transactionNo }: Transak
     }
 
     return parsedDate.toLocaleDateString("en-GB");
-  };
-
-  const formatStatusLabel = (status: string | null | undefined) => {
-    const normalizedStatus = status?.trim().toUpperCase();
-    if (!normalizedStatus) {
-      return "N/A";
-    }
-
-    return normalizedStatus === "DIBALIKAN" ? "DIBALIKKAN" : normalizedStatus;
-  };
-
-  const getStatusBadge = (status: string | null | undefined) => {
-    const baseClass = "rounded-[5px] px-2 py-0.5 text-[10px] font-bold uppercase";
-    const displayStatus = formatStatusLabel(status);
-    
-    switch (displayStatus) {
-      case "NORMAL":
-        return <span className={`bg-normal text-info ${baseClass}`}>Normal</span>;
-      case "DIBALIKAN":
-        return <span className={`bg-red text-white ${baseClass}`}>Dibalikkan</span>;
-      case "DILARASKAN":
-        return <span className={`bg-warning-surface text-warning ${baseClass}`}>Dilaraskan</span>;
-      case "PEMBALIKAN":
-        return <span className={`bg-red text-white ${baseClass}`}>Pembalikan</span>;
-      case "PELARASAN":
-        return <span className={`bg-warning-surface text-warning ${baseClass}`}>Pelarasan</span>;
-      default:
-        return <span className={`bg-light-blue text-grey ${baseClass}`}>{displayStatus}</span>;
-    }
   };
 
   // Calculate sums
@@ -138,7 +110,9 @@ export default function TransaksiViewRelated({ records, transactionNo }: Transak
                     <td className="w-min whitespace-nowrap p-3 font-bold">
                       {row.transactionNo || formatShortTransactionId(row.id)}
                     </td>
-                    <td className="w-min whitespace-nowrap p-3">{getStatusBadge(row.status)}</td>
+                    <td className="w-min whitespace-nowrap p-3">
+                      <TransactionStatusBadge status={row.status} />
+                    </td>
                     <td className="max-w-80 truncate p-3 text-grey" title={row.description ?? undefined}>
                       {row.description?.trim() || "-"}
                     </td>

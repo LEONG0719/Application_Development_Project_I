@@ -2,12 +2,13 @@
 
 import { useDeferredValue, useMemo, useEffect, useRef, useState } from "react";
 
-import Icon, { commonIcons } from "@/app/components/Icon/Icon";
+import { commonIcons } from "@/app/components/Icon/Icon";
 import {
   PaginationControls,
   usePaginationLogic,
 } from "@/app/components/Pagination/Pagination";
 import { Topic } from "@/app/components/InputField";
+import TableActionIconButton from "@/app/components/TableActionIconButton";
 import SearchBar, {
   SearchBarToggleButton,
   searchRecords,
@@ -59,33 +60,6 @@ type OccupancyMutationResponse = {
     unit?: QuarterUnitDetails;
   };
 };
-
-function HistoryActionButton({
-  icon,
-  label,
-  textClass,
-  disabled = false,
-  onClick,
-}: {
-  icon: string;
-  label: string;
-  textClass: string;
-  disabled?: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      className={`inline-flex items-center justify-center rounded-lg p-2 transition-colors hover:bg-background disabled:cursor-not-allowed disabled:opacity-40 ${textClass}`}
-      aria-label={label}
-      title={label}
-      disabled={disabled}
-      onClick={onClick}
-    >
-      <Icon icon={icon} size={18} />
-    </button>
-  );
-}
 
 export default function KuartersUnitDetailsHistoryTab({
   unitDetails,
@@ -587,26 +561,25 @@ export default function KuartersUnitDetailsHistoryTab({
                     <td className="px-3 py-2 text-center">
                       {isEditing ? (
                         <div className="flex justify-center gap-1">
-                          <HistoryActionButton
+                          <TableActionIconButton
                             icon={commonIcons.save}
                             label="Simpan rekod penghunian"
-                            textClass="text-green"
+                            tone="success"
                             disabled={Boolean(pendingAction)}
                             onClick={saveOccupancy}
                           />
-                          <HistoryActionButton
+                          <TableActionIconButton
                             icon={commonIcons.delete}
                             label="Padam rekod penghunian"
-                            textClass="text-red"
+                            tone="danger"
                             disabled={Boolean(pendingAction)}
                             onClick={deleteOccupancy}
                           />
                         </div>
                       ) : (
-                        <HistoryActionButton
+                        <TableActionIconButton
                           icon={commonIcons.edit}
                           label="Kemaskini rekod penghunian"
-                          textClass="text-grey"
                           disabled={Boolean(pendingAction)}
                           onClick={() => startEditing(occupancy)}
                         />

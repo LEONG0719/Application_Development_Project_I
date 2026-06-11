@@ -33,11 +33,11 @@ type TransaksiFilterPanelProps = {
 
 // Layout static design parameters configuration mapping arrays
 const STATUS_OPTIONS: Array<{ value: TransactionStatus; label: string; dotColor: string }> = [
-  { value: "NORMAL", label: "Normal", dotColor: "bg-cyan-500" },
-  { value: "DIBALIKAN", label: "Dibalikkan", dotColor: "bg-red" },
-  { value: "DILARASKAN", label: "Dilaraskan", dotColor: "bg-amber-500" },
-  { value: "PEMBALIKAN", label: "Pembalikan", dotColor: "bg-red" },
-  { value: "PELARASAN", label: "Pelarasan", dotColor: "bg-amber-500" },
+  { value: "NORMAL", label: "Normal", dotColor: "bg-status-normal-dot" },
+  { value: "DIBALIKAN", label: "Dibalikkan", dotColor: "bg-status-reversed-dot" },
+  { value: "DILARASKAN", label: "Dilaraskan", dotColor: "bg-status-adjusted-dot" },
+  { value: "PEMBALIKAN", label: "Pembalikan", dotColor: "bg-status-reversal-dot" },
+  { value: "PELARASAN", label: "Pelarasan", dotColor: "bg-status-adjustment-dot" },
 ];
 
 const CATEGORY_OPTIONS: Array<{ value: TransactionCategory; label: string }> = [

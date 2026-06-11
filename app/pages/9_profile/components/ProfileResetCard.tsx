@@ -17,20 +17,20 @@ export default function ProfileResetCard({
   onCriticalKeyChange: (value: string) => void;
 }) {
   return (
-    <section className="rounded-[5px] border border-static-dark bg-static-dark p-5.5 text-static-white shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+    <section className="profile-reset-card rounded-[5px] border border-static-dark bg-static-dark p-5.5 text-static-white shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
       <div className="flex items-center justify-between gap-4 max-sm:flex-col max-sm:items-start">
         <div>
           <div className="mb-1.5 flex items-center gap-2 text-xs font-extrabold">
             <Icon icon="restart_alt" size={15} />
             SISTEM SET SEMULA
           </div>
-          <p className="text-[10px] leading-5 text-content-subtle">
+          <p className="profile-reset-description text-[10px] leading-5 text-content-subtle">
             Tindakan ini akan memadam data operasi sistem dan mengekalkan akaun admin.
           </p>
         </div>
         <button
           type="button"
-          className="inline-flex h-8 items-center justify-center gap-1.5 rounded-[3px] bg-static-white px-4 text-[11px] font-bold text-static-dark transition hover:-translate-y-0.5 hover:opacity-90"
+          className="profile-reset-action inline-flex h-8 items-center justify-center gap-1.5 rounded-[3px] bg-static-white px-4 text-[11px] font-bold text-static-dark transition hover:-translate-y-0.5 hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-static-white/60"
           onClick={onToggle}
         >
           <Icon icon={isResetting ? "close" : "restart_alt"} size={14} />
@@ -58,14 +58,14 @@ export default function ProfileResetCard({
             inputFontSize={12}
             inputMinHeight={40}
             className="tracking-normal"
-            activeBackgroundClass="bg-white/10 text-white border-white/15 placeholder:text-white/35 focus:border-white"
-            toggleButtonClassName="text-white/70 hover:text-white"
+            activeBackgroundClass="profile-reset-input bg-white/10 text-white border-white/15 placeholder:text-white/35 focus:border-white"
+            toggleButtonClassName="profile-reset-input-toggle text-white/70 hover:text-white"
           />
           <div className="flex justify-end">
             <button
               type="submit"
               disabled={isSavingReset}
-              className="inline-flex h-9 items-center justify-center gap-2 rounded-[3px] bg-static-white px-5 text-[11px] font-bold text-static-dark disabled:cursor-not-allowed disabled:opacity-60"
+              className="profile-reset-action inline-flex h-9 items-center justify-center gap-2 rounded-[3px] bg-static-white px-5 text-[11px] font-bold text-static-dark transition hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-static-white/60 disabled:cursor-not-allowed disabled:opacity-60"
             >
               <Icon icon="restart_alt" size={14} />
               {isSavingReset ? "Memproses..." : "Sahkan Set Semula"}

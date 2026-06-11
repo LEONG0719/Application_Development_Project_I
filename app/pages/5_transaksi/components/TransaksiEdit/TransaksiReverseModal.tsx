@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Icon, { commonIcons } from "@/app/components/Icon/Icon";
 import { InputField, Topic } from "@/app/components/InputField";
+import TransactionStatusBadge from "../TransactionStatusBadge";
 
 interface TransaksiReverseModalProps {
   isOpen: boolean;
@@ -165,7 +166,9 @@ export default function TransaksiReverseModal({ isOpen, onClose, transaction, on
                   <tr className="border-b border-light-grey/20 text-sm transition-colors">
                     <td className="w-min whitespace-nowrap p-3 text-content">{new Date(transaction.transactionDate).toLocaleDateString("en-GB")}</td>
                     <td className="w-min whitespace-nowrap p-3 font-bold">{transaction.transactionNo}</td>
-                    <td className="w-min whitespace-nowrap p-3"><span className="rounded-[5px] bg-red px-2 py-0.5 text-[10px] font-bold uppercase text-white">Dibalikkan</span></td>
+                    <td className="w-min whitespace-nowrap p-3">
+                      <TransactionStatusBadge status="DIBALIKAN" />
+                    </td>
                     <td className="max-w-80 truncate p-3 text-grey">{transaction.description || "-"}</td>
                     <td className={`w-min whitespace-nowrap p-3 text-right ${isDebit ? "font-bold text-red" : "font-normal"}`}>
                       {isDebit ? formatRM(originalAmount) : "-"}
@@ -178,7 +181,9 @@ export default function TransaksiReverseModal({ isOpen, onClose, transaction, on
                   <tr className="border-b border-light-grey/20 text-sm transition-colors">
                     <td className="w-min whitespace-nowrap border-l-4 border-dark-blue p-3 text-content">Hari Ini</td>
                     <td className="w-min whitespace-nowrap p-3 italic text-light-grey">Diberikan Nanti</td>
-                    <td className="w-min whitespace-nowrap p-3"><span className="rounded-[5px] bg-red px-2 py-0.5 text-[10px] font-bold uppercase text-white">Pembalikan</span></td>
+                    <td className="w-min whitespace-nowrap p-3">
+                      <TransactionStatusBadge status="PEMBALIKAN" />
+                    </td>
                     <td className="max-w-80 truncate p-3 text-grey">{remarks || "-"}</td>
                     <td className={`w-min whitespace-nowrap p-3 text-right ${!isDebit ? "font-bold text-red" : "font-normal"}`}>
                       {!isDebit ? formatRM(originalAmount) : "-"}

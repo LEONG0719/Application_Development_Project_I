@@ -4,6 +4,8 @@ import { useState, useMemo, useEffect, useRef } from "react";
 import Icon from "@/app/components/Icon/Icon";
 import { InputField as SharedInputField } from "@/app/components/InputField";
 import ToolbarIconButton from "@/app/components/ToolbarIconButton";
+import TableActionIconButton from "@/app/components/TableActionIconButton";
+import ViewIconButton from "@/app/components/ViewIconButton";
 import FilterDate from "@/app/components/Filter/FilterDate";
 import type { ProcessingDraftSummary } from "./extract-review-shared";
 import { formatDraftDateTime } from "./extract-review-shared";
@@ -289,28 +291,22 @@ export default function ProcessingQueueTable({
                   </td>
                   <td className="w-[0%] px-3 py-2 text-center whitespace-nowrap">
                     <div className="flex items-center justify-center gap-1">
-                      <button
-                        type="button"
-                        className="inline-flex items-center justify-center rounded-lg p-2 transition-colors hover:bg-background text-dark-blue"
-                        title="Lihat"
+                      <ViewIconButton
+                        label="Lihat"
                         onClick={(e) => {
                           e.stopPropagation();
                           onContinueDraft(row);
                         }}
-                      >
-                        <Icon icon="visibility" size={18} />
-                      </button>
-                      <button
-                        type="button"
-                        className="inline-flex items-center justify-center rounded-lg p-2 transition-colors hover:bg-background text-red"
-                        title="Padam"
+                      />
+                      <TableActionIconButton
+                        icon="delete"
+                        label="Padam"
+                        tone="danger"
                         onClick={(e) => {
                           e.stopPropagation();
                           onDeleteDraft(row.id);
                         }}
-                      >
-                        <Icon icon="delete" size={18} />
-                      </button>
+                      />
                     </div>
                   </td>
                 </tr>

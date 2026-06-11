@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import Icon from "@/app/components/Icon/Icon";
 import { loadingTableRows } from "@/app/components/Loading/LoadingTableRows";
+import ViewIconButton from "@/app/components/ViewIconButton";
 import {
   PaginationControls,
 } from "@/app/components/Pagination/Pagination";
@@ -201,17 +201,13 @@ export default function TunggakanTable({
                 {/* Actions Column */}
                 <td className="px-3 py-2 text-center align-middle w-min whitespace-nowrap">
                   <div className="flex items-center justify-center">
-                    <button 
-                      type="button"
+                    <ViewIconButton
+                      label={`Lihat butiran ${row.fullName}`}
                       onClick={(e) => {
                         e.stopPropagation();
                         onViewResident(row.id);
                       }}
-                      className="inline-flex items-center justify-center rounded-lg p-2 text-dark-blue transition-colors hover:bg-background"
-                      aria-label={`Lihat butiran ${row.fullName}`}
-                    >
-                      <Icon icon="eye" size={18} />
-                    </button>
+                    />
                   </div>
                 </td>
               </tr>

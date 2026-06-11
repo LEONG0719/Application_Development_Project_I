@@ -1,4 +1,3 @@
-import Icon from "../../../../../../components/Icon/Icon";
 import {
   type ExtractedQuarterUnit,
 } from "../../../../components/extract-review-shared";
@@ -6,6 +5,7 @@ import { getUnitKey } from "./helpers";
 import { PaginationControls } from "@/app/components/Pagination/Pagination";
 import { loadingTableRows } from "@/app/components/Loading/LoadingTableRows";
 import { TableInputField } from "@/app/components/InputField";
+import TableActionIconButton from "@/app/components/TableActionIconButton";
 
 
 type KuartersUnitPanelProps = {
@@ -30,40 +30,6 @@ type KuartersUnitPanelProps = {
   onDeleteUnit: (unitKey: string) => Promise<void>;
   isLoading?: boolean;
 };
-
-function ActionButton({
-  icon,
-  label,
-  textClass,
-  iconClass,
-  onClick,
-  disabled = false,
-}: {
-  icon: string;
-  label: string;
-  textClass: string;
-  iconClass?: string;
-  onClick?: () => void;
-  disabled?: boolean;
-}) {
-  return (
-    <button
-      type="button"
-      aria-label={label}
-      title={label}
-      disabled={disabled}
-      className={`inline-flex items-center justify-center rounded-lg p-2 transition-colors hover:bg-background disabled:cursor-not-allowed disabled:opacity-35 ${textClass}`}
-      onClick={(e) => {
-        e.stopPropagation();
-        if (!disabled) {
-          onClick?.();
-        }
-      }}
-    >
-      <Icon icon={icon} size={18} className={iconClass} />
-    </button>
-  );
-}
 
 export default function KuartersUnitPanel({
   units,
@@ -143,7 +109,7 @@ export default function KuartersUnitPanel({
                     data-kuarters-editor={isEditing ? "true" : undefined}
                     className={[
                       "border-t border-light-grey/20 transition-colors cursor-auto select-text",
-                      unit.isExisted ? "bg-amber-50" : "hover:bg-background/60",
+                      unit.isExisted ? "bg-warning-surface" : "hover:bg-background/60",
                     ].join(" ")}
                     onDoubleClick={() => {
                       if (!isEditing) {
@@ -194,37 +160,41 @@ export default function KuartersUnitPanel({
                       <div className="flex justify-center gap-1">
                         {isEditing ? (
                           <>
-                            <ActionButton
+                            <TableActionIconButton
                               icon={isSavingUnit ? "progress_activity" : "save"}
                               label={
                                 isSavingUnit
                                   ? "Menyimpan perubahan unit"
                                   : "Simpan perubahan unit"
                               }
-                              textClass={isSavingUnit ? "text-dark-blue" : "text-green"}
-                              iconClass={isSavingUnit ? "animate-spin" : undefined}
+                              tone={isSavingUnit ? "neutral" : "success"}
+                              iconClassName={isSavingUnit ? "animate-spin" : undefined}
                               disabled={isSaving && !isSavingUnit}
-                              onClick={() => {
+                              onClick={(event) => {
+                                event.stopPropagation();
                                 void onSaveUnit(unitKey);
                               }}
                             />
-                            <ActionButton
+                            <TableActionIconButton
                               icon="delete"
                               label="Padam unit"
-                              textClass="text-red"
+                              tone="danger"
                               disabled={isSaving}
-                              onClick={() => {
+                              onClick={(event) => {
+                                event.stopPropagation();
                                 void onDeleteUnit(unitKey);
                               }}
                             />
                           </>
                         ) : (
-                          <ActionButton
+                          <TableActionIconButton
                             icon="edit"
                             label="Edit unit"
-                            textClass="text-dark-blue"
                             disabled={isSaving}
-                            onClick={() => onStartEdit(unitKey, unit.unitCode)}
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              onStartEdit(unitKey, unit.unitCode);
+                            }}
                           />
                         )}
                       </div>

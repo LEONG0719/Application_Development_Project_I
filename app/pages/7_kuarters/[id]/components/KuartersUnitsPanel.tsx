@@ -14,7 +14,9 @@ import FilterOption, {
 import Icon, { commonIcons } from "@/app/components/Icon/Icon";
 import { loadingTableRows } from "@/app/components/Loading/LoadingTableRows";
 import { PaginationControls } from "@/app/components/Pagination/Pagination";
+import TableActionIconButton from "@/app/components/TableActionIconButton";
 import ToolbarButton from "@/app/components/ToolbarIconButton";
+import ViewIconButton from "@/app/components/ViewIconButton";
 import { downloadQuarterUnits } from "@/app/pages/7_kuarters/hooks/kuartersDownloads";
 import KuartersUnitDatePicker from "./KuartersUnitDatePicker";
 import type { QuarterUnitOccupancyDetails } from "@/lib/quarters/quarter-units";
@@ -69,36 +71,6 @@ type KuartersUnitsPanelProps = {
   onSaveUnit: () => void;
   onUnavailableFeature: (message: string) => void;
 };
-
-function ActionButton({
-  icon,
-  label,
-  onClick,
-  textClass,
-  disabled = false,
-}: {
-  icon: string;
-  label: string;
-  onClick: () => void;
-  textClass: string;
-  disabled?: boolean;
-}) {
-  return (
-    <button
-      type="button"
-      className={`inline-flex items-center justify-center rounded-lg p-2 transition-colors hover:bg-background disabled:cursor-not-allowed disabled:opacity-40 ${textClass}`}
-      aria-label={label}
-      disabled={disabled}
-      title={label}
-      onClick={(e) => {
-        e.stopPropagation();
-        onClick();
-      }}
-    >
-      <Icon icon={icon} size={18} />
-    </button>
-  );
-}
 
 function getRowAccentClass(status: QuarterUnitRecord["status"]) {
   return status === "OCCUPIED"
@@ -318,19 +290,25 @@ export default function KuartersUnitsPanel({
     if (isEditing) {
       return (
         <div className="flex items-center gap-1">
-          <ActionButton
+          <TableActionIconButton
             icon={commonIcons.save}
             label={`Simpan ${unit.unitCode}`}
             disabled={Boolean(pendingAction)}
-            onClick={onSaveUnit}
-            textClass="text-green"
+            tone="success"
+            onClick={(event) => {
+              event.stopPropagation();
+              onSaveUnit();
+            }}
           />
-          <ActionButton
+          <TableActionIconButton
             icon={commonIcons.delete}
             label={`Padam ${unit.unitCode}`}
             disabled={Boolean(pendingAction)}
-            onClick={() => onDeleteUnit(unit.id)}
-            textClass="text-red"
+            tone="danger"
+            onClick={(event) => {
+              event.stopPropagation();
+              onDeleteUnit(unit.id);
+            }}
           />
         </div>
       );
@@ -338,19 +316,19 @@ export default function KuartersUnitsPanel({
 
     return (
       <div className="flex items-center gap-1">
-        <ActionButton
+        <TableActionIconButton
           icon={commonIcons.edit}
           label={`Kemaskini ${unit.unitCode}`}
           disabled={Boolean(pendingAction)}
-          onClick={() => onEditUnit(unit)}
-          textClass="text-grey"
+          onClick={(event) => {
+            event.stopPropagation();
+            onEditUnit(unit);
+          }}
         />
-        <ActionButton
-          icon={commonIcons.eye}
+        <ViewIconButton
           label={`Lihat ${unit.unitCode}`}
           disabled={Boolean(pendingAction)}
           onClick={() => setSelectedUnitId(unit.id)}
-          textClass="text-dark-blue"
         />
       </div>
     );
@@ -359,19 +337,25 @@ export default function KuartersUnitsPanel({
   function renderCreateActionCell() {
     return (
       <div className="flex items-center gap-1">
-        <ActionButton
+        <TableActionIconButton
           icon={commonIcons.save}
           label="Simpan unit baharu"
           disabled={Boolean(pendingAction)}
-          onClick={onSaveUnit}
-          textClass="text-green"
+          tone="success"
+          onClick={(event) => {
+            event.stopPropagation();
+            onSaveUnit();
+          }}
         />
-        <ActionButton
+        <TableActionIconButton
           icon={commonIcons.delete}
           label="Buang unit baharu"
           disabled={Boolean(pendingAction)}
-          onClick={() => onDeleteUnit(EMPTY_QUARTER_UNIT_ID)}
-          textClass="text-red"
+          tone="danger"
+          onClick={(event) => {
+            event.stopPropagation();
+            onDeleteUnit(EMPTY_QUARTER_UNIT_ID);
+          }}
         />
       </div>
     );

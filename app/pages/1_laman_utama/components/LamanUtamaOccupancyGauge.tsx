@@ -56,7 +56,7 @@ export default function LamanUtamaOccupancyGauge({
   const vacancyPercentDisplay = isLoading ? "--%" : `${vacancyPercent}%`;
 
   return (
-    <div className="relative flex flex-col items-start p-6 w-full h-[332px] bg-light-blue rounded-xl select-none">
+    <div className="relative flex flex-col items-start p-6 w-full h-83 bg-light-blue rounded-xl select-none">
       {/* Header section */}
       <div className="flex flex-row justify-between items-center w-full mb-2">
         <div className="flex flex-row items-center gap-2">
@@ -68,12 +68,12 @@ export default function LamanUtamaOccupancyGauge({
       </div>
 
       {/* Centered Gauge Area */}
-      <div className="flex justify-center items-center w-full flex-grow">
+      <div className="flex justify-center items-center w-full grow">
         {/* Outer 320x192 box container */}
-        <div className="relative w-[320px] h-[192px] rounded-lg bg-light-blue overflow-visible">
+        <div className="relative w-[320px] h-48 rounded-lg bg-light-blue overflow-visible">
           
           {/* Base Background Border (Light Blue) */}
-          <div className="absolute inset-0 border-[16px] border-gauge-primary rounded-lg pointer-events-none" />
+          <div className="absolute inset-0 border-16 border-gauge-primary rounded-lg pointer-events-none" />
 
           {/* Dynamic Foreground Running Border (SVG Overlay) */}
           <svg
@@ -108,7 +108,7 @@ export default function LamanUtamaOccupancyGauge({
             </div>
 
             {/* Divider */}
-            <div className="w-[148px] border-t border-gauge-secondary my-2" />
+            <div className="w-37 border-t border-gauge-secondary my-2" />
 
             {/* Split Dihuni vs Kosong columns */}
             <div className="flex flex-row justify-center items-center gap-6 w-full mt-1">

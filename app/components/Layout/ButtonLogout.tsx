@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 
 import Icon from "../Icon/Icon";
 import { ROUTES } from "../../constants/routes";
+import HeaderIconButton from "./HeaderIconButton";
 
 export default function ButtonLogout() {
 	const router = useRouter();
@@ -57,50 +58,51 @@ export default function ButtonLogout() {
 	return (
 		<>
 			{/* Logout Button */}
-			<button
-				type="button"
-				className="material-symbols-outlined text-red hover:cursor-pointer hover:text-dark-blue hover:scale-[0.98] active:scale-[0.86]"
+			<HeaderIconButton
+				icon="logout"
+				label="Log keluar"
+				tone="danger"
+				isActive={isLogoutDialogOpen}
 				onClick={openLogoutDialog}
-				title="Logout"
 				aria-haspopup="dialog"
 				aria-expanded={isLogoutDialogOpen}
-			>
-				<Icon icon="logout" size={24} />
-			</button>
+			/>
 
 			{/* Logout Confirmation Dialog */}
 			{isLogoutDialogOpen ? (
 				<div
-					className="fixed inset-0 z-50 flex items-center justify-center bg-dark-blue/35 p-4 backdrop-blur-[2px]"
+					className="fixed inset-0 z-50 flex items-center justify-center bg-static-dark/45 p-4 backdrop-blur-[2px]"
 					role="dialog"
 					aria-modal="true"
 					aria-labelledby="logout-dialog-title"
+					aria-describedby="logout-dialog-description"
 					onClick={(event) => {
 						if (event.target === event.currentTarget) {
 							closeLogoutDialog();
 						}
 					}}
 				>
-					<div className="w-full max-w-md rounded-2xl border border-light-blue bg-surface p-4 shadow-2xl">
+					<div className="w-full max-w-md rounded-xl border border-red/30 bg-surface p-6 shadow-[0_22px_55px_rgba(15,23,42,0.22)]">
 						<div className="flex items-start gap-4">
 							{/* Icon */}
-							<div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-red/10 text-red">
-								<Icon icon="logout" size={24} />
+							<div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-danger-surface text-red">
+								<Icon icon="logout" size={24} weight={700} />
 							</div>
 
 							{/* Dialog Content */}
-							<div className="space-y-2">
-								<p className="text-xs font-extrabold text-grey">
-									LOG KELUAR
-								</p>
+							<div className="min-w-0">
 								<h2
 									id="logout-dialog-title"
-									className="text-2xl font-extrabold text-dark-blue"
+									className="text-lg font-extrabold leading-6 text-content"
 								>
-									Adakah Anda Pasti Ingin Log Keluar?
+									Log Keluar daripada Sistem?
 								</h2>
-								<p className="text-sm font-medium text-grey">
-									Anda akan dikeluarkan dari peranti ini dan dihantar kembali ke skrin log masuk.
+								<p
+									id="logout-dialog-description"
+									className="mt-2 text-sm font-medium leading-6 text-content-muted"
+								>
+									Sesi semasa anda akan ditamatkan dan anda akan kembali ke
+									halaman log masuk.
 								</p>
 							</div>
 						</div>
@@ -111,19 +113,20 @@ export default function ButtonLogout() {
 							<button
 								ref={cancelButtonRef}
 								type="button"
-								className="inline-flex min-h-11 items-center justify-center rounded-xl border border-light-grey/30 bg-surface px-5 py-2.5 text-sm font-semibold text-dark-blue transition-colors hover:bg-background hover:scale-[0.98] active:scale-[0.96]"
+								className="inline-flex h-11 items-center justify-center rounded-lg border border-border bg-surface px-5 text-xs font-extrabold text-content shadow-sm transition-[background-color,border-color,transform] hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action-accent/45 active:scale-[0.98]"
 								onClick={closeLogoutDialog}
 							>
-								Cancel
+								Batal
 							</button>
 
 							{/* Confirm Logout Button */}
 							<button
 								type="button"
-								className="inline-flex min-h-11 items-center justify-center rounded-xl bg-red px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:opacity-90 hover:scale-[0.98] active:scale-[0.96]"
+								className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-red px-5 text-xs font-extrabold text-static-white shadow-sm transition-[background-color,transform] hover:bg-red/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red/40 focus-visible:ring-offset-2 focus-visible:ring-offset-surface active:scale-[0.98]"
 								onClick={handleLogout}
 							>
-								Sign out
+								<Icon icon="logout" size={16} />
+								Ya, Log Keluar
 							</button>
 						</div>
 					</div>
