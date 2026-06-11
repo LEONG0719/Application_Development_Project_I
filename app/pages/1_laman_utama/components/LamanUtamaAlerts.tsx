@@ -63,8 +63,8 @@ export default function LamanUtamaAlerts({
         {/* Upper section */}
         <div className="flex flex-row gap-4 items-start">
           {/* Clock/Checklist Icon Container */}
-          <div className="flex items-center justify-center w-12 h-12 bg-warning-strong/20 text-static-dark rounded-xl shrink-0">
-            <Icon icon="pending_actions" size={24} className="text-static-dark" />
+          <div className="flex items-center justify-center w-12 h-12 bg-warning-strong/20 text-content rounded-xl shrink-0">
+            <Icon icon="pending_actions" size={24} className="text-content" />
           </div>
 
           {/* Details */}

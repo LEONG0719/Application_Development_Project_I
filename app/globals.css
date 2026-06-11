@@ -9,8 +9,10 @@ body {
   padding: 0;
   width: 100%;
   height: 100%;
-  font-family: var(--font--sans);            /* Default Font (Inter) */
-  background-color: var(--color-background); /* Light Gray Background of every page. */
+  font-family: var(--font--sans);
+  /* Default Font (Inter) */
+  background-color: var(--color-background);
+  /* Light Gray Background of every page. */
   color: var(--color-content);
 }
 
@@ -34,10 +36,13 @@ html {
 
 /* --- Global Theme Variables --- */
 @theme {
-  --font--sans: "Inter", sans-serif; /* Default Font (Inter) */
+  --font--sans: "Inter", sans-serif;
+  /* Default Font (Inter) */
 
-  --color-background: #F8F9FF; /* Light Gray Background of every page. */
-  --color-blur-background: rgba(0, 0, 0, 0.7); /* Blur background color for overlay windows. */
+  --color-background: #F8F9FF;
+  /* Light Gray Background of every page. */
+  --color-blur-background: rgba(0, 0, 0, 0.7);
+  /* Blur background color for overlay windows. */
   --color-surface: #FFFFFF;
   --color-surface-muted: #EFF4FF;
   --color-content: #000000;
@@ -85,14 +90,21 @@ html {
   --color-brand-accent: #151E66;
   --color-brand-secondary: #2D367D;
 
-  --color-dark-grey: #000000; /* Legacy dark-grey foreground. Prefer content for primary text. */
+  --color-dark-grey: #000000;
+  /* Legacy dark-grey foreground. Prefer content for primary text. */
   --color-sidebar: #1E2738;
-  --color-light-grey: #94A3B8; /* Grey text & icon at sidebar. */
-  --color-grey: #464651;      /* Grey icon (e.g. Download / Filter) */
-  --color-dark-blue: #151E66;  /* Dark blue icon (e.g. Eyes / Pen / Add), button, dashboard background, overlay window header. */
-  --color-light-blue: #EFF4FF; /* Table header, overlay window background. */
-  --color-green: #15803D;     /* Green icon (e.g. Tick / Save), button (e.g. Simpan / Sahkan), text (e.g. Kredit). */
-  --color-red: #BA1A1A;       /* Red icon (e.g. Dustbin / Warning / Logout), button (e.g. Batal / Padam), text (e.g. Debit). */
+  --color-light-grey: #94A3B8;
+  /* Grey text & icon at sidebar. */
+  --color-grey: #464651;
+  /* Grey icon (e.g. Download / Filter) */
+  --color-dark-blue: #151E66;
+  /* Dark blue icon (e.g. Eyes / Pen / Add), button, dashboard background, overlay window header. */
+  --color-light-blue: #EFF4FF;
+  /* Table header, overlay window background. */
+  --color-green: #15803D;
+  /* Green icon (e.g. Tick / Save), button (e.g. Simpan / Sahkan), text (e.g. Kredit). */
+  --color-red: #BA1A1A;
+  /* Red icon (e.g. Dustbin / Warning / Logout), button (e.g. Batal / Padam), text (e.g. Debit). */
 
   /* Status Bayaran */
   --color-cukup: #15803D;
@@ -307,6 +319,7 @@ html[data-theme="dark"] {
 }
 
 @media (prefers-reduced-motion: no-preference) {
+
   body,
   .app-header,
   main,
@@ -330,6 +343,7 @@ html[data-theme="dark"] {
     opacity: 0;
     transform: translateY(4px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);

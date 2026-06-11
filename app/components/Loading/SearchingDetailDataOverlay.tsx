@@ -21,7 +21,7 @@ export default function SearchingDetailDataOverlay({
         <div className="flex min-h-108 items-center justify-center">
           <div className="text-center">
             <div
-              className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-dark-blue/20 border-t-dark-blue"
+              className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-black/20 border-t-black"
               aria-hidden="true"
             />
             <p className="mt-4 text-sm font-semibold text-grey">
