@@ -16,6 +16,10 @@ export type UploadedDocumentWithUploader = UploadedDocument & {
   } | null;
 };
 
+export type ReviewBuildOptions = {
+  useStoredReferences?: boolean;
+};
+
 const draftKindByCategory = {
   BAYARAN: "bayaran",
   TUNGGAKAN: "tunggakan",
@@ -62,8 +66,9 @@ export function mapUploadedDocumentForQueue(
 
 export async function mapUploadedDocumentForReview(
   document: UploadedDocumentWithUploader,
+  options: ReviewBuildOptions = {},
 ): Promise<ProcessingDraft | null> {
-  const extractResult = await buildExtractResultFromDraftRows(document);
+  const extractResult = await buildExtractResultFromDraftRows(document, options);
 
   if (!extractResult) {
     return null;
@@ -97,21 +102,22 @@ export async function mapUploadedDocumentForReview(
 
 async function buildExtractResultFromDraftRows(
   document: UploadedDocumentWithUploader,
+  options: ReviewBuildOptions,
 ): Promise<ExtractResult | null> {
   if (document.category === "BAYARAN") {
-    return buildBayaranExtractResultFromDraftRows(document.id);
+    return buildBayaranExtractResultFromDraftRows(document.id, options);
   }
 
   if (document.category === "TUNGGAKAN") {
-    return buildTunggakanExtractResultFromDraftRows(document.id);
+    return buildTunggakanExtractResultFromDraftRows(document.id, options);
   }
 
   if (document.category === "PENGHUNI") {
-    return buildPenghuniExtractResultFromDraftRows(document.id);
+    return buildPenghuniExtractResultFromDraftRows(document.id, options);
   }
 
   if (document.category === "KUARTERS") {
-    return buildKuartersExtractResultFromDraftRows(document.id);
+    return buildKuartersExtractResultFromDraftRows(document.id, options);
   }
 
   return null;

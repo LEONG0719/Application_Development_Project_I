@@ -2,10 +2,12 @@ import { Prisma } from "@prisma/client";
 
 import type { ExtractedTunggakanRecord } from "@/app/pages/2_muat_naik/components/extract-review-shared";
 import { prisma } from "@/lib/prisma";
+import type { ReviewBuildOptions } from "@/lib/uploaded-document/documents";
 import { findResidentsByNormalizedIcs } from "@/lib/uploaded-document/shared";
 
 export async function buildTunggakanExtractResultFromDraftRows(
   uploadedDocumentId: string,
+  options: ReviewBuildOptions = {},
 ) {
   const rows = await prisma.arrearsSummaryDraft.findMany({
     where: { uploadedDocumentId },
@@ -18,7 +20,9 @@ export async function buildTunggakanExtractResultFromDraftRows(
 
   const residentIdByIc = await findResidentsByNormalizedIcs(
     prisma,
-    rows.map((row) => row.residentIcNumber),
+    rows
+      .filter((row) => !row.originalResidentId)
+      .map((row) => row.residentIcNumber),
   );
   const preparedRows = rows.map((row) => ({
     row,
@@ -34,9 +38,31 @@ export async function buildTunggakanExtractResultFromDraftRows(
         .filter((residentId): residentId is string => Boolean(residentId)),
     ),
   ];
-  const [transactionResidentIds, summaryIdByResidentId] = await Promise.all([
+  const storedSummaryIdByResidentId = new Map(
+    rows
+      .filter(
+        (
+          row,
+        ): row is typeof row & {
+          originalResidentId: string;
+          originalSummaryId: string;
+        } => Boolean(row.originalResidentId && row.originalSummaryId),
+      )
+      .map((row) => [row.originalResidentId, row.originalSummaryId]),
+  );
+  const summaryResidentIdsToRefresh = options.useStoredReferences
+    ? residentIds.filter(
+        (residentId) => !storedSummaryIdByResidentId.has(residentId),
+      )
+    : residentIds;
+  const [transactionResidentIds, refreshedSummaryIdByResidentId] =
+    await Promise.all([
     findTransactionResidentIds(residentIds),
-    findSummaryIdsByResidentId(residentIds),
+    findSummaryIdsByResidentId(summaryResidentIdsToRefresh),
+  ]);
+  const summaryIdByResidentId = new Map([
+    ...storedSummaryIdByResidentId,
+    ...refreshedSummaryIdByResidentId,
   ]);
   const referenceUpdates: {
     draftId: string;
@@ -71,7 +97,9 @@ export async function buildTunggakanExtractResultFromDraftRows(
     return buildTunggakanRecord(row, residentId, isBlocked, importMessage);
   });
 
-  await updateTunggakanDraftReferences(referenceUpdates);
+  if (!options.useStoredReferences) {
+    await updateTunggakanDraftReferences(referenceUpdates);
+  }
   const acceptedRecords = records.filter((record) => record.importStatus !== "IGNORED");
 
   return {

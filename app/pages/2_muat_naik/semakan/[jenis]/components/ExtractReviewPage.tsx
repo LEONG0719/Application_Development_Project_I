@@ -46,9 +46,11 @@ const draftUpdateRouteByKind: Record<ReviewKind, (draftId: string) => string> = 
 export default function ExtractReviewPage({
   draftId,
   kind,
+  initialDraft,
 }: {
   draftId: string;
   kind: ReviewKind;
+  initialDraft: ProcessingDraft;
 }) {
   const router = useRouter();
   const [bayaranEditedTotalAmount, setBayaranEditedTotalAmount] = useState<
@@ -58,9 +60,11 @@ export default function ExtractReviewPage({
     useState<GlobalFixedNotice | null>(null);
   const [verifyingMode, setVerifyingMode] = useState<VerifyingMode | null>(null);
   const [selectedRecordKeys, setSelectedRecordKeys] = useState<string[]>([]);
-  const [extractResult, setExtractResult] = useState<ExtractResult | null>(null);
-  const [uploadedFileName, setUploadedFileName] = useState("");
-  const [isLoadingDraft, setIsLoadingDraft] = useState(true);
+  const [extractResult, setExtractResult] = useState<ExtractResult | null>(
+    initialDraft.extractResult,
+  );
+  const uploadedFileName = initialDraft.fileName;
+  const isLoadingDraft = false;
   const [filteredStats, setFilteredStats] = useState<{
     recordCount?: number;
     totalAmount?: string;
@@ -104,71 +108,6 @@ export default function ExtractReviewPage({
   const clearVerificationNotice = () => {
     setVerificationNotice(null);
   };
-
-  useEffect(() => {
-    let isActive = true;
-
-    async function loadDraft() {
-      if (!draftId) {
-        showVerificationNotice("error", "Dokumen semakan tidak ditemui.");
-        setIsLoadingDraft(false);
-        return;
-      }
-
-      setIsLoadingDraft(true);
-      clearVerificationNotice();
-
-      try {
-        const response = await fetch(`/api/uploaded-documents/${draftId}`);
-        const result = await response.json().catch(() => null);
-
-        if (response.status === 404) {
-          router.replace(uploadPageForKind);
-          return;
-        }
-
-        if (!response.ok || !result?.data?.document) {
-          throw new Error(result?.message ?? "Gagal mendapatkan draf dokumen.");
-        }
-
-        const document = result.data.document as ProcessingDraft;
-
-        if (document.kind !== kind) {
-          throw new Error("Jenis dokumen semakan tidak sepadan.");
-        }
-
-        if (!isActive) {
-          return;
-        }
-
-        setExtractResult(document.extractResult);
-        setUploadedFileName(document.fileName);
-      } catch (error) {
-        if (!isActive) {
-          return;
-        }
-
-        setExtractResult(null);
-        setUploadedFileName("");
-        showVerificationNotice(
-          "error",
-          error instanceof Error
-            ? error.message
-            : "Gagal mendapatkan draf dokumen.",
-        );
-      } finally {
-        if (isActive) {
-          setIsLoadingDraft(false);
-        }
-      }
-    }
-
-    void loadDraft();
-
-    return () => {
-      isActive = false;
-    };
-  }, [draftId, kind, router, uploadPageForKind]);
 
   const bayaranExtract =
     extractResult?.documentType === "bayaran" ? extractResult : null;

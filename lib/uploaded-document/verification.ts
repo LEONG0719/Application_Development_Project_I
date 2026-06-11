@@ -23,7 +23,7 @@ const uploadedDocumentTransactionOptions = {
 const verifyChunkSizeByKind: Record<VerifyKind, number> = {
   bayaran: 500,
   tunggakan: 500,
-  penghuni: 200,
+  penghuni: 500,
   kuarters: Number.MAX_SAFE_INTEGER,
 };
 

@@ -1,4 +1,4 @@
-import type { Prisma, ResidentStatus } from "@prisma/client";
+import { Prisma, type ResidentStatus } from "@prisma/client";
 
 import {
   getBillingDateKey,
@@ -225,6 +225,8 @@ type ChargeAdjustmentCategory = "CAJ_SEWA" | "CAJ_PENALTI";
 
 type OriginalChargeTransaction = {
   id: string;
+  transactionDate: Date;
+  category: ChargeAdjustmentCategory;
   debitAmount: Prisma.Decimal | number | string;
   creditAmount: Prisma.Decimal | number | string;
   childTransactions: {
@@ -280,20 +282,21 @@ export async function createOccupancyBillingAdjustments(
       chargeMonth: "asc",
     },
   });
+  const originalTransactions = await findOriginalChargeTransactions(
+    tx,
+    previous.residentId,
+    affectedMonths,
+  );
 
   const deltas: OccupancyBillingDelta[] = [];
 
   for (const charge of monthlyCharges) {
-    const rentalOriginalTransaction = await findOriginalChargeTransaction(tx, {
-      residentId: previous.residentId,
-      chargeMonth: charge.chargeMonth,
-      category: "CAJ_SEWA",
-    });
-    const penaltyOriginalTransaction = await findOriginalChargeTransaction(tx, {
-      residentId: previous.residentId,
-      chargeMonth: charge.chargeMonth,
-      category: "CAJ_PENALTI",
-    });
+    const rentalOriginalTransaction = originalTransactions.get(
+      getOriginalChargeTransactionKey(charge.chargeMonth, "CAJ_SEWA"),
+    );
+    const penaltyOriginalTransaction = originalTransactions.get(
+      getOriginalChargeTransactionKey(charge.chargeMonth, "CAJ_PENALTI"),
+    );
 
     if (rentalOriginalTransaction) {
       const rentalBaseAmount = getTransactionOriginalChargeAmount(
@@ -364,86 +367,116 @@ export async function createOccupancyBillingAdjustments(
   }
 
   const transactionNos = await generateTransactionNos(tx, deltas.length);
-  let transactionNoIndex = 0;
+  const preparedDeltas = deltas.map((delta, index) => ({
+    delta,
+    deltaAmount: roundCurrency(delta.expectedAmount - delta.currentAmount),
+    transactionNo: transactionNos[index],
+  }));
 
-  for (const delta of deltas) {
-    const deltaAmount = roundCurrency(delta.expectedAmount - delta.currentAmount);
+  await tx.transaction.updateMany({
+    where: {
+      id: {
+        in: [
+          ...new Set(
+            preparedDeltas.map(({ delta }) => delta.originalTransactionId),
+          ),
+        ],
+      },
+    },
+    data: {
+      status: "DILARASKAN",
+    },
+  });
 
-    await tx.transaction.update({
-      where: {
-        id: delta.originalTransactionId,
-      },
-      data: {
-        status: "DILARASKAN",
-      },
-    });
+  await tx.transaction.createMany({
+    data: preparedDeltas.map(({ delta, deltaAmount, transactionNo }) => ({
+      transactionNo,
+      residentId: previous.residentId,
+      transactionDate: new Date(),
+      category: delta.category,
+      status: "PELARASAN",
+      debitAmount: deltaAmount > 0 ? deltaAmount : 0,
+      creditAmount: deltaAmount < 0 ? Math.abs(deltaAmount) : 0,
+      relatedTransactionId: delta.originalTransactionId,
+      description: buildAdjustmentDescription(previous, delta),
+    })),
+  });
 
-    await tx.transaction.create({
-      data: {
-        transactionNo: transactionNos[transactionNoIndex++],
-        residentId: previous.residentId,
-        transactionDate: new Date(),
-        category: delta.category,
-        status: "PELARASAN",
-        debitAmount: deltaAmount > 0 ? deltaAmount : 0,
-        creditAmount: deltaAmount < 0 ? Math.abs(deltaAmount) : 0,
-        relatedTransactionId: delta.originalTransactionId,
-        description: buildAdjustmentDescription(previous, delta),
-      },
-    });
+  const monthlyChargeDeltas = new Map<
+    string,
+    {
+      rentalDelta: number;
+      penaltyDelta: number;
+    }
+  >();
 
-    const monthlyChargeDelta = {
-      totalMonthlyCharge: {
-        increment: deltaAmount,
-      },
-      balanceForMonth: {
-        increment: deltaAmount,
-      },
+  for (const { delta, deltaAmount } of preparedDeltas) {
+    const current = monthlyChargeDeltas.get(delta.monthlyChargeId) ?? {
+      rentalDelta: 0,
+      penaltyDelta: 0,
     };
 
     if (delta.category === "CAJ_SEWA") {
-      await tx.monthlyCharge.update({
-        where: {
-          id: delta.monthlyChargeId,
-        },
-        data: {
-          rentalAmount: {
-            increment: deltaAmount,
-          },
-          ...monthlyChargeDelta,
-        },
-      });
+      current.rentalDelta = roundCurrency(current.rentalDelta + deltaAmount);
     } else {
-      await tx.monthlyCharge.update({
-        where: {
-          id: delta.monthlyChargeId,
-        },
-        data: {
-          penaltyAmount: {
-            increment: deltaAmount,
-          },
-          ...monthlyChargeDelta,
-        },
-      });
+      current.penaltyDelta = roundCurrency(current.penaltyDelta + deltaAmount);
     }
 
-    await tx.arrearsSummary.upsert({
-      where: {
-        residentId: previous.residentId,
-      },
-      create: {
-        residentId: previous.residentId,
-        totalArrearsAmount: deltaAmount,
-        lastUpdatedMonth: delta.chargeMonth,
-      },
-      update: {
-        totalArrearsAmount: {
-          increment: deltaAmount,
-        },
-        lastUpdatedMonth: delta.chargeMonth,
-      },
-    });
+    monthlyChargeDeltas.set(delta.monthlyChargeId, current);
   }
+
+  await tx.$executeRaw`
+    UPDATE "MonthlyCharge" AS charge
+    SET
+      "rentalAmount" = charge."rentalAmount" + updates."rentalDelta",
+      "penaltyAmount" = charge."penaltyAmount" + updates."penaltyDelta",
+      "totalMonthlyCharge" =
+        charge."totalMonthlyCharge" + updates."rentalDelta" + updates."penaltyDelta",
+      "balanceForMonth" =
+        charge."balanceForMonth" + updates."rentalDelta" + updates."penaltyDelta",
+      "updatedAt" = NOW()
+    FROM (
+      VALUES ${Prisma.join(
+        [...monthlyChargeDeltas].map(
+          ([monthlyChargeId, delta]) =>
+            Prisma.sql`(
+              ${monthlyChargeId}::uuid,
+              ${delta.rentalDelta}::numeric,
+              ${delta.penaltyDelta}::numeric
+            )`,
+        ),
+      )}
+    ) AS updates("id", "rentalDelta", "penaltyDelta")
+    WHERE charge."id" = updates."id"
+  `;
+
+  const totalArrearsDelta = roundCurrency(
+    preparedDeltas.reduce((total, row) => total + row.deltaAmount, 0),
+  );
+  const lastUpdatedMonth = preparedDeltas.reduce(
+    (latest, row) =>
+      row.delta.chargeMonth.getTime() > latest.getTime()
+        ? row.delta.chargeMonth
+        : latest,
+    preparedDeltas[0].delta.chargeMonth,
+  );
+
+  await tx.arrearsSummary.upsert({
+    where: {
+      residentId: previous.residentId,
+    },
+    create: {
+      residentId: previous.residentId,
+      totalArrearsAmount: totalArrearsDelta,
+      lastUpdatedMonth,
+    },
+    update: {
+      totalArrearsAmount: {
+        increment: totalArrearsDelta,
+      },
+      lastUpdatedMonth,
+    },
+  });
 
   return deltas.length;
 }
@@ -561,26 +594,31 @@ function createEmptyChargeCalculation(chargeMonth: Date) {
   };
 }
 
-async function findOriginalChargeTransaction(
+async function findOriginalChargeTransactions(
   tx: Prisma.TransactionClient,
-  input: {
-    residentId: string;
-    chargeMonth: Date;
-    category: ChargeAdjustmentCategory;
-  },
-): Promise<OriginalChargeTransaction | null> {
-  const monthStart = getMonthStartInAppTimeZone(input.chargeMonth);
-  const nextMonthStart = new Date(monthStart);
-  nextMonthStart.setUTCMonth(nextMonthStart.getUTCMonth() + 1);
+  residentId: string,
+  affectedMonths: Date[],
+) {
+  if (affectedMonths.length === 0) {
+    return new Map<string, OriginalChargeTransaction>();
+  }
 
-  return tx.transaction.findFirst({
+  const firstMonthStart = getMonthStartInAppTimeZone(affectedMonths[0]);
+  const lastMonthStart = getMonthStartInAppTimeZone(
+    affectedMonths[affectedMonths.length - 1],
+  );
+  const nextMonthStart = new Date(lastMonthStart);
+  nextMonthStart.setUTCMonth(nextMonthStart.getUTCMonth() + 1);
+  const transactions = await tx.transaction.findMany({
     where: {
-      residentId: input.residentId,
+      residentId,
       transactionDate: {
-        gte: monthStart,
+        gte: firstMonthStart,
         lt: nextMonthStart,
       },
-      category: input.category,
+      category: {
+        in: ["CAJ_SEWA", "CAJ_PENALTI"],
+      },
       status: {
         in: ["NORMAL", "DILARASKAN"],
       },
@@ -593,6 +631,8 @@ async function findOriginalChargeTransaction(
     },
     select: {
       id: true,
+      transactionDate: true,
+      category: true,
       debitAmount: true,
       creditAmount: true,
       childTransactions: {
@@ -606,6 +646,44 @@ async function findOriginalChargeTransaction(
       },
     },
   });
+
+  const transactionByMonthAndCategory = new Map<
+    string,
+    OriginalChargeTransaction
+  >();
+
+  for (const transaction of transactions) {
+    if (
+      transaction.category !== "CAJ_SEWA" &&
+      transaction.category !== "CAJ_PENALTI"
+    ) {
+      continue;
+    }
+
+    const key = getOriginalChargeTransactionKey(
+      transaction.transactionDate,
+      transaction.category,
+    );
+
+    if (!transactionByMonthAndCategory.has(key)) {
+      transactionByMonthAndCategory.set(key, {
+        ...transaction,
+        category: transaction.category,
+      });
+    }
+  }
+
+  return transactionByMonthAndCategory;
+}
+
+function getOriginalChargeTransactionKey(
+  chargeMonth: Date,
+  category: ChargeAdjustmentCategory,
+) {
+  return [
+    getMonthStartInAppTimeZone(chargeMonth).toISOString(),
+    category,
+  ].join("|");
 }
 
 function getTransactionOriginalChargeAmount(transaction: OriginalChargeTransaction) {

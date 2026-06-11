@@ -6,6 +6,7 @@ import {
   parseDateOnlyInAppTimeZone,
 } from "@/lib/date-time";
 import { prisma } from "@/lib/prisma";
+import type { ReviewBuildOptions } from "@/lib/uploaded-document/documents";
 import { findResidentsByNormalizedIcs } from "@/lib/uploaded-document/shared";
 
 export function getBayaranPaymentDate(paymentMonth: string) {
@@ -51,6 +52,7 @@ export function getBayaranPaymentDate(paymentMonth: string) {
 
 export async function buildBayaranExtractResultFromDraftRows(
   uploadedDocumentId: string,
+  options: ReviewBuildOptions = {},
 ) {
   const rows = await prisma.paymentDraft.findMany({
     where: { uploadedDocumentId },
@@ -63,21 +65,26 @@ export async function buildBayaranExtractResultFromDraftRows(
 
   const residentIdByIc = await findResidentsByNormalizedIcs(
     prisma,
-    rows.map((row) => row.residentIcNumber),
+    rows
+      .filter((row) => !row.originalResidentId)
+      .map((row) => row.residentIcNumber),
   );
   const preparedRows = rows.map((row) => ({
     row,
     residentId:
+      row.originalResidentId ??
       residentIdByIc.get(normalizeIc(row.residentIcNumber)) ?? null,
     receiptNo: normalizeReceiptNo(row.receiptNo ?? row.referenceNo),
   }));
   const existingPaymentKeys = await findExistingPaymentKeys(preparedRows);
 
-  await updatePaymentDraftResidentReferences(
-    preparedRows
-      .filter(({ row, residentId }) => row.originalResidentId !== residentId)
-      .map(({ row, residentId }) => ({ draftId: row.id, residentId })),
-  );
+  if (!options.useStoredReferences) {
+    await updatePaymentDraftResidentReferences(
+      preparedRows
+        .filter(({ row, residentId }) => row.originalResidentId !== residentId)
+        .map(({ row, residentId }) => ({ draftId: row.id, residentId })),
+    );
+  }
 
   const records = preparedRows.map(({ row, residentId, receiptNo }) =>
     buildBayaranRecord(

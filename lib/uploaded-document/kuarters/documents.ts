@@ -4,6 +4,7 @@ import type {
   KuartersExtractResult,
 } from "@/app/pages/2_muat_naik/components/extract-review-shared";
 import { prisma } from "@/lib/prisma";
+import type { ReviewBuildOptions } from "@/lib/uploaded-document/documents";
 import {
   findKuartersCategoryMatches,
   findKuartersUnitMatches,
@@ -11,6 +12,7 @@ import {
 
 export async function buildKuartersExtractResultFromDraftRows(
   uploadedDocumentId: string,
+  options: ReviewBuildOptions = {},
 ): Promise<KuartersExtractResult | null> {
   const categories = await prisma.quarterCategoryDraft.findMany({
     where: { uploadedDocumentId },
@@ -23,16 +25,44 @@ export async function buildKuartersExtractResultFromDraftRows(
   }
 
   const categoryMatches = await findKuartersCategoryMatches(prisma, categories);
-  const unitMatches = await findKuartersUnitMatches(
-    prisma,
-    categories.flatMap((category) => {
-      const categoryId = categoryMatches.get(category.id)?.categoryId;
-
-      return categoryId
-        ? category.units.map((unit) => ({ unit, categoryId }))
-        : [];
-    }),
+  const storedUnitMatches = new Map(
+    categories.flatMap((category) =>
+      category.units
+        .filter(
+          (
+            unit,
+          ): unit is typeof unit & {
+            originalUnitId: string;
+          } => Boolean(unit.originalUnitId),
+        )
+        .map((unit) => [
+          unit.id,
+          { draftId: unit.id, unitId: unit.originalUnitId },
+        ]),
+    ),
   );
+  const unitsToRefresh = categories.flatMap((category) => {
+    const categoryId = categoryMatches.get(category.id)?.categoryId;
+
+    if (!categoryId) {
+      return [];
+    }
+
+    return category.units
+      .filter(
+        (unit) =>
+          !options.useStoredReferences || !storedUnitMatches.has(unit.id),
+      )
+      .map((unit) => ({ unit, categoryId }));
+  });
+  const refreshedUnitMatches = await findKuartersUnitMatches(
+    prisma,
+    unitsToRefresh,
+  );
+  const unitMatches = new Map([
+    ...storedUnitMatches,
+    ...refreshedUnitMatches,
+  ]);
   const records: ExtractedQuarterRecord[] = categories.map((category) => {
     const address = category.address ?? "N/A";
     const categoryMatch = categoryMatches.get(category.id);
