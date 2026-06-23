@@ -291,10 +291,6 @@ export async function getDashboardSummary(): Promise<DashboardSummaryData> {
     pendingUploadsToday: pendingUploadsToday || 0,
     pendingCategory,
     
-    analysis: formattedAnalysis.length > 0 ? formattedAnalysis : [
-      { className: "Jalan Ariffin", amount: "RM 0.00", settlementRate: 0, opacity: 1.0 },
-      { className: "Taman Nusantara", amount: "RM 0.00", settlementRate: 0, opacity: 0.7 },
-      { className: "Persiaran Tanjung", amount: "RM 0.00", settlementRate: 0, opacity: 0.4 },
-    ],
+    analysis: formattedAnalysis,
   };
 }

@@ -150,49 +150,15 @@ export async function getTransactionsList(params: TransactionFilterParams) {
   const pageRows = await prisma.$queryRaw<
     { id: string; totalCount: bigint }[]
   >(Prisma.sql`
-    WITH filtered_transactions AS (
+    WITH visible_transactions AS (
       SELECT
         t."id",
-        t."relatedTransactionId",
-        t."status",
         t."createdAt",
-        t."transactionNo",
-        ROW_NUMBER() OVER (
-          PARTITION BY
-            CASE
-              WHEN t."status" IN (
-                'PELARASAN'::"TransactionStatus",
-                'PEMBALIKAN'::"TransactionStatus"
-              )
-              AND t."relatedTransactionId" IS NOT NULL
-                THEN CONCAT('child:', t."relatedTransactionId"::text)
-              ELSE CONCAT('row:', t."id"::text)
-            END
-          ORDER BY
-            t."createdAt" DESC,
-            COALESCE(t."transactionNo", t."id"::text) DESC,
-            t."id" DESC
-        ) AS "relatedRank"
+        t."transactionNo"
       FROM "Transaction" t
       LEFT JOIN "Resident" r
         ON r."id" = t."residentId"
       ${whereSql}
-    ),
-    visible_transactions AS (
-      SELECT
-        "id",
-        "createdAt",
-        "transactionNo"
-      FROM filtered_transactions
-      WHERE
-        NOT (
-          "status" IN (
-            'PELARASAN'::"TransactionStatus",
-            'PEMBALIKAN'::"TransactionStatus"
-          )
-          AND "relatedTransactionId" IS NOT NULL
-        )
-        OR "relatedRank" = 1
     )
     SELECT
       "id",

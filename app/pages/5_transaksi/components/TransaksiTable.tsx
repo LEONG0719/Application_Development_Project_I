@@ -131,6 +131,9 @@ export default function TransaksiTable({
 
                 if (finalDebit > 0) finalDebit = finalDebit + totalDeltaDebit - totalDeltaCredit;
                 if (finalCredit > 0) finalCredit = finalCredit + totalDeltaCredit - totalDeltaDebit;
+              } else if (isDibalikan) {
+                finalDebit = 0;
+                finalCredit = 0;
               }
 
               let displayRelatedId = "N/A";
@@ -211,7 +214,7 @@ export default function TransaksiTable({
                   {/* Debit Amount */}
                   <td className="w-min whitespace-nowrap p-3 text-right font-bold">
                     {Number(tx.debitAmount) > 0 ? (
-                      isDilaraskan ? (
+                      (isDilaraskan || isDibalikan) ? (
                         <div className="flex flex-col items-end">
                           <span className="mb-0.5 text-xs font-normal text-light-grey line-through">
                             {formatRM(tx.debitAmount)}
@@ -231,7 +234,7 @@ export default function TransaksiTable({
                   {/* Credit Amount */}
                   <td className="w-min whitespace-nowrap p-3 text-right font-bold">
                     {Number(tx.creditAmount) > 0 ? (
-                      isDilaraskan ? (
+                      (isDilaraskan || isDibalikan) ? (
                         <div className="flex flex-col items-end">
                           <span className="mb-0.5 text-xs font-normal text-light-grey line-through">
                             {formatRM(tx.creditAmount)}
