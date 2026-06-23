@@ -281,9 +281,9 @@ export async function getDashboardSummary(): Promise<DashboardSummaryData> {
     totalChange: ytdChangeStr,
     totalPercentage,
     
-    occupancyTotal: totalUnits || 1450,
-    occupancyOccupied: occupiedUnits || 1087,
-    occupancyVacant: vacantUnits || 363,
+    occupancyTotal: totalUnits,
+    occupancyOccupied: occupiedUnits,
+    occupancyVacant: vacantUnits,
     
     arrearsAmount: `RM ${totalArrearsVal.toLocaleString("ms-MY", { minimumFractionDigits: 2 })}`,
     arrearsCount: arrearsCount || 0,
