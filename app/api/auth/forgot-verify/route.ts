@@ -18,7 +18,7 @@ export async function POST(request: Request) {
 		});
 
 		if (error) {
-			return NextResponse.json({ error: error.message }, { status: 400 });
+			return NextResponse.json({ error: "Kod pengesahan (OTP) tidak sah atau telah tamat tempoh." }, { status: 400 });
 		}
 
 		// Use the verified session to update the password immediately.
@@ -27,8 +27,10 @@ export async function POST(request: Request) {
 			const { error: updateError } = await supabase.auth.updateUser({ password });
 
 			if (updateError) {
-				return NextResponse.json({ error: updateError.message }, { status: 400 });
+				return NextResponse.json({ error: `Gagal mengemas kini kata laluan: ${updateError.message}` }, { status: 400 });
 			}
+		} else {
+			return NextResponse.json({ error: "Sesi pengesahan tidak sah atau telah tamat tempoh." }, { status: 400 });
 		}
 
 		return NextResponse.json({ message: "Password berjaya ditetapkan semula." });

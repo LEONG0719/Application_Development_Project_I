@@ -6,5 +6,5 @@ import "server-only";
 export const SESSION_COOKIE_NAME = "login_session";
 
 // When you change these values, you need to ensure that you also update the corresponding values in app/constants/auth.ts if you try to update the domain restrictions at ui also.
-export const DOMAIN_RESTRICTION_SERVER = false; 
+export const DOMAIN_RESTRICTION_SERVER = true; 
 export const RESTRICTED_EMAIL_DOMAIN_SERVER = "@johor.gov.my";

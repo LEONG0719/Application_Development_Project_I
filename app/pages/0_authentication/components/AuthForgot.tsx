@@ -102,7 +102,8 @@ export default function AuthForgot({ onClose }: AuthForgotProps) {
 			});
 
 			if (!response.ok) {
-				throw new Error("Gagal menetapkan semula kata laluan.");
+				const data = await response.json().catch(() => ({}));
+				throw new Error(data.error || "Gagal menetapkan semula kata laluan.");
 			}
 
 			showMessage("success", "Kata laluan berjaya ditetapkan semula.");
