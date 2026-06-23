@@ -207,6 +207,7 @@ export default function TransaksiPageClient(props: TransaksiPageClientProps) {
         headers,
         ...sorted.map((tx: any) => {
           const isDilaraskan = tx.status === "DILARASKAN";
+          const isDibalikan = tx.status === "DIBALIKAN";
           let finalDebit = Number(tx.debitAmount);
           let finalCredit = Number(tx.creditAmount);
           
@@ -217,6 +218,9 @@ export default function TransaksiPageClient(props: TransaksiPageClientProps) {
             
             if (finalDebit > 0) finalDebit = finalDebit + totalDeltaDebit - totalDeltaCredit;
             if (finalCredit > 0) finalCredit = finalCredit + totalDeltaCredit - totalDeltaDebit;
+          } else if (isDibalikan) {
+            finalDebit = 0;
+            finalCredit = 0;
           }
 
           let displayRelatedId = 'N/A';
