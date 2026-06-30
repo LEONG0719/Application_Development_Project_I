@@ -1,6 +1,7 @@
 import type { Prisma } from "@prisma/client";
 
 import { createAuditLog } from "@/lib/audit/audit-logs";
+import { APP_TIME_ZONE } from "@/lib/date-time";
 
 type AuditActor = {
   profile: {
@@ -149,6 +150,7 @@ function normalizeComparableValue(value: unknown) {
 
 function formatAuditDate(value: Date) {
   return new Intl.DateTimeFormat("ms-MY", {
+    timeZone: APP_TIME_ZONE,
     day: "2-digit",
     month: "short",
     year: "numeric",

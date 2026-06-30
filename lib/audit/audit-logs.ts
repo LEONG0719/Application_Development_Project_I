@@ -1,5 +1,6 @@
 import type { AuditLog, Prisma } from "@prisma/client";
 
+import { APP_TIME_ZONE } from "@/lib/date-time";
 import { prisma } from "@/lib/prisma";
 
 export const AUDIT_LOGS_PER_PAGE = 10;
@@ -49,6 +50,7 @@ export async function createAuditLog(
     data: {
       userId: input.actor?.profile.id ?? null,
       userName: input.actor?.profile.fullName ?? "Sistem",
+      timestamp: new Date(),
       moduleName: input.moduleName,
       targetData: input.targetData ?? null,
       actionType: input.actionType,
@@ -295,6 +297,7 @@ export function formatEnumLabel(value: string) {
 
 function formatAuditDate(value: Date) {
   return new Intl.DateTimeFormat("ms-MY", {
+    timeZone: APP_TIME_ZONE,
     day: "2-digit",
     month: "short",
     year: "numeric",
