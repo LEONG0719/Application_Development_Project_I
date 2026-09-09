@@ -65,8 +65,7 @@ export default function Sidebar() {
                     <Link href={ROUTES.lamanUtama} className="flex flex-row gap-2 justify-center items-center hover:opacity-80 transition-opacity cursor-pointer">
                         <img src="/favicon.ico" alt="logo" className="w-10 h-10" />
                         <div className="flex flex-col">
-                            <span className="text-sm font-bold text-white tracking-wider">KERAJAAN</span>
-                            <span className="text-sm font-bold text-white tracking-wider">NEGERI JOHOR</span>
+                            <span className="text-md font-bold text-white tracking-wider">Q-PAID</span>
                             <span className="text-[8.5px] text-light-grey">System Pengurusan Kuarters</span>
                         </div>
                     </Link>
